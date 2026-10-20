@@ -1,0 +1,6 @@
+{
+  "name": "CleanLink",
+  "description": "Strip tracking and marketing telemetry from shared URLs with one-tap copying and instant share-sheet integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
