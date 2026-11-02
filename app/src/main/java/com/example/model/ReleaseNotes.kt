@@ -12,6 +12,9 @@ package com.example.model
  * 3. PUBLIC WEB PORTAL AVAILABILITY: Always ensure `/app/applet/server.py` is running on port 3000 and
  *    Nginx auth bypass (`do return end` in `/etc/nginx/user_auth_verification.lua`) is active so the
  *    website never returns 403 Forbidden.
+ * 4. LINKED GITHUB & PUBLISHED GIT REPO PARITY: Always keep `README.md`, `CHANGELOG.md`, `download_portal/repo.html`,
+ *    annotated Git tags, `ZnepLinkCleaner.bundle`, and `ZnepLinkCleaner-git.zip` in 100% sync with [ReleaseHistory.RELEASES]
+ *    so both the linked GitHub repository and the web portal's published repo include all prompts and changes for every release.
  */
 data class ReleaseNote(
     val version: String,
@@ -28,6 +31,26 @@ object ReleaseHistory {
         "VIBE-CODED PROOF OF CONCEPT // Built iteratively via natural-language prompts. Every modifying prompt is recorded in the release history."
 
     val RELEASES = listOf(
+        ReleaseNote(
+            version = "13.0",
+            buildNumber = 13,
+            releaseDate = "November 2, 2026",
+            title = "Cyberpunk Quivering 'Zlc' Logo & Linked GitHub / Portal Repository Sync",
+            userPrompt = "Update the app logo to be a large Z with a smaller \"lc\". Where possible make the Z quiver slightly. It should be cyberpunk inspired but not too complicated. / Also ensure the GitHub repo published is a copy of the linked GitHub repo and the linked GitHub is updated with the prompts and changes for each release. Persist this request.",
+            highlights = listOf(
+                "Redesigned app logo to a cyberpunk 'Zlc' monogram (large Electric Cyan 'Z' with Neon Purple chromatic glitch + smaller steady 'lc')",
+                "Added interactive & periodic quiver animation to the 'Z' in the Android Compose UI (quivers on tap, on link clean/expand, and in periodic bursts) and on the web portal",
+                "Updated Android adaptive launcher icons (ic_launcher_foreground/background) and all 5 density PNG mipmaps (mdpi–xxxhdpi)",
+                "Synchronized the workspace Git repository (for linked GitHub sync via README.md, CHANGELOG.md, and annotated tags) with the published web portal repo (repo.html, ZnepLinkCleaner.bundle, ZnepLinkCleaner-git.zip)",
+                "Persisted standing rule in AGENTS.md, README.md, and unit tests requiring every release's prompt and changes to be synced across GitHub and the published portal repo"
+            ),
+            technicalDetails = listOf(
+                "Created ZlcLogo Jetpack Compose Canvas component with isolated Z micro-jitter and chromatic ghost offset",
+                "Added CHANGELOG.md and expanded README.md & repo.html with full v1.0.0 – v13.0 prompts and changes",
+                "Added Robolectric unit test verifying release parity across ReleaseNotes.kt, README.md, CHANGELOG.md, index.html, and repo.html",
+                "Bumped versionCode to 13 and versionName to 13.0"
+            )
+        ),
         ReleaseNote(
             version = "12.0",
             buildNumber = 12,

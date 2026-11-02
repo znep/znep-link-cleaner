@@ -128,11 +128,31 @@ class ExampleRobolectricTest {
     @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(12, releases.size)
-        assertEquals("12.0", releases.first().version)
+        assertEquals(13, releases.size)
+        assertEquals("13.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertTrue(releases.all { it.highlights.isNotEmpty() })
         assertTrue(releases.all { it.userPrompt.isNotBlank() })
         assertTrue(com.example.model.ReleaseHistory.VIBE_CODED_POC_NOTICE.contains("VIBE-CODED PROOF OF CONCEPT"))
+
+        // Verify linked GitHub files (README.md, CHANGELOG.md) and published portal files (index.html, repo.html) stay in sync
+        val rootDir = java.io.File("..").canonicalFile
+        val syncFiles = listOf(
+            java.io.File(rootDir, "README.md"),
+            java.io.File(rootDir, "CHANGELOG.md"),
+            java.io.File(rootDir, "download_portal/index.html"),
+            java.io.File(rootDir, "download_portal/repo.html")
+        )
+        for (file in syncFiles) {
+            if (file.exists()) {
+                val content = file.readText()
+                for (release in releases) {
+                    assertTrue(
+                        "File ${file.name} is missing version ${release.version}",
+                        content.contains(release.version)
+                    )
+                }
+            }
+        }
     }
 }

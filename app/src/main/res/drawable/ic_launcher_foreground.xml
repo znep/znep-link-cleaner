@@ -4,21 +4,38 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Link Icon Body -->
+    <!-- Safe zone is [21..87] (66dp centered inside 108dp) -->
+
+    <!-- Quiver / Chromatic Aberration Ghost 'Z' (Neon Purple offset -2.5, +1.5) -->
     <path
-        android:fillColor="#14B8A6"
-        android:pathData="M39.6,54.8c0,-5.1 4.1,-9.2 9.2,-9.2h8.3V39.4h-8.3c-8.5,0 -15.4,6.9 -15.4,15.4s6.9,15.4 15.4,15.4h8.3v-6.2h-8.3C43.7,64 39.6,59.9 39.6,54.8z" />
+        android:fillColor="#B3A855F7"
+        android:pathData="M23.5,31.5 H60.5 V39.5 L36.0,66.5 H60.5 V74.5 H23.5 V66.5 L48.0,39.5 H23.5 Z" />
+
+    <!-- Subtle Quiver Micro-Ticks around the Z -->
     <path
-        android:fillColor="#2DD4BF"
-        android:pathData="M68.4,54.8c0,5.1 -4.1,9.2 -9.2,9.2h-8.3v6.2h8.3c8.5,0 15.4,-6.9 15.4,-15.4s-6.9,-15.4 -15.4,-15.4h-8.3v6.2h8.3C64.3,45.6 68.4,49.7 68.4,54.8z" />
+        android:fillColor="#99A855F7"
+        android:pathData="M21.0,45.0 H26.0 V47.2 H21.0 Z" />
     <path
-        android:fillColor="#F0FDFA"
-        android:pathData="M46.5,51.8h15v6.2h-15z" />
-    <!-- Clean sparkle / star at top right -->
+        android:fillColor="#9938BDF8"
+        android:pathData="M58.0,51.0 H63.5 V53.2 H58.0 Z" />
+
+    <!-- Primary Large Cyberpunk 'Z' (Electric Cyan) -->
     <path
         android:fillColor="#38BDF8"
-        android:pathData="M76,33L77.8,38.2L83,40L77.8,41.8L76,47L74.2,41.8L69,40L74.2,38.2Z" />
+        android:pathData="M26.0,30.0 H63.0 V38.0 L38.5,65.0 H63.0 V73.0 H26.0 V65.0 L50.5,38.0 H26.0 Z" />
+
+    <!-- Crisp Ice-Cyan Top Edge Highlight on 'Z' -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M76,36L77,39L80,40L77,41L76,44L75,41L72,40L75,39Z" />
+        android:fillColor="#E0F2FE"
+        android:pathData="M26.0,30.0 H63.0 V32.6 H26.0 Z" />
+
+    <!-- Smaller Steady 'l' (Bottom-Right Subscript) -->
+    <path
+        android:fillColor="#F8FAFC"
+        android:pathData="M67.5,47.0 H72.5 V73.0 H67.5 Z" />
+
+    <!-- Smaller Steady 'c' (Bottom-Right Subscript) -->
+    <path
+        android:fillColor="#7DD3FC"
+        android:pathData="M75.5,54.0 H86.5 V58.5 H80.2 V68.5 H86.5 V73.0 H75.5 Z" />
 </vector>
