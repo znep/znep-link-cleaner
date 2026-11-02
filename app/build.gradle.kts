@@ -20,8 +20,8 @@ android {
     applicationId = "com.znep.linkcleaner"
     minSdk = 24
     targetSdk = 36
-    versionCode = 13
-    versionName = "13.0"
+    versionCode = 14
+    versionName = "14.0"
 
     val buildTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'", Locale.US).apply {
       timeZone = TimeZone.getTimeZone("UTC")

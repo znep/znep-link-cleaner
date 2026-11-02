@@ -32,6 +32,22 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "14.0",
+            buildNumber = 14,
+            releaseDate = "November 2, 2026",
+            title = "Google Play Publishing Version Bump (v14.0 / Build 14)",
+            userPrompt = "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\".",
+            highlights = listOf(
+                "Incremented versionCode from 13 to 14 and updated versionName to 14.0 following Google Play publishing",
+                "Synchronized v14.0 release notes and triggering prompt across Android app, linked GitHub docs (README.md & CHANGELOG.md), and web portal (index.html & repo.html)",
+                "Repackaged v14.0 APK, offline Git bundle, and source archives on linkcleaner.znep.com"
+            ),
+            technicalDetails = listOf(
+                "Updated defaultConfig.versionCode = 14 and defaultConfig.versionName = \"14.0\" in app/build.gradle.kts",
+                "Created annotated Git tag v14.0 and verified release parity via Robolectric unit test suite"
+            )
+        ),
+        ReleaseNote(
             version = "13.0",
             buildNumber = 13,
             releaseDate = "November 2, 2026",

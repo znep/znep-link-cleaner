@@ -1,9 +1,18 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** (`https://linkcleaner.znep.com`) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v13.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** (`https://linkcleaner.znep.com`) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v14.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v14.0] — Build 14 (November 2, 2026)
+### Google Play Publishing Version Bump (v14.0 / Build 14)
+- **Triggering User Prompt**:
+  > *"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\"."*
+- **Highlights**:
+  - Incremented `versionCode` from `13` to `14` and updated `versionName` to `"14.0"` following Google Play publishing.
+  - Synchronized `v14.0` release notes and triggering prompt across the Android app (`ReleaseNotes.kt`), linked GitHub repository (`README.md` & `CHANGELOG.md`), and web portal (`index.html` & `repo.html`).
+  - Repackaged `ZnepLinkCleaner.apk` (`v14.0`), `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v14.0-source.zip`.
 
 ## [v13.0] — Build 13 (November 2, 2026)
 ### Cyberpunk Quivering 'Zlc' Logo & Linked GitHub / Portal Repository Sync

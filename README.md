@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v13.0 (Build 13)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v14.0 (Build 14)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal (`https://linkcleaner.znep.com`) built iteratively through natural-language prompts in Google AI Studio. Every prompt that modified the application and its corresponding changes are permanently recorded in this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,23 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v13.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v14.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
 3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active.
-4. **Linked GitHub & Published Portal Repository Parity**: Ensure the published Git repository on the web portal (`repo.html`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, `ZnepLinkCleaner-v13.0-source.zip`) is an exact copy of the linked GitHub repository, updated with the prompts and changes for every release.
+4. **Linked GitHub & Published Portal Repository Parity**: Ensure the published Git repository on the web portal (`repo.html`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, `ZnepLinkCleaner-v14.0-source.zip`) is an exact copy of the linked GitHub repository, updated with the prompts and changes for every release.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v13.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v14.0`)
+
+### `v14.0` (Build 14) — November 2, 2026
+**Google Play Publishing Version Bump (v14.0 / Build 14)**
+- **User Prompt**:
+  > *"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\"."*
+- **Changes**:
+  - Incremented `versionCode` from `13` to `14` and updated `versionName` to `"14.0"` following Google Play publishing.
+  - Synchronized `v14.0` release notes and triggering prompt across the Android app (`ReleaseNotes.kt`), linked GitHub repository (`README.md` & `CHANGELOG.md`), and web portal (`index.html` & `repo.html`).
+  - Repackaged `ZnepLinkCleaner.apk` (`v14.0`), `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v14.0-source.zip`.
 
 ### `v13.0` (Build 13) — November 2, 2026
 **Cyberpunk Quivering 'Zlc' Logo & Linked GitHub / Portal Repository Sync**
@@ -153,4 +162,4 @@
 ```bash
 gradle :app:assembleDebug
 ```
-The compiled APK is generated at `app/build/outputs/apk/debug/app-debug.apk` and published to `download_portal/ZnepLinkCleaner.apk` and `download_portal/ZnepLinkCleaner-v13.0.apk`.
+The compiled APK is generated at `app/build/outputs/apk/debug/app-debug.apk` and published to `download_portal/ZnepLinkCleaner.apk` and `download_portal/ZnepLinkCleaner-v14.0.apk`.
