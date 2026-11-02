@@ -128,8 +128,8 @@ class ExampleRobolectricTest {
     @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(11, releases.size)
-        assertEquals("2.0.0", releases.first().version)
+        assertEquals(12, releases.size)
+        assertEquals("12.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertTrue(releases.all { it.highlights.isNotEmpty() })
         assertTrue(releases.all { it.userPrompt.isNotBlank() })

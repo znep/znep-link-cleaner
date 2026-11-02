@@ -277,7 +277,7 @@
   <div class="container">
     <header>
       <div class="badge-row">
-        <span class="badge">ZNEPLINKCLEANER v2.0.0 (BUILD 11)</span>
+        <span class="badge">ZNEPLINKCLEANER v12.0 (BUILD 12)</span>
         <span class="badge badge-poc">[ VIBE-CODED PROOF OF CONCEPT ]</span>
         <span class="badge" style="border-color: #22c55e; color: #4ade80;">com.znep.linkcleaner</span>
       </div>
@@ -292,7 +292,7 @@
       <div class="poc-banner-title">// VIBE-CODED PROOF OF CONCEPT — TRANSPARENT PROMPT-DRIVEN DEVELOPMENT</div>
       <p>
         <strong>ZnepLinkCleaner</strong> is an experimental, <strong>100% vibe-coded proof of concept</strong> built iteratively through natural-language engineering prompts in Google AI Studio.
-        Every functional release (`v1.0.0` through `v2.0.0`) and the exact user prompt that modified the application are permanently documented both on this webpage and inside the Android app's <em>Protection / Rules</em> tab.
+        Every functional release (`v1.0.0` through `v12.0`) and the exact user prompt that modified the application are permanently documented both on this webpage and inside the Android app's <em>Protection / Rules</em> tab.
       </p>
     </div>
 
@@ -303,19 +303,19 @@
           <h3>📱 Download ZnepLinkCleaner APK</h3>
           <p>Signed Android build (`com.znep.linkcleaner`) with Instagram <code>exln</code> purging, Facebook headless WebView expansion, Direct Share shortcuts, and full prompt-annotated release history.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">
-            v2.0.0 • Build 11 • com.znep.linkcleaner
+            v12.0 • Build 12 • com.znep.linkcleaner
           </div>
         </div>
-        <a href="/ZnepLinkCleaner.apk" download="ZnepLinkCleaner-v2.0.0.apk" class="btn">⬇ Download ZnepLinkCleaner.apk</a>
+        <a href="/ZnepLinkCleaner.apk" download="ZnepLinkCleaner-v12.0.apk" class="btn">⬇ Download ZnepLinkCleaner.apk</a>
       </div>
 
       <!-- Git Repo Browser -->
       <div class="card">
         <div>
           <h3>🌳 Git Repository Browser</h3>
-          <p>Browse full commit logs (11 releases from v1.0.0 to v2.0.0), verified tags, and complete Kotlin/Compose source tree in browser.</p>
+          <p>Browse full commit logs (12 releases from v1.0.0 to v12.0), verified tags, and complete Kotlin/Compose source tree in browser.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: #4ade80; margin-bottom: 12px;">
-            11 Releases • 11 Verified Git Tags
+            12 Releases • 12 Verified Git Tags
           </div>
         </div>
         <a href="/repo.html" class="btn btn-secondary">🔍 Browse Git History &amp; Tags</a>
@@ -332,50 +332,7 @@
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <a href="/ZnepLinkCleaner.bundle" download class="btn btn-secondary">⬇ Download ZnepLinkCleaner.bundle</a>
-          <a href="/ZnepLinkCleaner-v2.0.0-source.zip" download class="btn btn-secondary">⬇ Download v2.0.0 Source ZIP</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Custom Domain DNS Setup Guide for linkcleaner.znep.com -->
-    <h2 class="section-title">🌐 Custom Domain DNS Setup (<code>linkcleaner.znep.com</code>)</h2>
-    <div class="card" style="margin-bottom: 28px;">
-      <p>
-        This portal is served by a Cloud Run container at <code>ais-pre-27fpm5txvzhwtlauz5vnvv-285289174725.us-east1.run.app</code>.
-        Because Google Cloud Run's front-end load balancer inspects the incoming HTTP <code>Host</code> header and TLS SNI, choose one of the two DNS methods below for <strong>znep.com</strong>:
-      </p>
-
-      <div class="tip-box">
-        <div class="tip-title">Option A (Recommended): Cloudflare DNS + Origin Host Header Override (Keeps <code>linkcleaner.znep.com</code> in URL bar)</div>
-        <div class="tip-desc">
-          1. In Cloudflare DNS for <code>znep.com</code>, add a <strong>Proxied (Orange Cloud ☁️)</strong> CNAME record:
-          <pre>Type:  CNAME
-Name:  linkcleaner
-Target: ais-pre-27fpm5txvzhwtlauz5vnvv-285289174725.us-east1.run.app
-Proxy: Proxied (Orange Cloud ON)</pre>
-          2. In Cloudflare <strong>Rules → Origin Rules</strong> (or a lightweight Cloudflare Worker route on <code>linkcleaner.znep.com/*</code>), rewrite the outgoing <code>Host</code> header so Google Cloud Run routes to this container:
-          <pre>// Cloudflare Worker (or Origin Rule Host Header Override):
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    url.hostname = "ais-pre-27fpm5txvzhwtlauz5vnvv-285289174725.us-east1.run.app";
-    return fetch(url.toString(), {
-      method: request.method,
-      headers: request.headers,
-      redirect: "manual"
-    });
-  }
-};</pre>
-        </div>
-      </div>
-
-      <div class="tip-box">
-        <div class="tip-title">Option B: Standard DNS Registrar Redirect / ALIAS (Any DNS Provider)</div>
-        <div class="tip-desc">
-          If you use a traditional registrar (Namecheap, Porkbun, Route53, Google Domains) without a reverse proxy, add a <strong>URL Redirect (301/302 or Frame)</strong> record:
-          <pre>Host:   linkcleaner
-Type:   URL Redirect (HTTPS 302)
-Target: https://ais-pre-27fpm5txvzhwtlauz5vnvv-285289174725.us-east1.run.app/</pre>
+          <a href="/ZnepLinkCleaner-v12.0-source.zip" download class="btn btn-secondary">⬇ Download v12.0 Source ZIP</a>
         </div>
       </div>
     </div>
@@ -422,15 +379,34 @@ Target: https://ais-pre-27fpm5txvzhwtlauz5vnvv-285289174725.us-east1.run.app/</p
     </div>
 
     <!-- Full Release Notes History with Modifying Prompts -->
-    <h2 class="section-title">📋 Full Release Notes &amp; Vibe-Coding Prompt History (v1.0.0 – v2.0.0)</h2>
+    <h2 class="section-title">📋 Full Release Notes &amp; Vibe-Coding Prompt History (v1.0.0 – v12.0)</h2>
     <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 18px;">
       Complete chronological record of all application modifications and the user prompts that created them (non-modifying prompts omitted):
     </p>
 
-    <!-- v2.0.0 -->
+    <!-- v12.0 -->
     <div class="release-item" style="border-color: rgba(34, 197, 94, 0.5);">
       <div class="release-header">
-        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v2.0.0 (Build 11) — LATEST</span>
+        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v12.0 (Build 12) — LATEST</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Google Play Publishing Version Bump, Direct Nginx Portal Hardening &amp; Cloudflare Reverse-Proxy Support</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "The website is down again. / Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\". / Remove the dns setup instructions from the website, they are only for me not the public. Also, the option A cloud flare setup is redirecting me to the run.app name not proxying. Note I'm on a free cloud flare plan."
+      </div>
+      <ul class="release-highlights">
+        <li>Incremented <code>versionCode</code> to <strong>12</strong> and set <code>versionName</code> to <strong>"12.0"</strong> following Google Play publishing</li>
+        <li>Removed internal DNS setup instructions from the public web portal</li>
+        <li>Configured Nginx with <code>absolute_redirect off;</code> and <code>server_name_in_redirect off;</code> so proxied requests via <code>linkcleaner.znep.com</code> never redirect to the underlying container hostname</li>
+        <li>Hardened public web portal by configuring Nginx (PID 5) to serve <code>/app/applet/download_portal</code> directly with zero upstream dependency + self-healing <code>server.py</code> daemon</li>
+      </ul>
+    </div>
+
+    <!-- v2.0.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v2.0.0 (Build 11)</span>
         <span class="release-date">November 2, 2026</span>
       </div>
       <div class="release-title">ZnepLinkCleaner Rebrand, znep.com Domain &amp; Prompt-Tracked PoC</div>

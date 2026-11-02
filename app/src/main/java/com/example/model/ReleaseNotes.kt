@@ -29,6 +29,25 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "12.0",
+            buildNumber = 12,
+            releaseDate = "November 2, 2026",
+            title = "Google Play Publishing Version Bump, Direct Nginx Portal Hardening & Cloudflare Reverse-Proxy Support",
+            userPrompt = "The website is down again. / Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\". / Remove the dns setup instructions from the website, they are only for me not the public. Also, the option A cloud flare setup is redirecting me to the run.app name not proxying. Note I'm on a free cloud flare plan.",
+            highlights = listOf(
+                "Bumped versionCode to 12 and versionName to 12.0 following Google Play publishing",
+                "Removed internal DNS setup instructions from the public web portal",
+                "Configured Nginx with absolute_redirect off so proxied requests via linkcleaner.znep.com never redirect to the underlying container hostname",
+                "Hardened public web portal by configuring Nginx (PID 5) to serve /app/applet/download_portal directly with zero upstream dependency + self-healing server.py daemon"
+            ),
+            technicalDetails = listOf(
+                "Enabled absolute_redirect off and server_name_in_redirect off in /etc/nginx/nginx.conf",
+                "Configured Nginx try_files and custom MIME types (.apk, .bundle, .svg) in /etc/nginx/nginx.conf",
+                "Incremented defaultConfig.versionCode = 12 and defaultConfig.versionName = \"12.0\" in app/build.gradle.kts",
+                "Updated release history in-app and on linkcleaner.znep.com with complete v1.0.0 – v12.0 prompt log"
+            )
+        ),
+        ReleaseNote(
             version = "2.0.0",
             buildNumber = 11,
             releaseDate = "November 2, 2026",
