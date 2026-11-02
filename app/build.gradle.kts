@@ -20,8 +20,8 @@ android {
     applicationId = "com.aistudio.cleanlink.vmpqre"
     minSdk = 24
     targetSdk = 36
-    versionCode = 8
-    versionName = "1.7.0"
+    versionCode = 9
+    versionName = "1.8.0"
 
     val buildTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'", Locale.US).apply {
       timeZone = TimeZone.getTimeZone("UTC")

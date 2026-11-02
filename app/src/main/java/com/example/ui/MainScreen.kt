@@ -223,7 +223,10 @@ fun MainScreen(viewModel: MainViewModel) {
                         onAutoCloseChanged = { viewModel.setAutoClose(it) },
                         onKeepAmazonChanged = { viewModel.setKeepAmazon(it) },
                         onStrictModeChanged = { viewModel.setStrictMode(it) },
-                        onEnableFacebookWebViewChanged = { viewModel.setEnableFacebookWebViewExpansion(it) }
+                        onEnableFacebookWebViewChanged = { viewModel.setEnableFacebookWebViewExpansion(it) },
+                        onPracticeShare = {
+                            viewModel.shareLink(context, "https://example.com/share-target-test?utm_source=android_sharesheet&fbclid=practice123")
+                        }
                     )
                 }
             }

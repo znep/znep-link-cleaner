@@ -21,9 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -49,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cleaner.LinkCleaner
 import com.example.cleaner.UrlExpander
+import com.example.model.ReleaseHistory
+import com.example.model.ReleaseNote
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -63,11 +69,14 @@ fun RulesScreen(
     onKeepAmazonChanged: (Boolean) -> Unit,
     onStrictModeChanged: (Boolean) -> Unit,
     onEnableFacebookWebViewChanged: (Boolean) -> Unit,
+    onPracticeShare: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var paramFilterQuery by remember { mutableStateOf("") }
     var expandedShorteners by remember { mutableStateOf(false) }
     var expandedFacebookDetails by remember { mutableStateOf(true) }
+    var expandedShareTips by remember { mutableStateOf(true) }
+    var expandedReleaseHistory by remember { mutableStateOf(false) }
     var expandedParams by remember { mutableStateOf(false) }
 
     val filteredParams = remember(paramFilterQuery) {
@@ -291,6 +300,105 @@ fun RulesScreen(
             }
         }
 
+        // Android Share Sheet Prominence Guide & Tips
+        item {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { expandedShareTips = !expandedShareTips }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Share Sheet Prominence Tips",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Icon(
+                            imageVector = if (expandedShareTips) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = "Toggle Share Sheet Prominence Tips",
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "How to make CleanLink appear in the first position and top row of Android's system share sheet.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    AnimatedVisibility(visible = expandedShareTips) {
+                        Column(
+                            modifier = Modifier.padding(top = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            FacebookTechPoint(
+                                title = "1. Pin CleanLink to the Front (Most Effective) 📌",
+                                description = "Open any app (like Chrome, YouTube, or Twitter) > Tap Share > Locate CleanLink in the app row > Long-press its icon > Tap 'Pin'. Android will lock CleanLink permanently to the #1 spot in your system share dialog across all apps!"
+                            )
+                            FacebookTechPoint(
+                                title = "2. Active Direct Share Target Shortcut (Built-in) ⚡",
+                                description = "CleanLink defines an active <share-target> in shortcuts.xml and publishes dynamic ShortcutInfo targets. This qualifies CleanLink to appear in Android's prioritized Direct Share top row carousel."
+                            )
+                            FacebookTechPoint(
+                                title = "3. Resolver Intent Filter Priority (priority=100) 🎯",
+                                description = "CleanLink's manifest declares high priority for text/plain and text/* shares, boosting resolver affinity on Samsung OneUI, Motorola, Xiaomi, and AOSP share sheets."
+                            )
+                            FacebookTechPoint(
+                                title = "4. Usage Frequency & Recency Heuristic 📈",
+                                description = "Android's on-device sharesheet ranking model prioritizes recently and frequently chosen targets. Selecting CleanLink 2-3 times naturally promotes its ranking."
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Button(
+                                onClick = onPracticeShare,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                                    .testTag("practice_share_sheet_button"),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Practice Pinning CleanLink (Open Share Sheet)",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Technical Tracking Parameter Database
         item {
             Card(
@@ -411,6 +519,66 @@ fun RulesScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp
                         )
+                    }
+                }
+            }
+        }
+
+        // Full Release Notes & Changelog History
+        item {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { expandedReleaseHistory = !expandedReleaseHistory }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Full Release Notes History (${ReleaseHistory.RELEASES.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Icon(
+                            imageVector = if (expandedReleaseHistory) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = "Toggle Full Release Notes",
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Complete record of all application modifications and feature evolutions from v1.0.0 through v1.8.0.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    AnimatedVisibility(visible = expandedReleaseHistory) {
+                        Column(
+                            modifier = Modifier.padding(top = 12.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            for (release in ReleaseHistory.RELEASES) {
+                                ReleaseNoteItem(note = release)
+                            }
+                        }
                     }
                 }
             }
@@ -597,4 +765,59 @@ private fun FacebookTechPoint(title: String, description: String) {
         }
     }
 }
+
+@Composable
+private fun ReleaseNoteItem(note: ReleaseNote) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = "v${note.version} (Build ${note.buildNumber})",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Text(
+                    text = note.releaseDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = note.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                for (highlight in note.highlights) {
+                    Text(
+                        text = "• $highlight",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
 

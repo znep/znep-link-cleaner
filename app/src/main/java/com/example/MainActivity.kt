@@ -19,11 +19,31 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         handleIncomingIntent(intent)
+        setupShareShortcuts()
 
         setContent {
             CleanLinkTheme {
                 MainScreen(viewModel = viewModel)
             }
+        }
+    }
+
+    private fun setupShareShortcuts() {
+        try {
+            val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(this, "direct_clean_link")
+                .setShortLabel("Clean & Purge Link")
+                .setLongLabel("CleanLink: Instant Tracker Purging")
+                .setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(this, R.mipmap.ic_launcher))
+                .setIntent(Intent(Intent.ACTION_SEND).apply {
+                    setClass(this@MainActivity, MainActivity::class.java)
+                    type = "text/plain"
+                })
+                .setCategories(setOf("com.example.cleanlink.category.DIRECT_SHARE_TARGET"))
+                .setRank(1)
+                .build()
+            androidx.core.content.pm.ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
+        } catch (_: Exception) {
+            // Graceful fallback if shortcuts not supported
         }
     }
 

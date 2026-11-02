@@ -90,4 +90,13 @@ class ExampleRobolectricTest {
         assertEquals(com.example.model.ExpansionWarningType.RED_FACEBOOK_FAILED, result.warningType)
         assertTrue(result.strippedParams.any { it.key == "mibextid" })
     }
+
+    @Test
+    fun `verify full release notes history completeness`() {
+        val releases = com.example.model.ReleaseHistory.RELEASES
+        assertEquals(9, releases.size)
+        assertEquals("1.8.0", releases.first().version)
+        assertEquals("1.0.0", releases.last().version)
+        assertTrue(releases.all { it.highlights.isNotEmpty() })
+    }
 }
