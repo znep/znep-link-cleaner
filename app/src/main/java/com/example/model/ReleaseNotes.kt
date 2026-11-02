@@ -29,8 +29,29 @@ data class ReleaseNote(
 object ReleaseHistory {
     const val VIBE_CODED_POC_NOTICE =
         "VIBE-CODED PROOF OF CONCEPT // Built iteratively via natural-language prompts. Every modifying prompt is recorded in the release history."
+    const val GITHUB_REPO_URL = "https://github.com/znep/znep-link-cleaner"
+    const val WEB_PORTAL_URL = "https://linkcleaner.znep.com"
 
     val RELEASES = listOf(
+        ReleaseNote(
+            version = "15.0",
+            buildNumber = 15,
+            releaseDate = "November 2, 2026",
+            title = "Public GitHub Repo Integration, Live Embedded Commit Explorer & Per-Release Prompt-Annotated Git Commits",
+            userPrompt = "I had to manually push changes to GitHub from the UI and it didn't include the prompt in the commit message as requested. I want every new version published to the website to also be pushed to GitHub as a separate commit. Also note the GitHub repo is public and should be linked to and embedded if possible.",
+            highlights = listOf(
+                "Linked and embedded the public GitHub repository (https://github.com/znep/znep-link-cleaner) across the web portal (index.html & repo.html) and Android app UI",
+                "Added a live interactive GitHub Repository & Commit Explorer widget on linkcleaner.znep.com that streams real-time commit metadata and expandable prompt-annotated commit messages",
+                "Rebuilt and standardized all release Git commits (v1.0.0 through v15.0) as separate commits on main whose commit message bodies explicitly include the triggering User Prompt and release changelog",
+                "Added automated GitHub remote push daemon (scripts/sync_github.py + server.py .env watcher) so every new version published to the website is pushed as a separate prompt-annotated commit to https://github.com/znep/znep-link-cleaner"
+            ),
+            technicalDetails = listOf(
+                "Configured origin remote to https://github.com/znep/znep-link-cleaner.git with fast-forward ancestry from origin/main",
+                "Added scripts/sync_github.py and background .env GITHUB_TOKEN watcher in server.py for zero-touch container-to-GitHub per-release pushes",
+                "Added clickable public GitHub repository card and links in CleanScreen.kt and RulesScreen.kt",
+                "Bumped versionCode to 15 and versionName to 15.0"
+            )
+        ),
         ReleaseNote(
             version = "14.0",
             buildNumber = 14,

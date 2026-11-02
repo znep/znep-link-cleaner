@@ -150,9 +150,20 @@ def ensure_nginx_portal_and_auth_bypass():
 
             if reload_needed:
                 os.system("nginx -s reload 2>/dev/null || true")
+
+            # Automatically push any new release commits & tags to https://github.com/znep/znep-link-cleaner
+            # as soon as GITHUB_TOKEN is present in /app/applet/.env
+            try:
+                import sys
+                if "/app/applet/scripts" not in sys.path:
+                    sys.path.insert(0, "/app/applet/scripts")
+                import sync_github
+                sync_github.push_if_token_available()
+            except Exception:
+                pass
         except Exception:
             pass
-        time.sleep(20)
+        time.sleep(10)
 
 if __name__ == "__main__":
     os.makedirs(DIRECTORY, exist_ok=True)
@@ -162,3 +173,4 @@ if __name__ == "__main__":
     with socketserver.TCPServer(("", PORT), ZnepLinkCleanerHandler) as httpd:
         print(f"ZnepLinkCleaner Portal Server serving {DIRECTORY} on port {PORT}...")
         httpd.serve_forever()
+

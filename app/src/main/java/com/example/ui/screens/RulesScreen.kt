@@ -592,7 +592,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Complete record of all application modifications, user prompts, and feature evolutions from v1.0.0 through v2.0.0.",
+                        text = "Complete record of all application modifications, user prompts, and feature evolutions from v1.0.0 through v${ReleaseHistory.RELEASES.first().version} (synced with github.com/znep/znep-link-cleaner).",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -613,6 +613,7 @@ fun RulesScreen(
 
         // Version & Build Time Information Card
         item {
+            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
@@ -656,12 +657,14 @@ fun RulesScreen(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Surface(
+                        onClick = { uriHandler.openUri(ReleaseHistory.WEB_PORTAL_URL) },
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.surface,
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
                             MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("official_web_portal_button")
                     ) {
                         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                             Text(
@@ -671,7 +674,32 @@ fun RulesScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "https://linkcleaner.znep.com",
+                                text = ReleaseHistory.WEB_PORTAL_URL,
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        onClick = { uriHandler.openUri(ReleaseHistory.GITHUB_REPO_URL) },
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("public_github_repo_button")
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                            Text(
+                                text = "PUBLIC GITHUB REPOSITORY (LIVE COMMITS & PROMPTS) //",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = ReleaseHistory.GITHUB_REPO_URL,
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                                 color = MaterialTheme.colorScheme.onSurface
                             )

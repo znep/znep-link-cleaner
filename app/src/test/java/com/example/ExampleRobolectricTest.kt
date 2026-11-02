@@ -128,9 +128,10 @@ class ExampleRobolectricTest {
     @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(14, releases.size)
-        assertEquals("14.0", releases.first().version)
+        assertEquals(15, releases.size)
+        assertEquals("15.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
+        assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })
         assertTrue(releases.all { it.userPrompt.isNotBlank() })
         assertTrue(com.example.model.ReleaseHistory.VIBE_CODED_POC_NOTICE.contains("VIBE-CODED PROOF OF CONCEPT"))
@@ -146,6 +147,10 @@ class ExampleRobolectricTest {
         for (file in syncFiles) {
             if (file.exists()) {
                 val content = file.readText()
+                assertTrue(
+                    "File ${file.name} is missing public GitHub repository URL",
+                    content.contains("https://github.com/znep/znep-link-cleaner")
+                )
                 for (release in releases) {
                     assertTrue(
                         "File ${file.name} is missing version ${release.version}",

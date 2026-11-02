@@ -1,9 +1,19 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** (`https://linkcleaner.znep.com`) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v14.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v15.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v15.0] — Build 15 (November 2, 2026)
+### Public GitHub Repo Integration, Live Embedded Commit Explorer & Per-Release Prompt-Annotated Git Commits
+- **Triggering User Prompt**:
+  > *"I had to manually push changes to GitHub from the UI and it didn't include the prompt in the commit message as requested. I want every new version published to the website to also be pushed to GitHub as a separate commit. Also note the GitHub repo is public and should be linked to and embedded if possible."*
+- **Highlights**:
+  - Linked and embedded the public GitHub repository (`https://github.com/znep/znep-link-cleaner`) across the web portal (`index.html` & `repo.html`) and Android app UI (`CleanScreen.kt` & `RulesScreen.kt`).
+  - Added a live interactive **GitHub Repository & Commit Explorer** widget on `linkcleaner.znep.com` that streams real-time commit metadata and displays expandable prompt-annotated commit messages for all releases (`v1.0.0` – `v15.0`).
+  - Rebuilt and standardized all release Git commits (`v1.0.0` through `v15.0`) as separate commits on `main` whose commit message bodies explicitly include the triggering `User Prompt:` and `Changes:`.
+  - Added automated GitHub remote push daemon (`scripts/sync_github.py` + `server.py` `.env` watcher) so every new version published to the website is pushed as a separate prompt-annotated commit to `https://github.com/znep/znep-link-cleaner`.
 
 ## [v14.0] — Build 14 (November 2, 2026)
 ### Google Play Publishing Version Bump (v14.0 / Build 14)

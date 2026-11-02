@@ -346,10 +346,24 @@ fun CleanScreen(
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = "// VIBE-CODED PROOF OF CONCEPT: Built iteratively via prompts. View full prompt & release history in the Protection tab or at linkcleaner.znep.com.",
+                    text = "// VIBE-CODED PROOF OF CONCEPT: Built iteratively via prompts. View full prompt & release history in the Protection tab, at linkcleaner.znep.com, or on GitHub.",
                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.5.sp),
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
                 )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    RetroChip(
+                        label = "[ GitHub: znep/znep-link-cleaner ]",
+                        onClick = { onOpenBrowser(com.example.model.ReleaseHistory.GITHUB_REPO_URL) }
+                    )
+                    RetroChip(
+                        label = "[ Portal: linkcleaner.znep.com ]",
+                        onClick = { onOpenBrowser(com.example.model.ReleaseHistory.WEB_PORTAL_URL) }
+                    )
+                }
             }
         }
 

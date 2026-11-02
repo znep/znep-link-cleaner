@@ -22,6 +22,8 @@
    - Always ensure Nginx (`PID 5`) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `/app/applet/server.py` is running as a daemon on port 3000.
    - Ensure the background watchdog in `server.py` keeps `do return end` at the top of `/etc/nginx/user_auth_verification.lua` so the public URL never reverts to 403 Forbidden or 502 warmup.html.
 
-5. **Linked GitHub Repository & Published Portal Repo Parity (MANDATORY)**:
-   - The workspace Git repository (which syncs to the linked GitHub repository) and the published repository on the web portal (`download_portal/repo.html`, `download_portal/ZnepLinkCleaner.bundle`, `download_portal/ZnepLinkCleaner-git.zip`, and `download_portal/ZnepLinkCleaner-v<version>-source.zip`) **MUST always be a 1:1 copy of each other**.
-   - Every release **MUST** update `README.md`, `CHANGELOG.md`, `download_portal/repo.html`, and annotated Git commits/tags (`v1.0.0` through latest) with the exact **user prompts and changes for each release**, then regenerate `ZnepLinkCleaner.bundle` and `ZnepLinkCleaner-git.zip` from `HEAD` (and push to `origin` if a remote token is configured).
+5. **Linked Public GitHub Repository (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push (MANDATORY)**:
+   - Public GitHub Repository: **`https://github.com/znep/znep-link-cleaner`** (must always be linked in the Android app UI and both linked & embedded via the live interactive GitHub Commit Explorer on `download_portal/index.html` and `download_portal/repo.html`).
+   - Every new version published to the website **MUST** be committed as a **separate Git commit** on `main` whose commit message body explicitly includes `User Prompt:` (the exact prompt that triggered the release) and `Changes:`, tagged with annotated tag `v<version>`, and pushed to `origin` (`https://github.com/znep/znep-link-cleaner.git`) via `scripts/sync_github.py` / `server.py`.
+   - The workspace Git repository and the published repository on the web portal (`download_portal/repo.html`, `download_portal/git_commits.json`, `download_portal/ZnepLinkCleaner.bundle`, `download_portal/ZnepLinkCleaner-git.zip`, and `download_portal/ZnepLinkCleaner-v<version>-source.zip`) **MUST always be a 1:1 copy of each other**.
+
