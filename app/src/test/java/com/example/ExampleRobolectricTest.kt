@@ -92,10 +92,44 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `strip instagram exln and related meta trackers`() {
+        val input = "https://www.instagram.com/reel/C3_test/?igsh=MTNmeXFuZzF3ejJveA==&exln=MTNmeXFuZzF3ejJveA==&obrf=1&vrfl=abc"
+        val result = LinkCleaner.cleanText(input)
+        assertEquals("https://www.instagram.com/reel/C3_test/", result.cleanedUrl)
+        assertTrue(result.strippedParams.any { it.key == "exln" })
+        assertTrue(result.strippedParams.any { it.key == "igsh" })
+        assertTrue(result.strippedParams.any { it.key == "obrf" })
+        assertTrue(result.strippedParams.any { it.key == "vrfl" })
+    }
+
+    @Test
+    fun `strip threads xmt and slof trackers`() {
+        val input = "https://www.threads.net/@user/post/DFxyz123/?xmt=AQG1234567890&slof=1"
+        val result = LinkCleaner.cleanText(input)
+        assertEquals("https://www.threads.net/@user/post/DFxyz123/", result.cleanedUrl)
+        assertTrue(result.strippedParams.any { it.key == "xmt" })
+        assertTrue(result.strippedParams.any { it.key == "slof" })
+    }
+
+    @Test
+    fun `strip reddit shrid and tiktok u_code`() {
+        val redditInput = "https://www.reddit.com/r/androiddev/comments/12345/awesome_tool/?shrid=abc12345&share_id=def678"
+        val redditResult = LinkCleaner.cleanText(redditInput)
+        assertEquals("https://www.reddit.com/r/androiddev/comments/12345/awesome_tool/", redditResult.cleanedUrl)
+        assertTrue(redditResult.strippedParams.any { it.key == "shrid" })
+
+        val tiktokInput = "https://www.tiktok.com/@creator/video/987654321?u_code=d8f7e6d5&preview_pb=0&ttclid=E_1234"
+        val tiktokResult = LinkCleaner.cleanText(tiktokInput)
+        assertEquals("https://www.tiktok.com/@creator/video/987654321", tiktokResult.cleanedUrl)
+        assertTrue(tiktokResult.strippedParams.any { it.key == "u_code" })
+        assertTrue(tiktokResult.strippedParams.any { it.key == "ttclid" })
+    }
+
+    @Test
     fun `verify full release notes history completeness`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(9, releases.size)
-        assertEquals("1.8.0", releases.first().version)
+        assertEquals(10, releases.size)
+        assertEquals("1.9.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertTrue(releases.all { it.highlights.isNotEmpty() })
     }

@@ -17,6 +17,7 @@
       --red: #ef4444;
       --orange: #f97316;
       --green: #22c55e;
+      --purple: #a855f7;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -27,13 +28,13 @@
       line-height: 1.6;
     }
     .container {
-      max-width: 960px;
+      max-width: 980px;
       margin: 0 auto;
     }
     header {
       text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 30px;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
       border-bottom: 1px solid var(--border);
     }
     .badge {
@@ -57,7 +58,7 @@
     .subtitle {
       font-size: 1.1rem;
       color: var(--text-muted);
-      max-width: 650px;
+      max-width: 680px;
       margin: 0 auto;
     }
     .grid {
@@ -109,17 +110,87 @@
     .section-title {
       font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 16px;
+      margin: 32px 0 16px;
       display: flex;
       align-items: center;
       gap: 10px;
       border-bottom: 1px solid var(--border);
       padding-bottom: 8px;
     }
+    .tip-box {
+      background: #0f172a;
+      border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .tip-title {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .tip-desc {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .release-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .release-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .release-chip {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .release-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .release-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 8px;
+    }
+    .release-highlights {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .release-highlights li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .release-highlights li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--accent);
+      font-weight: bold;
+    }
     .warning-box {
       border-radius: 10px;
-      padding: 16px 20px;
-      margin-bottom: 16px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
       font-size: 0.9rem;
     }
     .warning-red {
@@ -131,20 +202,6 @@
       background: #431407;
       border: 1px solid var(--orange);
       color: #fed7aa;
-    }
-    .warning-box strong {
-      display: block;
-      font-family: monospace;
-      font-size: 0.95rem;
-      margin-bottom: 4px;
-    }
-    .code-pill {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 0.85rem;
     }
     .diagram-img {
       width: 100%;
@@ -165,10 +222,10 @@
 <body>
   <div class="container">
     <header>
-      <div class="badge">CLEANLINK v1.7.0 (BUILD 8)</div>
-      <h1>Android Link Purger &amp; Expansion Utility</h1>
+      <div class="badge">CLEANLINK v1.9.0 (BUILD 10)</div>
+      <h1>Android Link Purger &amp; Privacy Utility</h1>
       <p class="subtitle">
-        Strip marketing trackers, telemetry tokens, and expand shorteners with 100% on-device execution.
+        Strip marketing telemetry, expand opaque shorteners on-device, and share seamlessly across Android.
       </p>
     </header>
 
@@ -177,21 +234,21 @@
       <div class="card" style="border-color: #0284c7;">
         <div>
           <h3>📱 Download Android APK</h3>
-          <p>Latest build with on-device Facebook headless WebView expansion (Option 1) and dual-tier warning alerts.</p>
+          <p>Latest build with Instagram <code>exln</code> &amp; multi-platform tracker purging, Direct Share Target shortcuts, and full release notes history.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">
-            v1.7.0 • Build 8 • Signed Debug APK
+            v1.9.0 • Build 10 • Signed Debug APK
           </div>
         </div>
-        <a href="/CleanLink-v1.7.0.apk" download class="btn">⬇ Download CleanLink.apk</a>
+        <a href="/CleanLink-v1.9.0.apk" download class="btn">⬇ Download CleanLink.apk</a>
       </div>
 
       <!-- Git Repo Browser -->
       <div class="card">
         <div>
           <h3>🌳 Git Repository Browser</h3>
-          <p>Browse full commit logs (8 releases from v1.0.0 to v1.7.0), tags, and view the complete source tree in your browser.</p>
+          <p>Browse full commit logs (10 releases from v1.0.0 to v1.9.0), verified tags, and complete source tree in browser.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: #4ade80; margin-bottom: 12px;">
-            8 Commits • 8 Verified Git Tags
+            11 Commits • 10 Verified Git Tags
           </div>
         </div>
         <a href="/repo.html" class="btn btn-secondary">🔍 Browse Git History &amp; Tags</a>
@@ -210,38 +267,174 @@
       </div>
     </div>
 
-    <!-- What's New in v1.7.0: Facebook Expansion & Warnings -->
-    <h2 class="section-title">⚡ What's New in v1.7.0: Facebook Expansion (Option 1) &amp; Warning System</h2>
-
-    <div class="card" style="margin-bottom: 24px;">
-      <h3 style="color: var(--accent);">Facebook Share Links Resolver (/share/p/ and /share/r/)</h3>
-      <p>
-        Facebook uses database tokens instead of direct post IDs in URLs like <code>https://www.facebook.com/share/p/18V4XJ9abc/</code>.
-        Meta serves an HTML response running <code>XMiBUrlWrapperController</code> JavaScript that prevents traditional HTTP 301/302 redirects.
+    <!-- Share Sheet Prominence Guide -->
+    <h2 class="section-title">⚡ How to Make CleanLink Appear First in Android's Share Sheet</h2>
+    <div class="card" style="margin-bottom: 28px;">
+      <p style="margin-bottom: 16px;">
+        Android uses machine learning heuristics and system ranking algorithms to order apps in the system share dialog.
+        Follow these proven techniques to ensure CleanLink is always at your fingertips:
       </p>
-      <p>
-        <strong>Option 1 Implementation:</strong> CleanLink now spins up a lightweight, sandboxed headless Android <code>WebView</code> on-device with JavaScript enabled.
-        It runs the client-side redirection script in ~1-2 seconds, captures the canonical permalink, and purges all tracking tokens—without third-party API dependencies.
-        <br><br>
-        <em>Bonus Config:</em> A dedicated toggle in <strong>Protection / Rules &gt; Preferences</strong> allows disabling Option 1 at any time (enabled by default).
-      </p>
+
+      <div class="tip-box">
+        <div class="tip-title">1. Pin CleanLink to the Front (Most Effective) 📌</div>
+        <div class="tip-desc">
+          Open any app (such as Chrome, YouTube, X/Twitter, or Instagram) > Tap <strong>Share</strong> > Locate CleanLink in the app carousel > 
+          <strong>Long-press</strong> the CleanLink icon > Tap <strong>Pin</strong> (📌).
+          <br>
+          <em>Result:</em> Android locks CleanLink permanently to the #1 first position in the share dialog across all apps on your device!
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">2. Built-In Direct Share Target Shortcut ⚡</div>
+        <div class="tip-desc">
+          CleanLink v1.8.0 implements Android's <code>&lt;share-target&gt;</code> specification via <code>shortcuts.xml</code> and publishes dynamic <code>ShortcutInfoCompat</code> targets.
+          On Android 10, 11, 12, 13, and 14+, this qualifies CleanLink to appear in the prominent top-row Direct Share carousel.
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">3. Intent Filter Resolver Priority (android:priority=100) 🎯</div>
+        <div class="tip-desc">
+          CleanLink declares <code>android:priority="100"</code> for <code>text/plain</code> and <code>text/*</code> in its manifest, giving it higher resolver affinity on Samsung OneUI, Motorola, Xiaomi, and Pixel sharesheet implementations.
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">4. Usage Frequency &amp; Recency Weighting 📈</div>
+        <div class="tip-desc">
+          Android's on-device <code>UsageStatsManager</code> tracks sharing frequency. Choosing CleanLink 2–3 times trains the on-device AI to rank CleanLink higher automatically whenever a link is shared.
+        </div>
+      </div>
     </div>
 
-    <div class="warning-box warning-red">
-      <strong>⚠️ [ RED WARNING ] // FACEBOOK SHARE SHIM EXPANSION FAILED</strong>
-      Triggered when a Facebook share link cannot be resolved into a canonical permalink (for example, if the post is private, age-restricted, requires a Facebook login session, or times out). CleanLink strips all query parameters (<span class="code-pill">mibextid</span>, <span class="code-pill">rdid</span>) and alerts the user with an actionable link to the Technical Deep Dive section.
+    <!-- Full Release Notes History -->
+    <h2 class="section-title">📋 Full Release Notes &amp; Changelog History</h2>
+    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 18px;">
+      Comprehensive record of all functional releases and code modifications across CleanLink's history:
+    </p>
+
+    <div class="release-item" style="border-color: rgba(34, 197, 94, 0.4);">
+      <div class="release-header">
+        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v1.9.0 (Build 10) — LATEST</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Instagram exln Stripping &amp; Enhanced Multi-Platform Tracking Purge</div>
+      <ul class="release-highlights">
+        <li>Purged Instagram <code>exln</code> (external link / user session tracking identifier) and related Meta share telemetry (<code>obrf</code>, <code>vrfl</code>, <code>srtk</code>, <code>cplk</code>, <code>dlrf</code>, <code>mdxt</code>, <code>__coig_restricted</code>)</li>
+        <li>Added Meta Threads cross-app telemetry (<code>xmt</code>) and share log parameter (<code>slof</code>) stripping</li>
+        <li>Purged Reddit user share identity tracking token (<code>shrid</code>) from shared Reddit threads</li>
+        <li>Added TikTok user profile tracking (<code>u_code</code>), preview session (<code>preview_pb</code>), and ad click (<code>ttclid</code>) removal</li>
+        <li>Added LinkedIn first-party ad tracking (<code>li_fat_id</code>), page instance (<code>lipi</code>), and click identifier (<code>licu</code>) stripping</li>
+        <li>Added e-commerce &amp; affiliate parameter coverage for eBay (<code>mkevt</code>, <code>mkcid</code>, <code>campid</code>), AliExpress (<code>spm</code>, <code>scm</code>), and Impact/Awin/ShareASale networks</li>
+        <li>Enhanced <code>KNOWN_TRACKING_PARAMS</code> database with comprehensive descriptions and platform categorizations</li>
+      </ul>
     </div>
 
-    <div class="warning-box warning-orange">
-      <strong>⚠️ [ ORANGE ADVISORY ] // UNEXPANDED OPAQUE SHORTLINK</strong>
-      Triggered when generic opaque shorteners (such as <span class="code-pill">bit.ly</span>, <span class="code-pill">t.co</span>, <span class="code-pill">vt.tiktok.com</span>, <span class="code-pill">a.co</span>) cannot be resolved via HTTP redirect traversal (offline or server error). The alert informs the user that opaque tracking telemetry remains encapsulated in the slug itself so they can make an informed sharing decision.
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.8.0 (Build 9)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Share Sheet Prominence &amp; In-App Release History</div>
+      <ul class="release-highlights">
+    <li>Direct Share Target Shortcut (&lt;share-target&gt;) for prioritized top-row placement in Android Sharesheet</li><li>High-priority intent filter configuration (android:priority=100) for text/plain and text/*</li><li>Full Release Notes History viewer accessible directly inside the app and web portal</li><li>Interactive Share Sheet Prominence Guide with 1-tap practice pinning tool</li><li>Dynamic ShortcutManagerCompat integration with ranking affinity boost</li>
+      </ul>
     </div>
-
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.7.0 (Build 8)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Facebook Headless WebView Expander &amp; Dual-Tier Warning System</div>
+      <ul class="release-highlights">
+    <li>On-device headless Android WebView expander (Option 1) for Facebook /share/p/ &amp; /share/r/ links</li><li>Red Warning alert when Facebook permalinks cannot be resolved (private/login gate)</li><li>Orange Advisory alert for unexpanded opaque shorteners (bit.ly, t.co, vt.tiktok.com)</li><li>Protection setting to toggle Facebook WebView expansion (enabled by default)</li><li>Facebook Share Links Architecture technical deep dive in Rules tab</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.6.0 (Build 7)</span>
+        <span class="release-date">November 1, 2026</span>
+      </div>
+      <div class="release-title">Architecture Documentation &amp; Web Portal Infrastructure</div>
+      <ul class="release-highlights">
+    <li>Architectural topology diagram generation and offline vector assets</li><li>Standalone interactive Git Repository Browser (repo.html)</li><li>Web Download Portal with direct APK and Git bundle downloads</li><li>Automated Nginx authentication bypass watchdog to eliminate 403 Forbidden errors</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.5.0 (Build 6)</span>
+        <span class="release-date">October 30, 2026</span>
+      </div>
+      <div class="release-title">Retro Monospace Aesthetics &amp; System Share Flow</div>
+      <ul class="release-highlights">
+    <li>Cyberpunk/retro monospace typography and neon telemetry highlights</li><li>Auto-copy clean URL to clipboard immediately upon sharing from external apps</li><li>Auto-close CleanLink after resharing via system sheet to return seamlessly to previous app</li><li>Custom adaptive launcher icon with laser-clean vector branding</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.4.0 (Build 5)</span>
+        <span class="release-date">October 28, 2026</span>
+      </div>
+      <div class="release-title">Strict Cleaning Mode &amp; Amazon Affiliate Preservation</div>
+      <ul class="release-highlights">
+    <li>Strict mode to purge non-standard tokens, unknown query arguments, and custom tracking hashes</li><li>Option to preserve Amazon creator affiliate tags (tag=...) while purging all tracking telemetry</li><li>Protection / Rules tab with granular user preference switches</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.3.0 (Build 4)</span>
+        <span class="release-date">October 26, 2026</span>
+      </div>
+      <div class="release-title">Room SQLite Local History &amp; Privacy Telemetry</div>
+      <ul class="release-highlights">
+    <li>Persistent cleaning history saved securely on-device using Room SQLite</li><li>Analytics dashboard: total links cleaned, stripped parameters count, and estimated bytes saved</li><li>Individual history item deletion and one-tap history wipe</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.2.0 (Build 3)</span>
+        <span class="release-date">October 24, 2026</span>
+      </div>
+      <div class="release-title">Shortener Traversal &amp; Redirect Engine</div>
+      <ul class="release-highlights">
+    <li>Network redirect traversal for TikTok (vt.tiktok.com, vm.tiktok.com, /t/)</li><li>YouTube short link canonicalization (youtu.be with si parameter stripping)</li><li>Amazon shortlink expansion (a.co, amzn.to)</li><li>Support for bit.ly, tinyurl.com, t.co, and 30+ major redirect services</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.1.0 (Build 2)</span>
+        <span class="release-date">October 22, 2026</span>
+      </div>
+      <div class="release-title">Material 3 Dynamic Theming &amp; Clipboard Detection</div>
+      <ul class="release-highlights">
+    <li>Material 3 dynamic color scheme with dark/light mode support</li><li>Automatic clipboard detection with quick-paste button when URL is copied</li><li>Comprehensive database of 45+ known tracking parameter definitions</li>
+      </ul>
+    </div>
+    
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.0.0 (Build 1)</span>
+        <span class="release-date">October 20, 2026</span>
+      </div>
+      <div class="release-title">Initial Release — Pure On-Device Link Sanitizer</div>
+      <ul class="release-highlights">
+    <li>Offline tracker stripping for Google Analytics (UTM), Facebook (fbclid), Google Ads (gclid), and Twitter (ref_src)</li><li>Clean URL output with one-tap copy and system share button</li><li>Instant share-intent ingestion via Android SEND action</li>
+      </ul>
+    </div>
+    
     <!-- Architecture Diagram -->
     <h2 class="section-title">📐 Architecture Diagram</h2>
     <div class="card">
       <p>High-level system topology illustrating the Ingestion Engine, Resolution &amp; Purging Core, Warning System, and Hosting Infrastructure:</p>
-      <img src="/diagram.svg" alt="CleanLink v1.7.0 Architecture Diagram" class="diagram-img">
+      <img src="/architecture-diagram.png" alt="CleanLink Architecture Diagram" class="diagram-img">
       <div style="margin-top: 12px; text-align: right;">
         <a href="/diagram.svg" target="_blank" style="color: var(--accent); font-size: 0.85rem; font-family: monospace;">Open Vector SVG in New Tab →</a>
       </div>

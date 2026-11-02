@@ -12,6 +12,26 @@ data class ReleaseNote(
 object ReleaseHistory {
     val RELEASES = listOf(
         ReleaseNote(
+            version = "1.9.0",
+            buildNumber = 10,
+            releaseDate = "November 2, 2026",
+            title = "Instagram exln Stripping & Enhanced Multi-Platform Tracking Purge",
+            highlights = listOf(
+                "Stripped Instagram 'exln', 'obrf', 'vrfl', 'srtk', 'cplk', 'dlrf', and 'mdxt' user share tracking tokens",
+                "Added Meta Threads 'xmt' cross-app telemetry and 'slof' share log parameter removal",
+                "Purged Reddit user share identity tracking token 'shrid'",
+                "Added TikTok user profile tracking ('u_code'), preview session ('preview_pb'), and ad click ('ttclid') removal",
+                "Added LinkedIn first-party ad tracking ('li_fat_id'), page instance ('lipi'), and click identifier ('licu') stripping",
+                "Added e-commerce & affiliate parameter coverage for eBay (mkevt, mkcid, campid), AliExpress (spm, scm), and Impact/Awin"
+            ),
+            technicalDetails = listOf(
+                "Added comprehensive parameter rules and descriptions to KNOWN_TRACKING_PARAMS map",
+                "Added host-aware pattern guards for instagram.com, threads.net, reddit.com, substack.com, and linkedin.com",
+                "Ensured full release history remains preserved across both the in-app viewer and web portal",
+                "Bumped versionCode to 10 and versionName to 1.9.0"
+            )
+        ),
+        ReleaseNote(
             version = "1.8.0",
             buildNumber = 9,
             releaseDate = "November 2, 2026",

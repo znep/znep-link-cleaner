@@ -55,6 +55,17 @@ object LinkCleaner {
         "notif_t" to ("Meta / Facebook" to "Notification type tag"),
         "igshid" to ("Instagram" to "Instagram unique user share identifier"),
         "igsh" to ("Instagram" to "Instagram short share telemetry token"),
+        "exln" to ("Instagram / Meta" to "Instagram external link share and user session tracking token"),
+        "obrf" to ("Instagram / Meta" to "Instagram off-platform browse referral tag"),
+        "vrfl" to ("Instagram / Meta" to "Instagram verification referral link token"),
+        "srtk" to ("Instagram / Meta" to "Instagram share routing token"),
+        "cplk" to ("Instagram / Meta" to "Instagram copy link session tracker"),
+        "dlrf" to ("Instagram / Meta" to "Instagram direct link referral tracker"),
+        "mdxt" to ("Instagram / Meta" to "Instagram media external tracking token"),
+        "__coig_restricted" to ("Instagram / Meta" to "Instagram cross-origin cookie tracking parameter"),
+        "btag" to ("Instagram / Meta" to "Meta browser tracking tag"),
+        "xmt" to ("Meta / Threads" to "Meta Threads / Instagram cross-app share telemetry token"),
+        "slof" to ("Meta / Threads" to "Meta Threads share log parameter"),
 
         // TikTok
         "_r" to ("TikTok" to "TikTok referral user identifier"),
@@ -70,6 +81,10 @@ object LinkCleaner {
         "sec_uid" to ("TikTok" to "Encrypted user tracking ID"),
         "ug_source" to ("TikTok" to "User growth referral campaign"),
         "ugbiz_name" to ("TikTok" to "Business analytics tag"),
+        "u_code" to ("TikTok" to "TikTok user profile share tracking code"),
+        "preview_pb" to ("TikTok" to "TikTok share preview session token"),
+        "ug_btm" to ("TikTok" to "TikTok user growth navigation tracking tag"),
+        "ttclid" to ("TikTok Ads" to "TikTok Click Identifier for ad conversion"),
 
         // Twitter / X
         "twclid" to ("Twitter / X" to "Twitter Click Identifier for conversion tracking"),
@@ -107,11 +122,26 @@ object LinkCleaner {
         "sr" to ("Amazon" to "Search ranking position telemetry"),
         "dchild" to ("Amazon" to "Device child tracking token"),
         "ascsubtag" to ("Commerce Tracking" to "Sub-publisher affiliate tracking token"),
+        "mkevt" to ("eBay" to "eBay marketing event identifier"),
+        "mkcid" to ("eBay" to "eBay marketing channel identifier"),
+        "mkrid" to ("eBay" to "eBay marketing campaign identifier"),
+        "campid" to ("eBay" to "eBay partner network campaign ID"),
+        "toolid" to ("eBay" to "eBay partner network tool identifier"),
+        "customid" to ("eBay" to "eBay partner network custom tracking token"),
+        "spm" to ("AliExpress" to "Site position model telemetry tracker"),
+        "scm" to ("AliExpress" to "Smart content matching tracking token"),
+        "pdp_npi" to ("AliExpress" to "Product detail page new pricing impression tracking"),
 
         // Microsoft / Bing & Yandex
         "msclkid" to ("Microsoft Advertising" to "Bing / Microsoft Click Identifier"),
         "yclid" to ("Yandex" to "Yandex Direct Click Identifier"),
         "ymclid" to ("Yandex" to "Yandex Market Click Identifier"),
+        "s_kwcid" to ("Adobe Analytics" to "Adobe search keyword click identifier"),
+        "ef_id" to ("Adobe Advertising" to "Adobe Advertising Cloud click identifier"),
+        "irclickid" to ("Impact Radius" to "Impact affiliate conversion click identifier"),
+        "irgwc" to ("Impact Radius" to "Impact gateway click tracking parameter"),
+        "sscid" to ("ShareASale" to "ShareASale affiliate tracking identifier"),
+        "zanpid" to ("Awin / Zanox" to "Awin affiliate network tracking ID"),
 
         // Email & Marketing automation
         "mc_cid" to ("Mailchimp" to "Campaign identifier for subscriber tracking"),
@@ -139,12 +169,17 @@ object LinkCleaner {
 
         // Reddit & LinkedIn & Pinterest
         "share_id" to ("Reddit" to "Reddit share link tracking token"),
+        "shrid" to ("Reddit" to "Reddit user share identity tracking token"),
         "rdt" to ("Reddit" to "Reddit tracking token"),
         "trackingId" to ("LinkedIn" to "LinkedIn internal event tracking ID"),
         "refId" to ("LinkedIn" to "LinkedIn referral identifier"),
         "midToken" to ("LinkedIn" to "LinkedIn messaging tracking token"),
         "trk" to ("LinkedIn" to "LinkedIn navigation tracker"),
         "trkInfo" to ("LinkedIn" to "LinkedIn telemetry data token"),
+        "li_fat_id" to ("LinkedIn Ads" to "LinkedIn First-Party Ad Tracking Identifier"),
+        "lipi" to ("LinkedIn" to "LinkedIn page instance telemetry token"),
+        "licu" to ("LinkedIn" to "LinkedIn click URL identifier"),
+        "mx" to ("Twitter / X" to "Twitter / X marketing telemetry token"),
         "invite_code" to ("Pinterest" to "User invitation tracking token")
     )
 
@@ -429,8 +464,8 @@ object LinkCleaner {
             return true
         }
 
-        // Twitter / X share ID parameter 's' or 't'
-        if ((host.contains("twitter.com") || host.contains("x.com")) && (paramName == "s" || paramName == "t")) {
+        // Twitter / X share ID parameter 's', 't', or 'mx'
+        if ((host.contains("twitter.com") || host.contains("x.com")) && (paramName == "s" || paramName == "t" || paramName == "mx")) {
             return true
         }
 
@@ -443,13 +478,54 @@ object LinkCleaner {
             }
         }
 
+        // Instagram tracking parameters
+        if (host.contains("instagram.com")) {
+            if (paramName == "exln" || paramName == "obrf" || paramName == "vrfl" ||
+                paramName == "srtk" || paramName == "cplk" || paramName == "dlrf" ||
+                paramName == "mdxt" || paramName == "e" || paramName == "__coig_restricted" ||
+                paramName == "btag" || paramName == "igsh" || paramName == "igshid"
+            ) {
+                return true
+            }
+        }
+
+        // Threads tracking parameters
+        if (host.contains("threads.net")) {
+            if (paramName == "xmt" || paramName == "slof") {
+                return true
+            }
+        }
+
+        // Reddit tracking parameters
+        if (host.contains("reddit.com")) {
+            if (paramName == "shrid" || paramName == "share_id" || paramName == "rdt") {
+                return true
+            }
+        }
+
+        // Substack referral tracking
+        if (host.contains("substack.com") && paramName == "r") {
+            return true
+        }
+
         // TikTok tracking parameters
         if (host.contains("tiktok.com") || host.contains("douyin.com")) {
             if (paramName == "_r" || paramName == "_t" || paramName.startsWith("tt_") ||
                 paramName == "is_from_webapp" || paramName == "sender_device" ||
                 paramName == "share_app_id" || paramName == "share_item_id" ||
                 paramName == "share_link_id" || paramName == "checksum" ||
-                paramName == "sec_uid" || paramName.startsWith("ug_")
+                paramName == "sec_uid" || paramName.startsWith("ug_") ||
+                paramName == "u_code" || paramName == "preview_pb" || paramName == "ttclid"
+            ) {
+                return true
+            }
+        }
+
+        // LinkedIn tracking parameters
+        if (host.contains("linkedin.com")) {
+            if (paramName == "trackingid" || paramName == "refid" || paramName == "midtoken" ||
+                paramName == "trk" || paramName == "trkinfo" || paramName == "li_fat_id" ||
+                paramName == "lipi" || paramName == "licu"
             ) {
                 return true
             }
@@ -485,9 +561,15 @@ object LinkCleaner {
         return when {
             paramName.startsWith("utm_") -> "Marketing / UTM" to "Marketing campaign telemetry"
             paramName.startsWith("fb_") || host.contains("facebook.com") -> "Meta / Facebook" to "Facebook tracking token"
+            host.contains("instagram.com") -> "Instagram / Meta" to "Instagram share and user tracking token"
+            host.contains("threads.net") -> "Meta / Threads" to "Threads share and attribution token"
             paramName.startsWith("pf_rd_") || paramName.startsWith("pd_rd_") -> "Amazon Telemetry" to "Amazon recommendation pipeline tracker"
             paramName.startsWith("ga_") || paramName.startsWith("_ga") -> "Google Analytics" to "Google Analytics client tracker"
             host.contains("tiktok.com") -> "TikTok Telemetry" to "TikTok user share tracker"
+            host.contains("reddit.com") -> "Reddit Telemetry" to "Reddit share tracking token"
+            host.contains("linkedin.com") -> "LinkedIn Telemetry" to "LinkedIn attribution tracking token"
+            host.contains("ebay.") -> "eBay Marketing" to "eBay partner and campaign identifier"
+            host.contains("aliexpress.") -> "AliExpress Telemetry" to "AliExpress site position tracker"
             host.contains("amazon.") -> "Amazon Telemetry" to "Amazon product tracking parameter"
             host.contains("youtube.") || host.contains("youtu.be") -> "YouTube Telemetry" to "YouTube playback tracker"
             else -> "Tracking Parameter" to "Third-party telemetry identifier"

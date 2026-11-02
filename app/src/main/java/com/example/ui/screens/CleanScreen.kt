@@ -322,6 +322,7 @@ fun CleanScreen(
             ) {
                 RetroChip(label = "[ TikTok ]", onClick = { onLoadSample(SampleType.TIKTOK_SHARE) })
                 RetroChip(label = "[ Facebook ]", onClick = { onLoadSample(SampleType.FACEBOOK_META) })
+                RetroChip(label = "[ Instagram ]", onClick = { onLoadSample(SampleType.INSTAGRAM) })
                 RetroChip(label = "[ Amazon ]", onClick = { onLoadSample(SampleType.AMAZON) })
                 RetroChip(label = "[ YouTube ]", onClick = { onLoadSample(SampleType.YOUTUBE) })
                 RetroChip(label = "[ UTM ]", onClick = { onLoadSample(SampleType.MARKETING_UTM) })

@@ -33,6 +33,7 @@ sealed class UiEvent {
 enum class SampleType {
     TIKTOK_SHARE,
     FACEBOOK_META,
+    INSTAGRAM,
     AMAZON,
     YOUTUBE,
     MARKETING_UTM,
@@ -198,6 +199,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 "https://www.tiktok.com/@creator/video/7345678901234567890?_r=1&_t=8Wxyz&is_from_webapp=1&sender_device=pc&share_app_id=1233&share_link_id=abc123xyz"
             SampleType.FACEBOOK_META ->
                 "https://www.facebook.com/share/p/18V4XJ9abc/?mibextid=wwXIfr"
+            SampleType.INSTAGRAM ->
+                "https://www.instagram.com/reel/DC123456789/?igsh=MTNmeXFuZzF3ejJveA==&exln=MTNmeXFuZzF3ejJveA==&obrf=1"
             SampleType.AMAZON ->
                 "https://www.amazon.com/Apple-AirPods-Wireless-Earbuds-Charging/dp/B08N5WRWNW/ref=sr_1_1?crid=289EHQ99W&keywords=airpods&qid=1680000000&sprefix=airp%2Caps%2C120&sr=8-1&tag=affiliate-20&linkCode=ll1"
             SampleType.YOUTUBE ->
