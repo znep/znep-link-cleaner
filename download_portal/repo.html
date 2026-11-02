@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZnepLinkCleaner — Git Repository Browser (linkcleaner.znep.com)</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #121826;
+      --border: #232d42;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --code-bg: #0b1120;
+      --tag-bg: #1e293b;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #090d16;
+      font-size: 1.05rem;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-family: monospace;
+    }
+    .nav-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 16px;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .downloads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      background: var(--accent);
+      color: #04131f;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .section-header {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 24px 0 12px;
+      color: var(--accent);
+    }
+    .commit-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .commit-subject {
+      font-family: monospace;
+      font-size: 0.92rem;
+      color: #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .commit-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .tag-chip {
+      display: inline-block;
+      background: #1e3a5f;
+      color: #60a5fa;
+      border: 1px solid #2563eb;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">ZLC</div>
+        <div>
+          <h1>ZnepLinkCleaner Git Repository Browser</h1>
+          <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <span class="badge">main branch</span>
+            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v2.0.0 (Build 11)</span>
+            <span class="badge" style="border-color: #a855f7; color: #d8b4fe;">Vibe-Coded PoC</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">com.znep.linkcleaner</span>
+          </div>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="/">← Back to Download Portal</a>
+        <a href="/diagram.svg" target="_blank">Arch Diagram</a>
+      </div>
+    </header>
+
+    <div class="downloads-grid">
+      <div class="card">
+        <div class="card-title">Git Bundle (Offline Clone)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Complete Git repository packfile containing entire commit history, all branches, and tags (`v1.0.0` – `v2.0.0`).
+        </p>
+        <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;">
+          git clone ZnepLinkCleaner.bundle zneplinkcleaner
+        </div>
+        <a href="/ZnepLinkCleaner.bundle" download class="btn">⬇ Download ZnepLinkCleaner.bundle</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Full Git Zip (.git Included)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          ZIP archive including the full <code>.git</code> database and history ready to unzip and run <code>git log</code>.
+        </p>
+        <a href="/ZnepLinkCleaner-git.zip" download class="btn btn-secondary">⬇ Download ZnepLinkCleaner-git.zip</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Source Tree ZIP (v2.0.0)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Clean v2.0.0 snapshot of all Kotlin/Compose source files, standing rules (`AGENTS.md`), and Gradle build system.
+        </p>
+        <a href="/ZnepLinkCleaner-v2.0.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v2.0.0-source.zip</a>
+      </div>
+    </div>
+
+    <div class="section-header">Release History &amp; Tagged Commits (v1.0.0 – v2.0.0)</div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v2.0.0</span>v2.0.0: Rebrand to ZnepLinkCleaner (com.znep.linkcleaner), prompt-tracked release notes &amp; Vibe-Coded PoC</div>
+        <div class="commit-meta">November 2, 2026 • Build 11 • Domain: linkcleaner.znep.com</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.9.0</span>v1.9.0: Strip Instagram exln, Threads xmt, Reddit shrid &amp; multi-platform tracking parameters</div>
+        <div class="commit-meta">November 2, 2026 • Build 10</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.8.0</span>v1.8.0: Share Sheet prominence, Direct Share shortcuts, full release history &amp; 24/7 public portal watchdog</div>
+        <div class="commit-meta">November 2, 2026 • Build 9</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.7.0</span>v1.7.0: On-device headless WebView Facebook /share/ expander &amp; Red/Orange warning banners</div>
+        <div class="commit-meta">November 2, 2026 • Build 8</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.6.0</span>v1.6.0: Architecture topology diagram, repo browser &amp; web portal infrastructure</div>
+        <div class="commit-meta">November 1, 2026 • Build 7</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.5.0</span>v1.5.0: Retro monospace terminal aesthetics, auto-copy/auto-close &amp; custom adaptive icon</div>
+        <div class="commit-meta">October 30, 2026 • Build 6</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.4.0</span>v1.4.0: Strict cleaning mode &amp; Amazon affiliate tag preservation</div>
+        <div class="commit-meta">October 28, 2026 • Build 5</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.3.0</span>v1.3.0: Room SQLite local history &amp; privacy telemetry stats</div>
+        <div class="commit-meta">October 26, 2026 • Build 4</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.2.0</span>v1.2.0: Shortener HTTP 301/302 redirect traversal engine</div>
+        <div class="commit-meta">October 24, 2026 • Build 3</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.1.0</span>v1.1.0: Material 3 dynamic theming, clipboard detection &amp; parameter dictionary</div>
+        <div class="commit-meta">October 22, 2026 • Build 2</div>
+      </div>
+    </div>
+
+    <div class="commit-item">
+      <div>
+        <div class="commit-subject"><span class="tag-chip">tag: v1.0.0</span>v1.0.0: Initial release — pure on-device link sanitizer</div>
+        <div class="commit-meta">October 20, 2026 • Build 1</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

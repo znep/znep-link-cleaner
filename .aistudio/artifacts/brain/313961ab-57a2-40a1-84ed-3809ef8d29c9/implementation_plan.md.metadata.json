@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan to replace all non-existent ais-pre Cloud Run URL references with the live public ais-dev Cloud Run endpoint across the web portal DNS guide, README, and release notes while preserving Vibe-Coded PoC messaging and full prompt history.",
+  "updatedAt": "2026-11-02T22:31:22.682190579Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

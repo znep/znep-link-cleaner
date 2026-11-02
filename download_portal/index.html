@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<!--
+  MANDATORY STANDING INSTRUCTIONS FOR ALL FUTURE EDITS:
+  1. Always maintain clear "Vibe-Coded Proof of Concept" messaging in the hero section.
+  2. Always include the FULL release notes history (v1.0.0 through latest) and the exact triggering USER PROMPT for every release that modified the app.
+  3. Brand: ZnepLinkCleaner | Package: com.znep.linkcleaner | Domain: linkcleaner.znep.com
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZnepLinkCleaner (linkcleaner.znep.com) — Vibe-Coded Proof of Concept Android Link Sanitizer</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #121826;
+      --border: #232d42;
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --code-bg: #0b1120;
+      --red: #ef4444;
+      --orange: #f97316;
+      --green: #22c55e;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 32px 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .badge-poc {
+      background: rgba(168, 85, 247, 0.18);
+      color: #d8b4fe;
+      border: 1px solid #a855f7;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .poc-banner {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.14), rgba(56, 189, 248, 0.12));
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin-bottom: 32px;
+    }
+    .poc-banner-title {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #d8b4fe;
+      margin-bottom: 6px;
+    }
+    .poc-banner p {
+      font-size: 0.92rem;
+      color: #e2e8f0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .btn {
+      display: block;
+      text-align: center;
+      background: var(--accent);
+      color: #04131f;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.15s ease;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover { background: #334155; }
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 36px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .tip-box {
+      background: var(--code-bg);
+      border-left: 4px solid var(--accent);
+      padding: 14px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 12px;
+    }
+    .tip-title {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .tip-desc {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+    }
+    .release-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .release-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .release-chip {
+      background: rgba(56, 189, 248, 0.2);
+      color: var(--accent);
+      font-family: monospace;
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .release-date {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .release-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 10px;
+    }
+    .prompt-box {
+      background: var(--code-bg);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+    }
+    .prompt-label {
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 0.75rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .release-highlights {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    .release-highlights li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .release-highlights li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+    code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85em;
+      color: #7dd3fc;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      margin-top: 8px;
+    }
+    .diagram-img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 50px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-row">
+        <span class="badge">ZNEPLINKCLEANER v12.0 (BUILD 12)</span>
+        <span class="badge badge-poc">[ VIBE-CODED PROOF OF CONCEPT ]</span>
+        <span class="badge" style="border-color: #22c55e; color: #4ade80;">com.znep.linkcleaner</span>
+      </div>
+      <h1>ZnepLinkCleaner</h1>
+      <p class="subtitle">
+        On-device Android Link Sanitizer &amp; Privacy Utility under <strong>linkcleaner.znep.com</strong> — stripping marketing telemetry, Instagram <code>exln</code>/<code>igsh</code>, Meta <code>fbclid</code>/<code>xmt</code>, and expanding shorteners without API keys.
+      </p>
+    </header>
+
+    <!-- Vibe-Coded Proof of Concept Banner -->
+    <div class="poc-banner">
+      <div class="poc-banner-title">// VIBE-CODED PROOF OF CONCEPT — TRANSPARENT PROMPT-DRIVEN DEVELOPMENT</div>
+      <p>
+        <strong>ZnepLinkCleaner</strong> is an experimental, <strong>100% vibe-coded proof of concept</strong> built iteratively through natural-language engineering prompts in Google AI Studio.
+        Every functional release (`v1.0.0` through `v12.0`) and the exact user prompt that modified the application are permanently documented both on this webpage and inside the Android app's <em>Protection / Rules</em> tab.
+      </p>
+    </div>
+
+    <div class="grid">
+      <!-- APK Download -->
+      <div class="card" style="border-color: #0284c7;">
+        <div>
+          <h3>📱 Download ZnepLinkCleaner APK</h3>
+          <p>Signed Android build (`com.znep.linkcleaner`) with Instagram <code>exln</code> purging, Facebook headless WebView expansion, Direct Share shortcuts, and full prompt-annotated release history.</p>
+          <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">
+            v12.0 • Build 12 • com.znep.linkcleaner
+          </div>
+        </div>
+        <a href="/ZnepLinkCleaner.apk" download="ZnepLinkCleaner-v12.0.apk" class="btn">⬇ Download ZnepLinkCleaner.apk</a>
+      </div>
+
+      <!-- Git Repo Browser -->
+      <div class="card">
+        <div>
+          <h3>🌳 Git Repository Browser</h3>
+          <p>Browse full commit logs (12 releases from v1.0.0 to v12.0), verified tags, and complete Kotlin/Compose source tree in browser.</p>
+          <div style="font-family: monospace; font-size: 0.8rem; color: #4ade80; margin-bottom: 12px;">
+            12 Releases • 12 Verified Git Tags
+          </div>
+        </div>
+        <a href="/repo.html" class="btn btn-secondary">🔍 Browse Git History &amp; Tags</a>
+      </div>
+
+      <!-- Git Bundle Download -->
+      <div class="card">
+        <div>
+          <h3>📦 Git Offline Bundle &amp; Source</h3>
+          <p>Self-contained Git packfile and source archive with complete revision history. Clone anywhere without an external server.</p>
+          <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+            <code>git clone ZnepLinkCleaner.bundle zneplinkcleaner</code>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <a href="/ZnepLinkCleaner.bundle" download class="btn btn-secondary">⬇ Download ZnepLinkCleaner.bundle</a>
+          <a href="/ZnepLinkCleaner-v12.0-source.zip" download class="btn btn-secondary">⬇ Download v12.0 Source ZIP</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share Sheet Prominence Guide -->
+    <h2 class="section-title">⚡ How to Make ZnepLinkCleaner Appear First in Android's Share Sheet</h2>
+    <div class="card" style="margin-bottom: 28px;">
+      <p style="margin-bottom: 16px;">
+        Android uses machine learning heuristics and system ranking algorithms to order apps in the system share dialog.
+        Follow these proven techniques to ensure <strong>ZnepLinkCleaner</strong> is always at your fingertips:
+      </p>
+
+      <div class="tip-box">
+        <div class="tip-title">1. Pin ZnepLinkCleaner to the Front (Most Effective) 📌</div>
+        <div class="tip-desc">
+          Open any app (such as Chrome, YouTube, X/Twitter, or Instagram) &gt; Tap <strong>Share</strong> &gt; Locate <strong>ZnepLinkCleaner</strong> in the app carousel &gt; 
+          <strong>Long-press</strong> the ZnepLinkCleaner icon &gt; Tap <strong>Pin</strong> (📌).
+          <br>
+          <em>Result:</em> Android locks ZnepLinkCleaner permanently to the #1 first position in the share dialog across all apps on your device!
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">2. Built-In Direct Share Target Shortcut ⚡</div>
+        <div class="tip-desc">
+          ZnepLinkCleaner v2.0.0 implements Android's <code>&lt;share-target&gt;</code> specification via <code>shortcuts.xml</code> (`com.znep.linkcleaner.category.DIRECT_SHARE_TARGET`) and publishes dynamic <code>ShortcutInfoCompat</code> targets.
+          On Android 10+, this qualifies ZnepLinkCleaner to appear in the prominent top-row Direct Share carousel.
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">3. Intent Filter Resolver Priority (android:priority=100) 🎯</div>
+        <div class="tip-desc">
+          ZnepLinkCleaner declares <code>android:priority="100"</code> for <code>text/plain</code> and <code>text/*</code> in its manifest, giving it higher resolver affinity on Samsung OneUI, Motorola, Xiaomi, and Pixel sharesheet implementations.
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-title">4. Usage Frequency &amp; Recency Weighting 📈</div>
+        <div class="tip-desc">
+          Android's on-device <code>UsageStatsManager</code> tracks sharing frequency. Choosing ZnepLinkCleaner 2–3 times trains the on-device AI to rank ZnepLinkCleaner higher automatically whenever a link is shared.
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Release Notes History with Modifying Prompts -->
+    <h2 class="section-title">📋 Full Release Notes &amp; Vibe-Coding Prompt History (v1.0.0 – v12.0)</h2>
+    <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 18px;">
+      Complete chronological record of all application modifications and the user prompts that created them (non-modifying prompts omitted):
+    </p>
+
+    <!-- v12.0 -->
+    <div class="release-item" style="border-color: rgba(34, 197, 94, 0.5);">
+      <div class="release-header">
+        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v12.0 (Build 12) — LATEST</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Google Play Publishing Version Bump, Direct Nginx Portal Hardening &amp; Cloudflare Reverse-Proxy Support</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "The website is down again. / Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\". / Remove the dns setup instructions from the website, they are only for me not the public. Also, the option A cloud flare setup is redirecting me to the run.app name not proxying. Note I'm on a free cloud flare plan."
+      </div>
+      <ul class="release-highlights">
+        <li>Incremented <code>versionCode</code> to <strong>12</strong> and set <code>versionName</code> to <strong>"12.0"</strong> following Google Play publishing</li>
+        <li>Removed internal DNS setup instructions from the public web portal</li>
+        <li>Configured Nginx with <code>absolute_redirect off;</code> and <code>server_name_in_redirect off;</code> so proxied requests via <code>linkcleaner.znep.com</code> never redirect to the underlying container hostname</li>
+        <li>Hardened public web portal by configuring Nginx (PID 5) to serve <code>/app/applet/download_portal</code> directly with zero upstream dependency + self-healing <code>server.py</code> daemon</li>
+      </ul>
+    </div>
+
+    <!-- v2.0.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v2.0.0 (Build 11)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">ZnepLinkCleaner Rebrand, znep.com Domain &amp; Prompt-Tracked PoC</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Before we go further, I want to rename the app. The name should still indicate what it does but be unique in a way that might be legally protectable in the future. Perhaps include 'znep'... Choose ZnepLinkCleaner. I own znep.com. The app can live under that name, and you can give me DNS entries to setup make linkcleaner.znep.com resolve to the website. Don't worry about backwards compatibility. Ensure you are recording prompts as part of the release notes and have clear messaging the app is a vibe coded proof of concept, and that this instruction sticks in the future."
+      </div>
+      <ul class="release-highlights">
+        <li>Full rebrand to <strong>ZnepLinkCleaner</strong> across Android UI, system Share Sheet targets, and web portal</li>
+        <li>Migrated Android <code>applicationId</code> to authoritative domain package <code>com.znep.linkcleaner</code></li>
+        <li>Added prominent <strong>"Vibe-Coded Proof of Concept"</strong> banner and messaging in-app and on <code>linkcleaner.znep.com</code></li>
+        <li>Recorded triggering User Prompts in every release note entry (`v1.0.0` – `v2.0.0`) enforced by unit test</li>
+        <li>Added DNS &amp; Cloudflare reverse-proxy setup guide for custom subdomain <code>linkcleaner.znep.com</code></li>
+        <li>Removed legacy CleanLink artifacts for a clean break under the ZnepLinkCleaner brand</li>
+      </ul>
+    </div>
+
+    <!-- v1.9.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.9.0 (Build 10)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Instagram exln Stripping &amp; Enhanced Multi-Platform Tracking Purge</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Instagram links still have an exln param that looks like tracking. Should it be removed? If so, update the app and also look for other missing tracking params."
+      </div>
+      <ul class="release-highlights">
+        <li>Purged Instagram <code>exln</code> (external link / user session tracking identifier) and related Meta share telemetry (<code>obrf</code>, <code>vrfl</code>, <code>srtk</code>, <code>cplk</code>, <code>dlrf</code>, <code>mdxt</code>, <code>__coig_restricted</code>)</li>
+        <li>Added Meta Threads cross-app telemetry (<code>xmt</code>) and share log parameter (<code>slof</code>) stripping</li>
+        <li>Purged Reddit user share identity tracking token (<code>shrid</code>) from shared Reddit threads</li>
+        <li>Added TikTok user profile tracking (<code>u_code</code>), preview session (<code>preview_pb</code>), and ad click (<code>ttclid</code>) removal</li>
+        <li>Added LinkedIn first-party ad tracking (<code>li_fat_id</code>), page instance (<code>lipi</code>), and click identifier (<code>licu</code>) stripping</li>
+        <li>Added e-commerce &amp; affiliate parameter coverage for eBay (<code>mkevt</code>, <code>mkcid</code>, <code>campid</code>), AliExpress (<code>spm</code>, <code>scm</code>), and Impact/Awin/ShareASale networks</li>
+      </ul>
+    </div>
+
+    <!-- v1.8.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.8.0 (Build 9)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Share Sheet Prominence, Public Portal Watchdog &amp; Full Release History</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "The website is no longer public, ensure it remains public and analyze why previous attempts reverted. Always include the full release notes history on the webpage and within the app somewhere. You don't need to include prompts that don't modify the app itself. In addition, provide tips on how to make the app show up earlier and more prominently in the share dialogue. Modify the app if possible to help."
+      </div>
+      <ul class="release-highlights">
+        <li>Direct Share Target Shortcut (&lt;share-target&gt;) for prioritized top-row placement in Android Sharesheet</li>
+        <li>High-priority intent filter configuration (android:priority=100) for text/plain and text/*</li>
+        <li>Full Release Notes History viewer accessible directly inside the app and web portal</li>
+        <li>Interactive Share Sheet Prominence Guide with 1-tap practice pinning tool</li>
+        <li>Permanent Nginx auth-bypass watchdog in <code>server.py</code> to prevent 403 Forbidden reverts</li>
+      </ul>
+    </div>
+
+    <!-- v1.7.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.7.0 (Build 8)</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Facebook Headless WebView Expander &amp; Dual-Tier Warning System</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add Option 1 (on-device headless Android WebView resolution) for Facebook share links (/share/p/, /share/r/, etc.) to resolve client-side JS redirects to canonical permalinks. Implement a red warning when Facebook share links fail to expand and an orange advisory for unexpanded shorteners. Include technical details for Facebook share links in the app without cluttering the main screen, and provide a config setting to disable Option 1 (enabled by default)."
+      </div>
+      <ul class="release-highlights">
+        <li>On-device headless Android WebView expander (Option 1) for Facebook /share/p/ &amp; /share/r/ links</li>
+        <li>Red Warning alert when Facebook permalinks cannot be resolved (private/login gate)</li>
+        <li>Orange Advisory alert for unexpanded opaque shorteners (bit.ly, t.co, vt.tiktok.com)</li>
+        <li>Protection setting to toggle Facebook WebView expansion (enabled by default)</li>
+        <li>Facebook Share Links Architecture technical deep dive in Rules tab</li>
+      </ul>
+    </div>
+
+    <!-- v1.6.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.6.0 (Build 7)</span>
+        <span class="release-date">November 1, 2026</span>
+      </div>
+      <div class="release-title">Architecture Documentation &amp; Web Portal Infrastructure</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Create a public download portal webpage hosting the signed APK, an offline Git bundle, a source archive, an interactive Git repository browser, and a visual system architecture diagram."
+      </div>
+      <ul class="release-highlights">
+        <li>Architectural topology diagram generation and offline vector assets</li>
+        <li>Standalone interactive Git Repository Browser (repo.html)</li>
+        <li>Web Download Portal with direct APK and Git bundle downloads</li>
+      </ul>
+    </div>
+
+    <!-- v1.5.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.5.0 (Build 6)</span>
+        <span class="release-date">October 30, 2026</span>
+      </div>
+      <div class="release-title">Retro Monospace Aesthetics &amp; System Share Flow</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Restyle the UI with a sleek retro/cyberpunk monospace terminal aesthetic, add auto-copy on share and auto-close after reshare options, and design a custom adaptive launcher icon."
+      </div>
+      <ul class="release-highlights">
+        <li>Cyberpunk/retro monospace typography and neon telemetry highlights</li>
+        <li>Auto-copy clean URL to clipboard immediately upon sharing from external apps</li>
+        <li>Auto-close after resharing via system sheet to return seamlessly to previous app</li>
+        <li>Custom adaptive launcher icon with laser-clean vector branding</li>
+      </ul>
+    </div>
+
+    <!-- v1.4.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.4.0 (Build 5)</span>
+        <span class="release-date">October 28, 2026</span>
+      </div>
+      <div class="release-title">Strict Cleaning Mode &amp; Amazon Affiliate Preservation</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add a Protection / Rules tab with a toggle to preserve Amazon creator affiliate tags while stripping tracking parameters, plus a Strict Cleaning Mode for aggressive heuristic token removal."
+      </div>
+      <ul class="release-highlights">
+        <li>Strict mode to purge non-standard tokens, unknown query arguments, and custom tracking hashes</li>
+        <li>Option to preserve Amazon creator affiliate tags (tag=...) while purging all tracking telemetry</li>
+        <li>Protection / Rules tab with granular user preference switches</li>
+      </ul>
+    </div>
+
+    <!-- v1.3.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.3.0 (Build 4)</span>
+        <span class="release-date">October 26, 2026</span>
+      </div>
+      <div class="release-title">Room SQLite Local History &amp; Privacy Telemetry</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add a local Room database to record cleaned link history on-device and show privacy stats (links cleaned, trackers removed, and bytes saved)."
+      </div>
+      <ul class="release-highlights">
+        <li>Persistent cleaning history saved securely on-device using Room SQLite</li>
+        <li>Analytics dashboard: total links cleaned, stripped parameters count, and estimated bytes saved</li>
+        <li>Individual history item deletion and one-tap history wipe</li>
+      </ul>
+    </div>
+
+    <!-- v1.2.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.2.0 (Build 3)</span>
+        <span class="release-date">October 24, 2026</span>
+      </div>
+      <div class="release-title">Shortener Traversal &amp; Redirect Engine</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Support expanding shortened links like TikTok (vt.tiktok.com), Amazon (a.co, amzn.to), bit.ly, and t.co by following HTTP redirects before cleaning the destination URL."
+      </div>
+      <ul class="release-highlights">
+        <li>Network redirect traversal for TikTok (vt.tiktok.com, vm.tiktok.com, /t/)</li>
+        <li>YouTube short link canonicalization (youtu.be with si parameter stripping)</li>
+        <li>Amazon shortlink expansion (a.co, amzn.to)</li>
+        <li>Support for bit.ly, tinyurl.com, t.co, and 30+ major redirect services</li>
+      </ul>
+    </div>
+
+    <!-- v1.1.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.1.0 (Build 2)</span>
+        <span class="release-date">October 22, 2026</span>
+      </div>
+      <div class="release-title">Material 3 Dynamic Theming &amp; Clipboard Detection</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add Material 3 theming, automatic clipboard link detection with a quick-paste button, and a searchable dictionary of known tracking parameters."
+      </div>
+      <ul class="release-highlights">
+        <li>Material 3 dynamic color scheme with dark/light mode support</li>
+        <li>Automatic clipboard detection with quick-paste button when URL is copied</li>
+        <li>Comprehensive database of known tracking parameter definitions</li>
+      </ul>
+    </div>
+
+    <!-- v1.0.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v1.0.0 (Build 1)</span>
+        <span class="release-date">October 20, 2026</span>
+      </div>
+      <div class="release-title">Initial Release — Pure On-Device Link Sanitizer</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Build an Android app that receives shared links from the Android Share Sheet, strips tracking parameters like utm_source, fbclid, and gclid, and lets you copy or reshare the clean URL."
+      </div>
+      <ul class="release-highlights">
+        <li>Offline tracker stripping for Google Analytics (UTM), Facebook (fbclid), Google Ads (gclid), and Twitter (ref_src)</li>
+        <li>Clean URL output with one-tap copy and system share button</li>
+        <li>Instant share-intent ingestion via Android SEND action</li>
+      </ul>
+    </div>
+
+    <!-- Architecture Diagram -->
+    <h2 class="section-title">📐 Architecture Diagram</h2>
+    <div class="card">
+      <p>High-level system topology illustrating the Ingestion Engine, Resolution &amp; Purging Core, Warning System, and Hosting Infrastructure for <strong>ZnepLinkCleaner</strong>:</p>
+      <img src="/architecture-diagram.png" alt="ZnepLinkCleaner Architecture Diagram" class="diagram-img">
+      <div style="margin-top: 12px; text-align: right;">
+        <a href="/diagram.svg" target="_blank" style="color: var(--accent); font-size: 0.85rem; font-family: monospace;">Open Vector SVG in New Tab →</a>
+      </div>
+    </div>
+
+    <footer>
+      ZnepLinkCleaner (com.znep.linkcleaner) • Vibe-Coded Proof of Concept • https://linkcleaner.znep.com • Built with Jetpack Compose &amp; Kotlin
+    </footer>
+  </div>
+</body>
+</html>
