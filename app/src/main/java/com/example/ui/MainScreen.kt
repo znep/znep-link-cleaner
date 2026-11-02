@@ -113,20 +113,10 @@ fun MainScreen(viewModel: MainViewModel) {
             CenterAlignedTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Link,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        com.example.ui.components.ZlcLogo(
+                            size = 32.dp,
+                            triggerKey = Pair(cleanResult?.cleanedUrl, isExpanding)
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "ZnepLinkCleaner",

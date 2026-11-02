@@ -10,6 +10,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ZnepLinkCleaner (linkcleaner.znep.com) — Vibe-Coded Proof of Concept Android Link Sanitizer</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='24' fill='%23060913'/%3E%3Cpath d='M23.5 31.5H60.5V39.5L36 66.5H60.5V74.5H23.5V66.5L48 39.5H23.5Z' fill='%23A855F7' opacity='0.75'/%3E%3Cpath d='M26 30H63V38L38.5 65H63V73H26V65L50.5 38H26Z' fill='%2338BDF8'/%3E%3Crect x='67.5' y='47' width='5' height='26' fill='%23F8FAFC'/%3E%3Cpath d='M75.5 54H86.5V58.5H80.2V68.5H86.5V73H75.5Z' fill='%237DD3FC'/%3E%3C/svg%3E">
   <style>
     :root {
       --bg: #090d16;
@@ -271,13 +272,80 @@
       padding-top: 24px;
       border-top: 1px solid var(--border);
     }
+    .zlc-logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .zlc-svg {
+      width: 76px;
+      height: 76px;
+      border-radius: 18px;
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.25), 0 0 36px rgba(168, 85, 247, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+    }
+    @keyframes zQuiver {
+      0%, 88%, 100% { transform: translate(0, 0); }
+      90% { transform: translate(-2.2px, 1.1px); }
+      92% { transform: translate(2.4px, -1.2px); }
+      94% { transform: translate(-1.6px, -0.8px); }
+      96% { transform: translate(1.4px, 0.9px); }
+      98% { transform: translate(-0.8px, 0.4px); }
+    }
+    @keyframes zGhostQuiver {
+      0%, 88%, 100% { transform: translate(0, 0); opacity: 0.68; }
+      90% { transform: translate(2.8px, -1.3px); opacity: 0.95; }
+      92% { transform: translate(-3.0px, 1.4px); opacity: 0.92; }
+      94% { transform: translate(2.0px, 0.9px); opacity: 0.88; }
+      96% { transform: translate(-1.6px, -1.0px); opacity: 0.85; }
+    }
+    .z-quiver {
+      animation: zQuiver 3.8s infinite ease-in-out;
+      transform-origin: center;
+    }
+    .z-ghost-quiver {
+      animation: zGhostQuiver 3.8s infinite ease-in-out;
+      transform-origin: center;
+    }
+    .zlc-logo-wrap:active .z-quiver,
+    .zlc-logo-wrap.quiver-burst .z-quiver {
+      animation: zQuiver 0.35s linear infinite;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
+      <div class="zlc-logo-wrap" title="Click to quiver Zlc logo" onclick="this.classList.add('quiver-burst'); setTimeout(() => this.classList.remove('quiver-burst'), 420);">
+        <svg class="zlc-svg" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cyberBg" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#060913"/>
+              <stop offset="55%" stop-color="#0F172A"/>
+              <stop offset="100%" stop-color="#1E1B4B"/>
+            </linearGradient>
+          </defs>
+          <rect width="108" height="108" fill="url(#cyberBg)"/>
+          <circle cx="54" cy="54" r="40" fill="#A855F7" fill-opacity="0.1"/>
+          <!-- Quivering Neon Purple Chromatic Ghost Z -->
+          <g class="z-ghost-quiver">
+            <path d="M23.5 31.5 H60.5 V39.5 L36.0 66.5 H60.5 V74.5 H23.5 V66.5 L48.0 39.5 H23.5 Z" fill="#A855F7"/>
+          </g>
+          <!-- Quivering Primary Electric Cyan Z -->
+          <g class="z-quiver">
+            <path d="M26.0 30.0 H63.0 V38.0 L38.5 65.0 H63.0 V73.0 H26.0 V65.0 L50.5 38.0 H26.0 Z" fill="#38BDF8"/>
+            <rect x="26.0" y="30.0" width="37.0" height="2.6" fill="#E0F2FE"/>
+          </g>
+          <!-- Steady Smaller 'lc' Subscript -->
+          <rect x="67.5" y="47.0" width="5.0" height="26.0" fill="#F8FAFC"/>
+          <path d="M75.5 54.0 H86.5 V58.5 H80.2 V68.5 H86.5 V73.0 H75.5 Z" fill="#7DD3FC"/>
+        </svg>
+      </div>
       <div class="badge-row">
-        <span class="badge">ZNEPLINKCLEANER v12.0 (BUILD 12)</span>
+        <span class="badge">ZNEPLINKCLEANER v13.0 (BUILD 13)</span>
         <span class="badge badge-poc">[ VIBE-CODED PROOF OF CONCEPT ]</span>
         <span class="badge" style="border-color: #22c55e; color: #4ade80;">com.znep.linkcleaner</span>
       </div>
@@ -292,7 +360,7 @@
       <div class="poc-banner-title">// VIBE-CODED PROOF OF CONCEPT — TRANSPARENT PROMPT-DRIVEN DEVELOPMENT</div>
       <p>
         <strong>ZnepLinkCleaner</strong> is an experimental, <strong>100% vibe-coded proof of concept</strong> built iteratively through natural-language engineering prompts in Google AI Studio.
-        Every functional release (`v1.0.0` through `v12.0`) and the exact user prompt that modified the application are permanently documented both on this webpage and inside the Android app's <em>Protection / Rules</em> tab.
+        Every functional release (`v1.0.0` through `v13.0`) and the exact user prompt that modified the application are permanently documented on this webpage, in the linked GitHub repository (`README.md` &amp; `CHANGELOG.md`), and inside the Android app's <em>Protection / Rules</em> tab.
       </p>
     </div>
 
@@ -301,38 +369,38 @@
       <div class="card" style="border-color: #0284c7;">
         <div>
           <h3>📱 Download ZnepLinkCleaner APK</h3>
-          <p>Signed Android build (`com.znep.linkcleaner`) with Instagram <code>exln</code> purging, Facebook headless WebView expansion, Direct Share shortcuts, and full prompt-annotated release history.</p>
+          <p>Signed Android build (`com.znep.linkcleaner`) with cyberpunk quivering <code>Zlc</code> logo, Instagram <code>exln</code> purging, Facebook headless WebView expansion, and full prompt-annotated release history.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 12px;">
-            v12.0 • Build 12 • com.znep.linkcleaner
+            v13.0 • Build 13 • com.znep.linkcleaner
           </div>
         </div>
-        <a href="/ZnepLinkCleaner.apk" download="ZnepLinkCleaner-v12.0.apk" class="btn">⬇ Download ZnepLinkCleaner.apk</a>
+        <a href="/ZnepLinkCleaner.apk" download="ZnepLinkCleaner-v13.0.apk" class="btn">⬇ Download ZnepLinkCleaner.apk</a>
       </div>
 
       <!-- Git Repo Browser -->
       <div class="card">
         <div>
           <h3>🌳 Git Repository Browser</h3>
-          <p>Browse full commit logs (12 releases from v1.0.0 to v12.0), verified tags, and complete Kotlin/Compose source tree in browser.</p>
+          <p>Exact 1:1 mirror of the linked GitHub repository with all 13 releases (`v1.0.0` to `v13.0`), triggering prompts, verified tags, and Kotlin/Compose source tree.</p>
           <div style="font-family: monospace; font-size: 0.8rem; color: #4ade80; margin-bottom: 12px;">
-            12 Releases • 12 Verified Git Tags
+            13 Releases • 13 Prompt-Tracked Git Tags
           </div>
         </div>
-        <a href="/repo.html" class="btn btn-secondary">🔍 Browse Git History &amp; Tags</a>
+        <a href="/repo.html" class="btn btn-secondary">🔍 Browse Git History &amp; Prompts</a>
       </div>
 
       <!-- Git Bundle Download -->
       <div class="card">
         <div>
           <h3>📦 Git Offline Bundle &amp; Source</h3>
-          <p>Self-contained Git packfile and source archive with complete revision history. Clone anywhere without an external server.</p>
+          <p>Self-contained Git packfile and source archive synchronized with the linked GitHub repository. Clone anywhere without an external server.</p>
           <div style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
             <code>git clone ZnepLinkCleaner.bundle zneplinkcleaner</code>
           </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <a href="/ZnepLinkCleaner.bundle" download class="btn btn-secondary">⬇ Download ZnepLinkCleaner.bundle</a>
-          <a href="/ZnepLinkCleaner-v12.0-source.zip" download class="btn btn-secondary">⬇ Download v12.0 Source ZIP</a>
+          <a href="/ZnepLinkCleaner-v13.0-source.zip" download class="btn btn-secondary">⬇ Download v13.0 Source ZIP</a>
         </div>
       </div>
     </div>
@@ -379,15 +447,35 @@
     </div>
 
     <!-- Full Release Notes History with Modifying Prompts -->
-    <h2 class="section-title">📋 Full Release Notes &amp; Vibe-Coding Prompt History (v1.0.0 – v12.0)</h2>
+    <h2 class="section-title">📋 Full Release Notes &amp; Vibe-Coding Prompt History (v1.0.0 – v13.0)</h2>
     <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 18px;">
       Complete chronological record of all application modifications and the user prompts that created them (non-modifying prompts omitted):
     </p>
 
-    <!-- v12.0 -->
+    <!-- v13.0 -->
     <div class="release-item" style="border-color: rgba(34, 197, 94, 0.5);">
       <div class="release-header">
-        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v12.0 (Build 12) — LATEST</span>
+        <span class="release-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: rgba(34, 197, 94, 0.4);">v13.0 (Build 13) — LATEST</span>
+        <span class="release-date">November 2, 2026</span>
+      </div>
+      <div class="release-title">Cyberpunk Quivering 'Zlc' Logo &amp; Linked GitHub / Portal Repository Sync</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Update the app logo to be a large Z with a smaller \"lc\". Where possible make the Z quiver slightly. It should be cyberpunk inspired but not too complicated. / Also ensure the GitHub repo published is a copy of the linked GitHub repo and the linked GitHub is updated with the prompts and changes for each release. Persist this request."
+      </div>
+      <ul class="release-highlights">
+        <li>Redesigned app logo to a cyberpunk <code>Zlc</code> monogram (large Electric Cyan <code>Z</code> with Neon Purple chromatic glitch + smaller steady <code>lc</code>)</li>
+        <li>Added interactive &amp; periodic quiver animation to the <code>Z</code> in the Android Compose UI (quivers on tap, on link clean/expand, and in periodic bursts) and on the web portal</li>
+        <li>Updated Android adaptive launcher icons (<code>ic_launcher_foreground.xml</code> / <code>ic_launcher_background.xml</code>) and all 5 density PNG mipmaps (<code>mdpi</code>–<code>xxxhdpi</code>)</li>
+        <li>Synchronized the workspace Git repository (for linked GitHub sync via <code>README.md</code>, <code>CHANGELOG.md</code>, and annotated tags) with the published web portal repo (<code>repo.html</code>, <code>ZnepLinkCleaner.bundle</code>, <code>ZnepLinkCleaner-git.zip</code>)</li>
+        <li>Persisted standing rule in <code>AGENTS.md</code>, <code>README.md</code>, and unit tests requiring every release's prompt and changes to be synced across GitHub and the published portal repo</li>
+      </ul>
+    </div>
+
+    <!-- v12.0 -->
+    <div class="release-item">
+      <div class="release-header">
+        <span class="release-chip">v12.0 (Build 12)</span>
         <span class="release-date">November 2, 2026</span>
       </div>
       <div class="release-title">Google Play Publishing Version Bump, Direct Nginx Portal Hardening &amp; Cloudflare Reverse-Proxy Support</div>
