@@ -99,6 +99,33 @@ fun RulesScreen(
     ) {
         item {
             Spacer(modifier = Modifier.height(4.dp))
+            // Vibe-Coded Proof of Concept Banner
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = "[ VIBE-CODED PROOF OF CONCEPT ]",
+                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "ZnepLinkCleaner is a 100% vibe-coded proof of concept Android application built iteratively through natural-language prompts. Every prompt that modified the application is permanently recorded in the Full Release Notes History below and at https://linkcleaner.znep.com.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        lineHeight = 17.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
             Text(
                 text = "Preferences",
                 style = MaterialTheme.typography.titleMedium,
@@ -115,7 +142,7 @@ fun RulesScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingToggleRow(
                         title = "Auto-copy on share",
-                        subtitle = "Immediately copy clean URL to clipboard when shared to CleanLink",
+                        subtitle = "Immediately copy clean URL to clipboard when shared to ZnepLinkCleaner",
                         checked = autoCopy,
                         onCheckedChange = onAutoCopyChanged
                     )
@@ -192,7 +219,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "CleanLink traverses HTTP 301/302 redirects to obtain canonical links before stripping tracking parameters.",
+                        text = "ZnepLinkCleaner traverses HTTP 301/302 redirects to obtain canonical links before stripping tracking parameters.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -288,7 +315,7 @@ fun RulesScreen(
                             )
                             FacebookTechPoint(
                                 title = "3. Option 1: Headless Android WebView Resolver",
-                                description = "CleanLink solves this by orchestrating a sandboxed, off-screen Android WebView with JavaScript enabled. It executes Meta's redirect script in ~1-2s, intercepts the resulting canonical permalink before rendering completes, and immediately purges all tracking parameters (e.g. mibextid, rdid)."
+                                description = "ZnepLinkCleaner solves this by orchestrating a sandboxed, off-screen Android WebView with JavaScript enabled. It executes Meta's redirect script in ~1-2s, intercepts the resulting canonical permalink before rendering completes, and immediately purges all tracking parameters (e.g. mibextid, rdid)."
                             )
                             FacebookTechPoint(
                                 title = "4. Expansion Warnings (Red & Orange Alerts)",
@@ -341,7 +368,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "How to make CleanLink appear in the first position and top row of Android's system share sheet.",
+                        text = "How to make ZnepLinkCleaner appear in the first position and top row of Android's system share sheet.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -352,20 +379,20 @@ fun RulesScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             FacebookTechPoint(
-                                title = "1. Pin CleanLink to the Front (Most Effective) 📌",
-                                description = "Open any app (like Chrome, YouTube, or Twitter) > Tap Share > Locate CleanLink in the app row > Long-press its icon > Tap 'Pin'. Android will lock CleanLink permanently to the #1 spot in your system share dialog across all apps!"
+                                title = "1. Pin ZnepLinkCleaner to the Front (Most Effective) 📌",
+                                description = "Open any app (like Chrome, YouTube, or Instagram) > Tap Share > Locate ZnepLinkCleaner in the app row > Long-press its icon > Tap 'Pin'. Android will lock ZnepLinkCleaner permanently to the #1 spot in your system share dialog across all apps!"
                             )
                             FacebookTechPoint(
                                 title = "2. Active Direct Share Target Shortcut (Built-in) ⚡",
-                                description = "CleanLink defines an active <share-target> in shortcuts.xml and publishes dynamic ShortcutInfo targets. This qualifies CleanLink to appear in Android's prioritized Direct Share top row carousel."
+                                description = "ZnepLinkCleaner defines an active <share-target> in shortcuts.xml and publishes dynamic ShortcutInfo targets. This qualifies ZnepLinkCleaner to appear in Android's prioritized Direct Share top row carousel."
                             )
                             FacebookTechPoint(
                                 title = "3. Resolver Intent Filter Priority (priority=100) 🎯",
-                                description = "CleanLink's manifest declares high priority for text/plain and text/* shares, boosting resolver affinity on Samsung OneUI, Motorola, Xiaomi, and AOSP share sheets."
+                                description = "ZnepLinkCleaner's manifest declares high priority for text/plain and text/* shares, boosting resolver affinity on Samsung OneUI, Motorola, Xiaomi, and AOSP share sheets."
                             )
                             FacebookTechPoint(
                                 title = "4. Usage Frequency & Recency Heuristic 📈",
-                                description = "Android's on-device sharesheet ranking model prioritizes recently and frequently chosen targets. Selecting CleanLink 2-3 times naturally promotes its ranking."
+                                description = "Android's on-device sharesheet ranking model prioritizes recently and frequently chosen targets. Selecting ZnepLinkCleaner 2-3 times naturally promotes its ranking."
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -388,7 +415,7 @@ fun RulesScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Practice Pinning CleanLink (Open Share Sheet)",
+                                    text = "Practice Pinning ZnepLinkCleaner (Open Share Sheet)",
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -440,7 +467,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Detailed documentation of every telemetry token identified and purged by CleanLink.",
+                        text = "Detailed documentation of every telemetry token identified and purged by ZnepLinkCleaner.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -565,7 +592,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Complete record of all application modifications and feature evolutions from v1.0.0 through v1.8.0.",
+                        text = "Complete record of all application modifications, user prompts, and feature evolutions from v1.0.0 through v2.0.0.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -602,7 +629,7 @@ fun RulesScreen(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "CleanLink v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})",
+                            text = "ZnepLinkCleaner v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})",
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
@@ -611,13 +638,19 @@ fun RulesScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
+                        text = "Package: ${com.example.BuildConfig.APPLICATION_ID}",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
                         text = "Build Time: ${com.example.BuildConfig.BUILD_TIME}",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Release Date: November 1, 2026",
+                        text = "Release Date: November 2, 2026 • Vibe-Coded Proof of Concept",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline
                     )
@@ -632,13 +665,13 @@ fun RulesScreen(
                     ) {
                         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                             Text(
-                                text = "OFFICIAL ALIAS //",
+                                text = "OFFICIAL WEB PORTAL //",
                                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = "https://is.gd/cleanlink_app",
+                                text = "https://linkcleaner.znep.com",
                                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -805,7 +838,33 @@ private fun ReleaseNoteItem(note: ReleaseNote) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surface,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(10.dp)) {
+                    Text(
+                        text = "> USER PROMPT //",
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "\"${note.userPrompt}\"",
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 for (highlight in note.highlights) {
                     Text(

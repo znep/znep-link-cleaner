@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CleanLink Web Portal Server
+ZnepLinkCleaner Web Portal Server (linkcleaner.znep.com)
 Serves download portal, Git bundles, repository browser, and APKs on port 3000.
 Automatically maintains auth bypass on Nginx to prevent 403 Forbidden errors.
 """
@@ -15,7 +15,7 @@ import time
 PORT = 3000
 DIRECTORY = "/app/applet/download_portal"
 
-class CleanLinkHandler(http.server.SimpleHTTPRequestHandler):
+class ZnepLinkCleanerHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
@@ -58,6 +58,6 @@ if __name__ == "__main__":
     
     # Allow socket reuse
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), CleanLinkHandler) as httpd:
-        print(f"CleanLink Portal Server serving {DIRECTORY} on port {PORT}...")
+    with socketserver.TCPServer(("", PORT), ZnepLinkCleanerHandler) as httpd:
+        print(f"ZnepLinkCleaner Portal Server serving {DIRECTORY} on port {PORT}...")
         httpd.serve_forever()

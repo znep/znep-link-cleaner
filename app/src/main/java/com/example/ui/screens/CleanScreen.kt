@@ -111,21 +111,22 @@ fun CleanScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "> CLEANLINK CONSOLE //",
+                        text = "> ZNEPLINKCLEANER CONSOLE //",
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)),
+                        modifier = Modifier.testTag("vibe_coded_poc_badge")
                     ) {
                         Text(
-                            text = "[ READY ]",
+                            text = "[ VIBE-CODED PoC ]",
                             style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp),
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                         )
                     }
@@ -330,19 +331,26 @@ fun CleanScreen(
             }
         }
 
-        // Sleek Minimalist Protocol Tip
+        // Sleek Minimalist Protocol Tip & Vibe-Coded PoC Notice
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
         ) {
-            Text(
-                text = "// SYSTEM PROTOCOL: Tap 'Share' in any browser or app and select CleanLink.",
-                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-            )
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                Text(
+                    text = "// SYSTEM PROTOCOL: Tap 'Share' in any browser or app and select ZnepLinkCleaner.",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = "// VIBE-CODED PROOF OF CONCEPT: Built iteratively via prompts. View full prompt & release history in the Protection tab or at linkcleaner.znep.com.",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.5.sp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

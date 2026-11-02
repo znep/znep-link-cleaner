@@ -1,6 +1,6 @@
 {
-  "name": "CleanLink",
-  "description": "Strip tracking and marketing telemetry from shared URLs with one-tap copying and instant share-sheet integration.",
+  "name": "ZnepLinkCleaner",
+  "description": "Vibe-coded proof of concept Android privacy utility under znep.com that strips tracking parameters (Instagram exln/igsh, Meta fbclid/xmt, TikTok, UTM) and expands shortlinks on-device.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

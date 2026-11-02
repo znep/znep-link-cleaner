@@ -129,7 +129,7 @@ fun MainScreen(viewModel: MainViewModel) {
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "CleanLink",
+                            text = "ZnepLinkCleaner",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface

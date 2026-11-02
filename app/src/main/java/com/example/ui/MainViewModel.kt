@@ -152,7 +152,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun copyToClipboard(text: String, showToast: Boolean = true) {
         val context = getApplication<Application>()
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("CleanLink", text)
+        val clip = ClipData.newPlainText("ZnepLinkCleaner", text)
         clipboard.setPrimaryClip(clip)
 
         viewModelScope.launch {

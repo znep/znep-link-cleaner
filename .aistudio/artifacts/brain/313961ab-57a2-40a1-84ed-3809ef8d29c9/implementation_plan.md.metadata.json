@@ -1,0 +1,6 @@
+{
+  "summary": "Revised implementation plan removing legacy CleanLink backwards compatibility, embedding user prompts into every release note (v1.0.0–v2.0.0) in the app and web portal, adding clear \"Vibe-Coded Proof of Concept\" messaging across the app UI and web portal, and establishing permanent rules in README.md and code KDocs so future turns always preserve this behavior.",
+  "updatedAt": "2026-11-02T21:56:15.060299342Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

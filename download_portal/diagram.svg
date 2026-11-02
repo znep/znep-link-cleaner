@@ -30,8 +30,8 @@
   <rect width="1198" height="678" x="1" y="1" rx="20" fill="none" stroke="#1e293b" stroke-width="2"/>
 
   <!-- Title & Banner -->
-  <text x="60" y="55" font-family="monospace" font-size="24" font-weight="bold" fill="#38bdf8">CLEANLINK v1.7.0 // ARCHITECTURAL TOPOLOGY</text>
-  <text x="60" y="80" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">Link Sanitization, Facebook Headless WebView Expander (Option 1), Warnings Pipeline &amp; Hosting Setup</text>
+  <text x="60" y="55" font-family="monospace" font-size="23" font-weight="bold" fill="#38bdf8">ZNEPLINKCLEANER v2.0.0 // VIBE-CODED PROOF OF CONCEPT TOPOLOGY</text>
+  <text x="60" y="80" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">Package: com.znep.linkcleaner • Domain: linkcleaner.znep.com • Multi-Platform Tracker Purger &amp; Headless WebView Resolver</text>
 
   <!-- COLUMN 1: Android Client Input -->
   <g transform="translate(60, 110)" filter="url(#shadow)">
@@ -103,11 +103,11 @@
     <g transform="translate(16, 320)">
       <rect width="248" height="175" rx="8" fill="#0b1120" stroke="#1e293b"/>
       <text x="12" y="24" font-family="monospace" font-size="11" font-weight="bold" fill="#f8fafc">Tracker Stripping Core</text>
-      <text x="12" y="46" font-family="sans-serif" font-size="10" fill="#94a3b8">• 45+ Known Telemetry Keys</text>
-      <text x="12" y="64" font-family="sans-serif" font-size="10" fill="#94a3b8">• UTM, fbclid, mibextid, gclid</text>
-      <text x="12" y="82" font-family="sans-serif" font-size="10" fill="#94a3b8">• TikTok _t, _r, share_link_id</text>
-      <text x="12" y="100" font-family="sans-serif" font-size="10" fill="#94a3b8">• YouTube si, feature, pp</text>
-      <text x="12" y="120" font-family="sans-serif" font-size="10" fill="#94a3b8">• Amazon crid, sprefix, qid</text>
+      <text x="12" y="46" font-family="sans-serif" font-size="10" fill="#94a3b8">• Instagram exln, igsh, obrf, vrfl</text>
+      <text x="12" y="64" font-family="sans-serif" font-size="10" fill="#94a3b8">• Meta fbclid, mibextid, Threads xmt</text>
+      <text x="12" y="82" font-family="sans-serif" font-size="10" fill="#94a3b8">• TikTok _t, _r, u_code, ttclid</text>
+      <text x="12" y="100" font-family="sans-serif" font-size="10" fill="#94a3b8">• Reddit shrid • LinkedIn li_fat_id</text>
+      <text x="12" y="120" font-family="sans-serif" font-size="10" fill="#94a3b8">• Amazon, eBay, AliExpress, UTM</text>
       <text x="12" y="145" font-family="monospace" font-size="10" font-weight="bold" fill="#4ade80">→ Zero Data Leaves Device</text>
     </g>
   </g>
@@ -175,22 +175,21 @@
     <g transform="translate(12, 185)">
       <rect width="166" height="120" rx="8" fill="#0b1120" stroke="#1e293b"/>
       <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Artifacts &amp; Git</text>
-      <text x="10" y="42" font-family="sans-serif" font-size="9" fill="#94a3b8">• CleanLink.apk (v1.7.0)</text>
-      <text x="10" y="58" font-family="sans-serif" font-size="9" fill="#94a3b8">• CleanLink.bundle</text>
-      <text x="10" y="74" font-family="sans-serif" font-size="9" fill="#94a3b8">• Full .git history</text>
+      <text x="10" y="42" font-family="sans-serif" font-size="9" fill="#94a3b8">• ZnepLinkCleaner.apk</text>
+      <text x="10" y="58" font-family="sans-serif" font-size="9" fill="#94a3b8">• ZnepLinkCleaner.bundle</text>
+      <text x="10" y="74" font-family="sans-serif" font-size="9" fill="#94a3b8">• Full .git &amp; Prompts</text>
       <text x="10" y="90" font-family="sans-serif" font-size="9" fill="#94a3b8">• HTML repo browser</text>
     </g>
 
     <g transform="translate(12, 320)">
       <rect width="166" height="175" rx="8" fill="#0b1120" stroke="#1e293b"/>
-      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Durable URLs</text>
-      <text x="10" y="42" font-family="monospace" font-size="8" fill="#cbd5e1">is.gd/cleanlink_app</text>
-      <text x="10" y="60" font-family="monospace" font-size="8" fill="#cbd5e1">is.gd/cleanlink_apk</text>
-      <text x="10" y="78" font-family="monospace" font-size="8" fill="#cbd5e1">is.gd/cleanlink_repo</text>
-      <text x="10" y="96" font-family="monospace" font-size="8" fill="#cbd5e1">is.gd/cleanlink_arch</text>
-      <text x="10" y="125" font-family="sans-serif" font-size="9" fill="#94a3b8">Note on 403:</text>
-      <text x="10" y="142" font-family="sans-serif" font-size="8" fill="#fca5a5">AI Studio auth cookie</text>
-      <text x="10" y="157" font-family="sans-serif" font-size="8" fill="#fca5a5">required for web root</text>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Domain &amp; Access</text>
+      <text x="10" y="44" font-family="monospace" font-size="8" fill="#4ade80">linkcleaner.znep.com</text>
+      <text x="10" y="64" font-family="monospace" font-size="8" fill="#cbd5e1">com.znep.linkcleaner</text>
+      <text x="10" y="88" font-family="sans-serif" font-size="9" fill="#94a3b8">24/7 Public Watchdog:</text>
+      <text x="10" y="106" font-family="sans-serif" font-size="8" fill="#4ade80">Nginx Lua Auth Bypassed</text>
+      <text x="10" y="122" font-family="sans-serif" font-size="8" fill="#4ade80">Persistent Port 3000</text>
+      <text x="10" y="142" font-family="sans-serif" font-size="8" fill="#38bdf8">Vibe-Coded PoC</text>
     </g>
   </g>
 </svg>

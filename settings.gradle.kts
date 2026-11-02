@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "CleanLink"
+rootProject.name = "ZnepLinkCleaner"
 
 include(":app")

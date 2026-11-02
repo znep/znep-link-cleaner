@@ -32,13 +32,13 @@ class MainActivity : ComponentActivity() {
         try {
             val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(this, "direct_clean_link")
                 .setShortLabel("Clean & Purge Link")
-                .setLongLabel("CleanLink: Instant Tracker Purging")
+                .setLongLabel("ZnepLinkCleaner: Instant Tracker Purging")
                 .setIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(this, R.mipmap.ic_launcher))
                 .setIntent(Intent(Intent.ACTION_SEND).apply {
                     setClass(this@MainActivity, MainActivity::class.java)
                     type = "text/plain"
                 })
-                .setCategories(setOf("com.example.cleanlink.category.DIRECT_SHARE_TARGET"))
+                .setCategories(setOf("com.znep.linkcleaner.category.DIRECT_SHARE_TARGET"))
                 .setRank(1)
                 .build()
             androidx.core.content.pm.ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)

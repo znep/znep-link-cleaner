@@ -19,7 +19,7 @@ class ExampleRobolectricTest {
     fun `read string from context`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val appName = context.getString(R.string.app_name)
-        assertEquals("CleanLink", appName)
+        assertEquals("ZnepLinkCleaner", appName)
     }
 
     @Test
@@ -126,11 +126,13 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `verify full release notes history completeness`() {
+    fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(10, releases.size)
-        assertEquals("1.9.0", releases.first().version)
+        assertEquals(11, releases.size)
+        assertEquals("2.0.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertTrue(releases.all { it.highlights.isNotEmpty() })
+        assertTrue(releases.all { it.userPrompt.isNotBlank() })
+        assertTrue(com.example.model.ReleaseHistory.VIBE_CODED_POC_NOTICE.contains("VIBE-CODED PROOF OF CONCEPT"))
     }
 }

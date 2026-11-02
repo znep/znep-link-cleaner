@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CleanLink</string>
+    <string name="app_name">ZnepLinkCleaner</string>
     <string name="action_share_clean">Share Clean Link</string>
     <string name="action_copy_clean">Copy Clean Link</string>
     <string name="link_copied_toast">Clean link copied to clipboard!</string>
