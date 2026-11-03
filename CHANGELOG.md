@@ -1,9 +1,20 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v19.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v20.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v20.0] — Build 20 (November 3, 2026)
+### Facebook Native Deep-Link (`fb://native_post`) Base64 Permalink Decoder, `wtsid` Tracker Purge & GitHub Pages/Releases Hosting
+- **Triggering User Prompt**:
+  > *"Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field."*
+- **Highlights**:
+  - Decoded Facebook native Android app deep-link redirects (`fb://native_post/<base64>?wtsid=...`, `fb://facewebmodal/f?href=...`, `fb://story/...`, and `intent://...#Intent;scheme=fb;...`) directly into canonical `https://www.facebook.com/<actorId>/posts/<postId>` permalinks by unpacking Facebook's Base64 GraphQL `S:_I<actorId>:<postId>` token.
+  - Eliminated false-positive `"Security Firewall // Unsafe Redirect Blocked"` errors when Facebook mobile web pages attempt to launch the native `fb://` app scheme during headless WebView expansion.
+  - Added DOM meta-tag fallback extraction (`al:android:url`, `link[rel=canonical]`, `og:url`) in `FacebookWebViewExpander` and added `wtsid`, `_rdc`, and `_rdr` to `KNOWN_TRACKING_PARAMS`.
+  - Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in `CleanResultCard`.
+  - Configured GitHub Pages static deployment (`gh-pages` + `CNAME` `linkcleaner.znep.com`) and automated GitHub Releases binary asset publishing via the GitHub REST API.
 
 ## [v19.0] — Build 19 (November 2, 2026)
 ### Google Play Publishing Version Bump (v19.0 / Build 19)

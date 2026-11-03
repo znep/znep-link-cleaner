@@ -201,7 +201,7 @@
           <h1>ZnepLinkCleaner Git Repository Browser</h1>
           <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" class="badge" style="text-decoration: none;">🐙 github.com/znep/znep-link-cleaner ↗</a>
-            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v19.0 (Build 19)</span>
+            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v20.0 (Build 20)</span>
             <span class="badge" style="border-color: #a855f7; color: #d8b4fe;">Vibe-Coded PoC</span>
             <span style="font-size: 0.8rem; color: var(--text-muted);">com.znep.linkcleaner</span>
           </div>
@@ -219,7 +219,7 @@
       <div class="card" style="border-color: rgba(168, 85, 247, 0.55);">
         <div class="card-title">🐙 Public GitHub Repository</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Live public repository at <code>github.com/znep/znep-link-cleaner</code>. Every release (<code>v1.0.0</code> – <code>v19.0</code>) is committed as a separate Git commit and tag containing the triggering user prompt and changelog.
+          Live public repository at <code>github.com/znep/znep-link-cleaner</code>. Every release (<code>v1.0.0</code> – <code>v20.0</code>) is committed as a separate Git commit and tag containing the triggering user prompt and changelog.
         </p>
         <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #d8b4fe;">
           git clone https://github.com/znep/znep-link-cleaner.git
@@ -230,7 +230,7 @@
       <div class="card">
         <div class="card-title">Git Bundle (Offline Clone)</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Complete Git repository packfile synchronized 1:1 with <code>github.com/znep/znep-link-cleaner</code> (<code>v1.0.0</code> – <code>v19.0</code>), including all 19 separate prompt-annotated commits and tags.
+          Complete Git repository packfile synchronized 1:1 with <code>github.com/znep/znep-link-cleaner</code> (<code>v1.0.0</code> – <code>v20.0</code>), including all 20 separate prompt-annotated commits and tags.
         </p>
         <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;">
           git clone ZnepLinkCleaner.bundle zneplinkcleaner
@@ -247,18 +247,34 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Source Tree ZIP (v19.0)</div>
+        <div class="card-title">Source Tree ZIP (v20.0)</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Clean v19.0 snapshot of all Kotlin/Compose source files, standing rules (<code>AGENTS.md</code>, <code>CHANGELOG.md</code>), and Gradle build system.
+          Clean v20.0 snapshot of all Kotlin/Compose source files, standing rules (<code>AGENTS.md</code>, <code>CHANGELOG.md</code>), and Gradle build system.
         </p>
-        <a href="https://github.com/znep/znep-link-cleaner/releases/download/v19.0/ZnepLinkCleaner-v19.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v19.0-source.zip</a>
+        <a href="https://github.com/znep/znep-link-cleaner/releases/download/v20.0/ZnepLinkCleaner-v20.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v20.0-source.zip</a>
       </div>
     </div>
 
-    <div class="section-header">Synchronized GitHub Release Commits, Prompts &amp; Tags (v1.0.0 – v19.0) — <a href="https://github.com/znep/znep-link-cleaner/commits/main" target="_blank" rel="noopener" style="color: var(--accent);">View on GitHub ↗</a></div>
+    <div class="section-header">Synchronized GitHub Release Commits, Prompts &amp; Tags (v1.0.0 – v20.0) — <a href="https://github.com/znep/znep-link-cleaner/commits/main" target="_blank" rel="noopener" style="color: var(--accent);">View on GitHub ↗</a></div>
 
     <div class="commit-item" style="border-color: rgba(34, 197, 94, 0.5);">
-      <div class="commit-subject"><span class="tag-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e;">tag: v19.0</span>v19.0: Google Play Publishing Version Bump (v19.0 / Build 19)</div>
+      <div class="commit-subject"><span class="tag-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e;">tag: v20.0</span>v20.0: Facebook Native Deep-Link (fb://native_post) Base64 Permalink Decoder, wtsid Tracker Purge &amp; GitHub Pages/Releases Hosting</div>
+      <div class="commit-meta">Author: Marc Slemko &lt;marcs@znep.com&gt; • Date: November 3, 2026 • Branch: main (HEAD)</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
+        "Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field."
+      </div>
+      <ul class="commit-changes">
+        <li>Decoded Facebook native Android app deep-link redirects (<code>fb://native_post/&lt;base64&gt;?wtsid=...</code>, <code>fb://facewebmodal/f?href=...</code>, <code>fb://story/...</code>, and <code>intent://...#Intent;scheme=fb;...</code>) directly into canonical <code>https://www.facebook.com/&lt;actorId&gt;/posts/&lt;postId&gt;</code> permalinks</li>
+        <li>Eliminated false-positive "Security Firewall // Unsafe Redirect Blocked" errors when Facebook mobile web pages attempt to launch the native <code>fb://</code> app scheme during headless WebView expansion</li>
+        <li>Added DOM meta-tag fallback extraction (<code>al:android:url</code>, <code>link[rel=canonical]</code>, <code>og:url</code>) in <code>FacebookWebViewExpander</code> and added <code>wtsid</code>, <code>_rdc</code>, and <code>_rdr</code> to <code>KNOWN_TRACKING_PARAMS</code></li>
+        <li>Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in <code>CleanResultCard</code></li>
+        <li>Configured GitHub Pages static deployment (<code>gh-pages</code> + <code>CNAME</code> <code>linkcleaner.znep.com</code>) and automated GitHub Releases binary asset publishing via the GitHub REST API</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v19.0</span>v19.0: Google Play Publishing Version Bump (v19.0 / Build 19)</div>
       <div class="commit-meta">November 2, 2026 • Build 19 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
       <div class="prompt-box">
         <span class="prompt-label">&gt; USER PROMPT //</span>

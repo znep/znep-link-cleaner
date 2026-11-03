@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v19.0 (Build 19)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v20.0 (Build 20)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal ([https://linkcleaner.znep.com](https://linkcleaner.znep.com)) with public source & prompt-tracked Git history at **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**. Built iteratively through natural-language prompts in Google AI Studio, every prompt that modified the application and its corresponding changes are permanently recorded in each separate Git commit message, this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,25 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v19.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v20.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
-3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active.
-4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v19.0-source.zip`.
+3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active, alongside GitHub Pages (`gh-pages`) and GitHub Releases binary hosting.
+4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v20.0-source.zip`.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v19.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v20.0`)
+
+### `v20.0` (Build 20) — November 3, 2026
+**Facebook Native Deep-Link (`fb://native_post`) Base64 Permalink Decoder, `wtsid` Tracker Purge & GitHub Pages/Releases Hosting**
+- **User Prompt**:
+  > *"Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field."*
+- **Changes**:
+  - Decoded Facebook native Android app deep-link redirects (`fb://native_post/<base64>?wtsid=...`, `fb://facewebmodal/f?href=...`, `fb://story/...`, and `intent://...#Intent;scheme=fb;...`) directly into canonical `https://www.facebook.com/<actorId>/posts/<postId>` permalinks by unpacking Facebook's Base64 GraphQL `S:_I<actorId>:<postId>` token.
+  - Eliminated false-positive `"Security Firewall // Unsafe Redirect Blocked"` errors when Facebook mobile web pages attempt to launch the native `fb://` app scheme during headless WebView expansion.
+  - Added DOM meta-tag fallback extraction (`al:android:url`, `link[rel=canonical]`, `og:url`) in `FacebookWebViewExpander` and added `wtsid`, `_rdc`, and `_rdr` to `KNOWN_TRACKING_PARAMS`.
+  - Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in `CleanResultCard`.
+  - Configured GitHub Pages static deployment (`gh-pages` + `CNAME` `linkcleaner.znep.com`) and automated GitHub Releases binary asset publishing via the GitHub REST API.
 
 ### `v19.0` (Build 19) — November 2, 2026
 **Google Play Publishing Version Bump (v19.0 / Build 19)**

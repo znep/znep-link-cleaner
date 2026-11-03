@@ -210,10 +210,28 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `decode facebook native_post base64 deep link and strip wtsid tracker`() {
+        val fbDeepLink = "fb://native_post/UzpfSTEwMDA2NTU0MDM4NTAxOToxNDMzNTc5NTM1NTAzMzc5OjE0MzM1Nzk1MzU1MDMzNzk=?wtsid=wt_0DfZb2qGHBljgYsBz"
+        val extracted = com.example.cleaner.FacebookWebViewExpander.extractPermalinkFromFacebookDeepLink(
+            fbDeepLink,
+            preserveQuery = true
+        )
+        assertEquals(
+            "https://www.facebook.com/100065540385019/posts/1433579535503379?wtsid=wt_0DfZb2qGHBljgYsBz",
+            extracted
+        )
+
+        val cleaned = LinkCleaner.cleanText(fbDeepLink)
+        assertEquals("https://www.facebook.com/100065540385019/posts/1433579535503379", cleaned.cleanedUrl)
+        assertTrue(cleaned.strippedParams.any { it.key == "wtsid" })
+        assertEquals(com.example.model.ExpansionWarningType.NONE, cleaned.warningType)
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(19, releases.size)
-        assertEquals("19.0", releases.first().version)
+        assertEquals(20, releases.size)
+        assertEquals("20.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

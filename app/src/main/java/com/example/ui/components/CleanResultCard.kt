@@ -322,8 +322,13 @@ fun CleanResultCard(
             }
 
             // Security Advisories Banner (Homograph, user@host, APK download, Cleartext HTTP, Raw IP)
-            if (result.securityAdvisories.isNotEmpty()) {
-                val hasHighSeverity = result.securityAdvisories.any { it.severity == SecuritySeverity.HIGH }
+            val displayedAdvisories = if (result.warningType == ExpansionWarningType.RED_SECURITY_BLOCKED) {
+                result.securityAdvisories.filter { it.code != "BLOCKED_UNSAFE_REDIRECT" }
+            } else {
+                result.securityAdvisories
+            }
+            if (displayedAdvisories.isNotEmpty()) {
+                val hasHighSeverity = displayedAdvisories.any { it.severity == SecuritySeverity.HIGH }
                 val borderColor = if (hasHighSeverity) Color(0xFFEF4444) else Color(0xFFF59E0B)
                 val bgColor = if (hasHighSeverity) Color(0xFF310B14) else Color(0xFF2B1C06)
                 val titleColor = if (hasHighSeverity) Color(0xFFFCA5A5) else Color(0xFFFDE68A)
@@ -350,14 +355,14 @@ fun CleanResultCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "[ SECURITY & PHISHING ADVISORIES (${result.securityAdvisories.size}) ]",
+                                text = "[ SECURITY & PHISHING ADVISORIES (${displayedAdvisories.size}) ]",
                                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                                 fontWeight = FontWeight.Bold,
                                 color = titleColor
                             )
                         }
 
-                        for (advisory in result.securityAdvisories) {
+                        for (advisory in displayedAdvisories) {
                             SecurityAdvisoryItem(advisory = advisory)
                         }
                     }
@@ -385,17 +390,17 @@ fun CleanResultCard(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = if (isUnchanged) {
-                            "VERIFIED CLEAN LINK // IDENTICAL TO INPUT"
-                        } else {
-                            "PURGED LINK //"
+                        text = when {
+                            isUnchanged && hasWarnings -> "UNCHANGED LINK // SEE ADVISORY ABOVE"
+                            isUnchanged -> "VERIFIED CLEAN LINK // IDENTICAL TO INPUT"
+                            else -> "PURGED LINK //"
                         },
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                         fontWeight = FontWeight.Bold,
-                        color = if (isUnchanged && !hasWarnings) {
-                            Color(0xFF6EE7B7)
-                        } else {
-                            MaterialTheme.colorScheme.primary
+                        color = when {
+                            isUnchanged && hasWarnings -> Color(0xFFFDE68A)
+                            isUnchanged -> Color(0xFF6EE7B7)
+                            else -> MaterialTheme.colorScheme.primary
                         }
                     )
                     if (isUnchanged && !hasWarnings) {

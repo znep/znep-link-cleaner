@@ -1,7 +1,16 @@
 [
   {
-    "sha": "d64f0f45be2c2b215b4bb84cc0462c17a84313ce",
-    "short_sha": "d64f0f4",
+    "sha": "7e49f391c4c0e09fce24a06fda94f792d59dee9a",
+    "short_sha": "7e49f39",
+    "author": "Marc Slemko",
+    "date": "2026-11-03",
+    "subject": "Release v20.0 (Build 20): Facebook Native Deep-Link (fb://native_post) Base64 Permalink Decoder, wtsid Tracker Purge & GitHub Pages/Releases Hosting",
+    "body": "User Prompt: \"Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field.\"\n\nChanges:\n- Decoded Facebook native Android app deep-link redirects (fb://native_post/<base64>?wtsid=..., fb://facewebmodal/f?href=..., fb://story/..., and intent://...#Intent;scheme=fb;...) directly into canonical https://www.facebook.com/<actorId>/posts/<postId> permalinks by unpacking Facebook's Base64 GraphQL S:_I<actorId>:<postId> token.\n- Eliminated false-positive 'Security Firewall // Unsafe Redirect Blocked' errors when Facebook mobile web pages attempt to launch the native fb:// app scheme during headless WebView expansion.\n- Added DOM meta-tag fallback extraction (al:android:url, link[rel=canonical], og:url) in FacebookWebViewExpander and added wtsid, _rdc, and _rdr to KNOWN_TRACKING_PARAMS.\n- Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in CleanResultCard.\n- Configured GitHub Pages static deployment (gh-pages + CNAME linkcleaner.znep.com) and automated GitHub Releases binary asset publishing via the GitHub REST API.",
+    "tag": "v20.0"
+  },
+  {
+    "sha": "c4eb9e4a27192b0cc22c63203926e37e8f9be15f",
+    "short_sha": "c4eb9e4",
     "author": "Marc Slemko",
     "date": "2026-11-03",
     "subject": "Release v19.0 (Build 19): Post-Play Store Publish Version Bump",

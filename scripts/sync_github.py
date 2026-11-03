@@ -146,11 +146,13 @@ def ensure_all_release_commits_tagged():
         if not m:
             continue
         tag_name = m.group(1)
-        run_git(
-            ["tag", "-f", "-a", tag_name, sha, "-m", f"Release {subject.strip()}"],
-            env=author_env,
-            check=False,
-        )
+        existing_sha = run_git(["rev-list", "-n", "1", tag_name], check=False)
+        if existing_sha.returncode != 0 or existing_sha.stdout.strip() != sha:
+            run_git(
+                ["tag", "-f", "-a", tag_name, sha, "-m", f"Release {subject.strip()}"],
+                env=author_env,
+                check=False,
+            )
         tagged.append((tag_name, sha[:7]))
     return tagged
 

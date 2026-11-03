@@ -34,6 +34,25 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "20.0",
+            buildNumber = 20,
+            releaseDate = "November 3, 2026",
+            title = "Facebook Native Deep-Link (fb://native_post) Base64 Permalink Decoder, wtsid Tracker Purge & GitHub Pages/Releases Hosting",
+            userPrompt = "Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field.",
+            highlights = listOf(
+                "Decoded Facebook native Android app deep-link redirects (fb://native_post/<base64>?wtsid=..., fb://facewebmodal/f?href=..., fb://story/..., and intent://...#Intent;scheme=fb;...) directly into canonical https://www.facebook.com/<actorId>/posts/<postId> permalinks",
+                "Eliminated false-positive 'Security Firewall // Unsafe Redirect Blocked' errors when Facebook mobile web pages attempt to launch the native fb:// app scheme during headless WebView expansion",
+                "Added DOM meta-tag fallback extraction (al:android:url, link[rel=canonical], og:url) in FacebookWebViewExpander and added wtsid, _rdc, and _rdr to KNOWN_TRACKING_PARAMS",
+                "Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in CleanResultCard",
+                "Configured GitHub Pages static deployment (gh-pages + CNAME linkcleaner.znep.com) and automated GitHub Releases binary asset publishing via the GitHub REST API"
+            ),
+            technicalDetails = listOf(
+                "Implemented extractPermalinkFromFacebookDeepLink and decodeNativePostBase64Token in FacebookWebViewExpander.kt to unpack GraphQL S:_I<actorId>:<postId> Base64 payloads",
+                "Updated UrlExpander.kt and LinkCleaner.kt to unwrap fb:// deep links and strip wtsid, _rdc, and _rdr tracking parameters",
+                "Updated CleanResultCard.kt to suppress duplicate BLOCKED_UNSAFE_REDIRECT advisory rows when the primary RED_SECURITY_BLOCKED banner is visible; bumped versionCode to 20 and versionName to 20.0"
+            )
+        ),
+        ReleaseNote(
             version = "19.0",
             buildNumber = 19,
             releaseDate = "November 2, 2026",

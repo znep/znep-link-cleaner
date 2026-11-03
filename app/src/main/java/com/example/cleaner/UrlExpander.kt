@@ -232,7 +232,15 @@ object UrlExpander {
                     if (code in 300..399) {
                         val location = response.header("Location")
                         if (!location.isNullOrBlank()) {
-                            val candidateUrl = resolveRedirectLocation(currentUrl, location.trim())
+                            val rawCandidateUrl = resolveRedirectLocation(currentUrl, location.trim())
+                            val candidateUrl = if (FacebookWebViewExpander.isFacebookNativeAppDeepLink(rawCandidateUrl)) {
+                                FacebookWebViewExpander.extractPermalinkFromFacebookDeepLink(
+                                    rawCandidateUrl,
+                                    preserveQuery = true
+                                ) ?: rawCandidateUrl
+                            } else {
+                                rawCandidateUrl
+                            }
                             val candidateBlockReason = UrlSecurityValidator.validateRedirectTarget(candidateUrl)
                             if (candidateBlockReason != null) {
                                 blockedReason = candidateBlockReason
@@ -252,7 +260,7 @@ object UrlExpander {
                                     step = hops.size + 1,
                                     url = currentUrl,
                                     host = UrlSecurityValidator.extractHost(currentUrl),
-                                    mechanism = "HTTP $code"
+                                    mechanism = if (candidateUrl != rawCandidateUrl) "Meta Native Deep-Link Decode" else "HTTP $code"
                                 )
                             )
                         } else {
@@ -331,6 +339,17 @@ object UrlExpander {
     fun unwrapOfflineRedirectsDetailed(url: String): OfflineUnwrapResult {
         try {
             val trimmed = url.trim()
+
+            // 0. Facebook Native Deep-Link Unwrap (fb://native_post/<base64>, fb://facewebmodal/..., intent://...)
+            if (FacebookWebViewExpander.isFacebookNativeAppDeepLink(trimmed)) {
+                val decodedFb = FacebookWebViewExpander.extractPermalinkFromFacebookDeepLink(
+                    trimmed,
+                    preserveQuery = true
+                )
+                if (decodedFb != null) {
+                    return OfflineUnwrapResult(url = decodedFb, mechanism = "Meta Native Deep-Link Decode")
+                }
+            }
 
             // 1. Google AMP Project CDN Wrapper (*.cdn.ampproject.org/v/s/<target>)
             val ampCdnMatch = AMP_CDN_REGEX.matchEntire(trimmed)

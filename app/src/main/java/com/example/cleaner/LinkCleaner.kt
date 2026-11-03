@@ -10,7 +10,7 @@ import com.example.model.StrippedParam
 object LinkCleaner {
 
     private val URL_REGEX = Regex(
-        """(https?://[^\s<>"'\)]+)""",
+        """((?:https?|fb)://[^\s<>"'\)]+)""",
         RegexOption.IGNORE_CASE
     )
 
@@ -57,6 +57,9 @@ object LinkCleaner {
         "hc_location" to ("Meta / Facebook" to "Home container location token"),
         "notif_id" to ("Meta / Facebook" to "Notification telemetry reference ID"),
         "notif_t" to ("Meta / Facebook" to "Notification type tag"),
+        "wtsid" to ("Meta / Facebook" to "Facebook web-to-share session tracking identifier"),
+        "_rdc" to ("Meta / Facebook" to "Facebook mobile redirect datacenter telemetry"),
+        "_rdr" to ("Meta / Facebook" to "Facebook redirect routing flag"),
         "igshid" to ("Instagram" to "Instagram unique user share identifier"),
         "igsh" to ("Instagram" to "Instagram short share telemetry token"),
         "exln" to ("Instagram / Meta" to "Instagram external link share and user session tracking token"),
@@ -271,7 +274,7 @@ object LinkCleaner {
                             step = 2,
                             url = resolved,
                             host = UrlSecurityValidator.extractHost(resolved),
-                            mechanism = "Meta WebView Permalink"
+                            mechanism = "Meta Deep-Link / WebView Permalink"
                         )
                     )
                 } else {
