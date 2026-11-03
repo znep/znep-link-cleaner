@@ -1,9 +1,18 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v16.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v17.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v17.0] — Build 17 (November 2, 2026)
+### Google Play Publishing Version Bump (v17.0 / Build 17) & Tagged GitHub Release Sync
+- **Triggering User Prompt**:
+  > *"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\"."*
+- **Highlights**:
+  - Incremented `versionCode` from `16` to `17` and updated `versionName` to `"17.0"` following Google Play publishing.
+  - Synchronized `v17.0` release notes and triggering prompt across the Android app (`ReleaseNotes.kt`), linked GitHub repository (`README.md` & `CHANGELOG.md`), and web portal (`index.html` & `repo.html`).
+  - Committed `v17.0` as a separate prompt-annotated commit on `main`, tagged `v17.0`, and pushed to `https://github.com/znep/znep-link-cleaner`.
 
 ## [v16.0] — Build 16 (November 2, 2026)
 ### Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox & Anti-Phishing Advisories

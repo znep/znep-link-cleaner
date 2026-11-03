@@ -34,6 +34,22 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "17.0",
+            buildNumber = 17,
+            releaseDate = "November 2, 2026",
+            title = "Google Play Publishing Version Bump (v17.0 / Build 17) & Tagged GitHub Release Sync",
+            userPrompt = "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\".",
+            highlights = listOf(
+                "Incremented versionCode from 16 to 17 and updated versionName to 17.0 following Google Play publishing",
+                "Synchronized v17.0 release notes and triggering prompt across Android app (ReleaseNotes.kt), linked GitHub repository (README.md & CHANGELOG.md), and web portal (index.html & repo.html)",
+                "Committed v17.0 as a separate prompt-annotated commit on main, tagged with annotated tag v17.0, and pushed to https://github.com/znep/znep-link-cleaner"
+            ),
+            technicalDetails = listOf(
+                "Updated defaultConfig in app/build.gradle.kts: versionCode = 17, versionName = \"17.0\"",
+                "Repackaged ZnepLinkCleaner.apk (v17.0), ZnepLinkCleaner.bundle, ZnepLinkCleaner-git.zip, and ZnepLinkCleaner-v17.0-source.zip"
+            )
+        ),
+        ReleaseNote(
             version = "16.0",
             buildNumber = 16,
             releaseDate = "November 2, 2026",

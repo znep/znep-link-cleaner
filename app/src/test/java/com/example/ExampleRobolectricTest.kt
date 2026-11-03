@@ -182,8 +182,8 @@ class ExampleRobolectricTest {
     @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(16, releases.size)
-        assertEquals("16.0", releases.first().version)
+        assertEquals(17, releases.size)
+        assertEquals("17.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

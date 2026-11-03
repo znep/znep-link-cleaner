@@ -1,7 +1,16 @@
 [
   {
-    "sha": "ae5aa3a84d04d952bd22a6027f6da21304b7cda5",
-    "short_sha": "ae5aa3a",
+    "sha": "6ad9edca75ea2d364c27017826a008667ff8211c",
+    "short_sha": "6ad9edc",
+    "author": "Marc Slemko",
+    "date": "2026-11-03",
+    "subject": "Release v17.0 (Build 17): Post-Play Store Publish Version Bump",
+    "body": "User Prompt: \"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \\\"<new versionCode>.0\\\".\"\n\nChanges:\n- Incremented versionCode from 16 to 17 and updated versionName to \"17.0\" in app/build.gradle.kts following Google Play publishing completion for v16.0.\n- Synchronized v17.0 (Build 17) release notes and triggering user prompt across the Android app (ReleaseNotes.kt), web portal (index.html, repo.html), README.md, CHANGELOG.md, and GitHub commit/tag history.",
+    "tag": "v17.0"
+  },
+  {
+    "sha": "fff8e63095a57ce0ed84ef90d81b005079653506",
+    "short_sha": "fff8e63",
     "author": "Marc Slemko",
     "date": "2026-11-03",
     "subject": "v16.0 (Build 16): Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox & Anti-Phishing Advisories",
