@@ -1,7 +1,16 @@
 [
   {
-    "sha": "75068f0260c33b3b2c999700c6e7e21996b49be3",
-    "short_sha": "75068f0",
+    "sha": "d64f0f45be2c2b215b4bb84cc0462c17a84313ce",
+    "short_sha": "d64f0f4",
+    "author": "Marc Slemko",
+    "date": "2026-11-03",
+    "subject": "Release v19.0 (Build 19): Post-Play Store Publish Version Bump",
+    "body": "User Prompt: \"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \\\"<new versionCode>.0\\\".\"\n\nChanges:\n- Incremented versionCode from 18 to 19 and updated versionName to \"19.0\" in app/build.gradle.kts following Google Play publishing completion for v18.0.\n- Synchronized v19.0 (Build 19) release notes and triggering user prompt across the Android app (ReleaseNotes.kt), web portal (index.html, repo.html), README.md, CHANGELOG.md, and GitHub commit/tag history.",
+    "tag": "v19.0"
+  },
+  {
+    "sha": "1d97f199549fbcfd51cf918a9742ef42c10aac52",
+    "short_sha": "1d97f19",
     "author": "Marc Slemko",
     "date": "2026-11-03",
     "subject": "Release v18.0 (Build 18): Unchanged Link Indicator, Random Cyberpunk Z Glitch Engine, In-Place Text Replacement, AMP/Amazon Simplifier & Hop Trace",

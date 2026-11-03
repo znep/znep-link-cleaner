@@ -1,9 +1,18 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v18.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v19.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v19.0] — Build 19 (November 2, 2026)
+### Google Play Publishing Version Bump (v19.0 / Build 19)
+- **Triggering User Prompt**:
+  > *"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\"."*
+- **Highlights**:
+  - Incremented `versionCode` from `18` to `19` and updated `versionName` to `"19.0"` following Google Play publishing completion for `v18.0`.
+  - Synchronized `v19.0` release notes and triggering prompt across the Android app (`ReleaseNotes.kt`), linked GitHub repository (`README.md` & `CHANGELOG.md`), and web portal (`index.html` & `repo.html`).
+  - Committed `v19.0` as a separate prompt-annotated commit on `main`, tagged `v19.0`, and pushed to `https://github.com/znep/znep-link-cleaner`.
 
 ## [v18.0] — Build 18 (November 2, 2026)
 ### Unchanged Link Indicator, Randomized Cyberpunk 'Z' Glitch Engine, In-Place Text Replacement, Canonical AMP/Amazon Simplifier & Redirect Hop Trace
