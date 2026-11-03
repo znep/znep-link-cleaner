@@ -27,6 +27,13 @@ data class StrippedParam(
     val description: String
 )
 
+data class RedirectHop(
+    val step: Int,
+    val url: String,
+    val host: String,
+    val mechanism: String
+)
+
 data class CleanResult(
     val originalText: String,
     val cleanedText: String,
@@ -42,5 +49,16 @@ data class CleanResult(
     val warningMessage: String? = null,
     val isFacebookShareLink: Boolean = false,
     val securityAdvisories: List<SecurityAdvisory> = emptyList(),
-    val isOfflineDeferredShortlink: Boolean = false
-)
+    val isOfflineDeferredShortlink: Boolean = false,
+    val redirectHops: List<RedirectHop> = emptyList()
+) {
+    /**
+     * True when the input URL/text required zero modifications (no trackers stripped,
+     * no canonical path simplifications, and no redirect unwrapping/expansion).
+     */
+    val isUnchanged: Boolean
+        get() = originalText == cleanedText &&
+            originalUrl == cleanedUrl &&
+            strippedParams.isEmpty() &&
+            expandedFromUrl == null
+}

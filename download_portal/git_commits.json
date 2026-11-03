@@ -1,7 +1,16 @@
 [
   {
-    "sha": "6ad9edca75ea2d364c27017826a008667ff8211c",
-    "short_sha": "6ad9edc",
+    "sha": "75068f0260c33b3b2c999700c6e7e21996b49be3",
+    "short_sha": "75068f0",
+    "author": "Marc Slemko",
+    "date": "2026-11-03",
+    "subject": "Release v18.0 (Build 18): Unchanged Link Indicator, Random Cyberpunk Z Glitch Engine, In-Place Text Replacement, AMP/Amazon Simplifier & Hop Trace",
+    "body": "User Prompt: \"Give me some ideas for useful features to add that are technically solid. This could include ux changes, but the less ux bloat the better. / Additionally, indicate clearly if the link is unchanged instead of requiring the user to compare the two versions of it. / Also make the Z jiggle more or do other cool visual things randomly.\"\n\nChanges:\n- Added an unmistakable '[ \u2713 UNCHANGED // ALREADY CLEAN ]' emerald status badge, '0 B CHANGED' pill, and 'VERIFIED CLEAN LINK // IDENTICAL TO INPUT' notice on CleanResultCard so users never have to visually diff two identical URLs.\n- Upgraded the Zlc logo with a 5-mode Randomized Cyberpunk Z Glitch & Stunt Engine (Seismic Tri-Chromatic Jiggle, Horizontal CRT Scanline Slice Tear, Kinetic Snap-Flip, High-Voltage Neon Overdrive with corner sparks, and Quantum Blink) in both the Android UI (ZlcLogo.kt) and web portal (index.html, repo.html).\n- Added zero-UI In-Place Android Text Selection Replacement (ACTION_PROCESS_TEXT write-back): highlighting a dirty URL inside any editable text field and tapping ZnepLinkCleaner replaces the link in-place without switching apps.\n- Added Canonical URL Normalization: unwraps Google AMP cache/viewer URLs (*.cdn.ampproject.org/v/s/... and /amp suffixes) and condenses verbose Amazon product paths (/Product-Title-Slug/dp/ASIN/ref=...) down to canonical /dp/<ASIN> permalinks.\n- Added a collapsible Redirect Hop Chain Inspector that records every intermediate redirect hop (Offline Shim, AMP Cache Unwrap, HTTP 301/302, Meta WebView) and displays the step-by-step trace on demand.",
+    "tag": "v18.0"
+  },
+  {
+    "sha": "d4aa697f09efff59d3a6e68fb60b0191bd957f0b",
+    "short_sha": "d4aa697",
     "author": "Marc Slemko",
     "date": "2026-11-03",
     "subject": "Release v17.0 (Build 17): Post-Play Store Publish Version Bump",

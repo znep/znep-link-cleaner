@@ -1,6 +1,7 @@
 package com.example.cleaner
 
 import android.net.Uri
+import com.example.model.RedirectHop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -22,17 +23,29 @@ object UrlExpander {
         "buff.ly", "ow.ly", "rebrand.ly", "cutt.ly", "shorturl.at", "git.io", "qrco.de", "goo.gl"
     )
 
+    private val AMP_CDN_REGEX = Regex(
+        """^https?://[a-z0-9.-]+\.cdn\.ampproject\.org/[vc]/(s/)?(.+)$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val GOOGLE_AMP_PATH_REGEX = Regex(
+        """^/amp/(s/)?(.+)$""",
+        RegexOption.IGNORE_CASE
+    )
+
     data class DetailedExpansion(
         val finalUrl: String,
         val wasRedirected: Boolean,
         val isOpaqueShortener: Boolean,
         val failedToRedirect: Boolean,
-        val blockedReason: String? = null
+        val blockedReason: String? = null,
+        val hops: List<RedirectHop> = emptyList()
     )
 
     data class OfflineUnwrapResult(
         val url: String,
-        val blockedReason: String? = null
+        val blockedReason: String? = null,
+        val mechanism: String? = null
     )
 
     private val client = OkHttpClient.Builder()
@@ -136,9 +149,30 @@ object UrlExpander {
 
     suspend fun expandUrlDetailed(url: String, maxRedirects: Int = 6): DetailedExpansion = withContext(Dispatchers.IO) {
         val trimmed = url.trim()
+        val hops = mutableListOf<RedirectHop>()
+        hops.add(
+            RedirectHop(
+                step = 1,
+                url = trimmed,
+                host = UrlSecurityValidator.extractHost(trimmed),
+                mechanism = "Original"
+            )
+        )
+
         val offlineResult = unwrapOfflineRedirectsDetailed(trimmed)
         val offline = offlineResult.url
         val isOpaque = isOpaqueShortener(trimmed)
+
+        if (offline != trimmed) {
+            hops.add(
+                RedirectHop(
+                    step = hops.size + 1,
+                    url = offline,
+                    host = UrlSecurityValidator.extractHost(offline),
+                    mechanism = offlineResult.mechanism ?: "Offline Shim"
+                )
+            )
+        }
 
         if (offlineResult.blockedReason != null) {
             return@withContext DetailedExpansion(
@@ -146,7 +180,8 @@ object UrlExpander {
                 wasRedirected = false,
                 isOpaqueShortener = isOpaque,
                 failedToRedirect = true,
-                blockedReason = offlineResult.blockedReason
+                blockedReason = offlineResult.blockedReason,
+                hops = hops
             )
         }
 
@@ -157,7 +192,8 @@ object UrlExpander {
                 wasRedirected = false,
                 isOpaqueShortener = isOpaque,
                 failedToRedirect = true,
-                blockedReason = initialBlockReason
+                blockedReason = initialBlockReason,
+                hops = hops
             )
         }
 
@@ -167,7 +203,8 @@ object UrlExpander {
                 wasRedirected = offline != trimmed,
                 isOpaqueShortener = isOpaque,
                 failedToRedirect = false,
-                blockedReason = null
+                blockedReason = null,
+                hops = if (hops.size > 1) hops else emptyList()
             )
         }
 
@@ -204,18 +241,28 @@ object UrlExpander {
                                     wasRedirected = currentUrl != trimmed,
                                     isOpaqueShortener = isOpaque,
                                     failedToRedirect = true,
-                                    blockedReason = candidateBlockReason
+                                    blockedReason = candidateBlockReason,
+                                    hops = if (hops.size > 1) hops else emptyList()
                                 )
                             }
                             currentUrl = candidateUrl
                             redirectCount++
+                            hops.add(
+                                RedirectHop(
+                                    step = hops.size + 1,
+                                    url = currentUrl,
+                                    host = UrlSecurityValidator.extractHost(currentUrl),
+                                    mechanism = "HTTP $code"
+                                )
+                            )
                         } else {
                             return@withContext DetailedExpansion(
                                 finalUrl = currentUrl,
                                 wasRedirected = currentUrl != trimmed,
                                 isOpaqueShortener = isOpaque,
                                 failedToRedirect = currentUrl == trimmed,
-                                blockedReason = null
+                                blockedReason = null,
+                                hops = if (hops.size > 1) hops else emptyList()
                             )
                         }
                     } else {
@@ -224,7 +271,8 @@ object UrlExpander {
                             wasRedirected = currentUrl != trimmed,
                             isOpaqueShortener = isOpaque,
                             failedToRedirect = currentUrl == trimmed,
-                            blockedReason = null
+                            blockedReason = null,
+                            hops = if (hops.size > 1) hops else emptyList()
                         )
                     }
                 }
@@ -245,7 +293,8 @@ object UrlExpander {
             wasRedirected = wasRedirected,
             isOpaqueShortener = isOpaque,
             failedToRedirect = !wasRedirected || blockedReason != null,
-            blockedReason = blockedReason
+            blockedReason = blockedReason,
+            hops = if (hops.size > 1) hops else emptyList()
         )
     }
 
@@ -271,9 +320,9 @@ object UrlExpander {
     }
 
     /**
-     * Handles link shims that can be unwrapped instantly without network
-     * (e.g. l.facebook.com/l.php?u=... or google.com/url?q=...), while validating
-     * that the unwrapped target is a safe public HTTP/HTTPS URL.
+     * Handles link shims and AMP cache wrappers that can be unwrapped instantly without network
+     * (e.g. l.facebook.com/l.php?u=..., google.com/url?q=..., *.cdn.ampproject.org/v/s/...),
+     * while validating that the unwrapped target is a safe public HTTP/HTTPS URL.
      */
     fun unwrapOfflineRedirects(url: String): String {
         return unwrapOfflineRedirectsDetailed(url).url
@@ -281,49 +330,85 @@ object UrlExpander {
 
     fun unwrapOfflineRedirectsDetailed(url: String): OfflineUnwrapResult {
         try {
-            val uri = Uri.parse(url)
-            val host = uri.host?.lowercase().orEmpty()
+            val trimmed = url.trim()
 
-            // Facebook link shim
+            // 1. Google AMP Project CDN Wrapper (*.cdn.ampproject.org/v/s/<target>)
+            val ampCdnMatch = AMP_CDN_REGEX.matchEntire(trimmed)
+            if (ampCdnMatch != null) {
+                val isHttps = !ampCdnMatch.groupValues[1].isNullOrEmpty()
+                val rest = ampCdnMatch.groupValues[2]
+                if (rest.isNotBlank()) {
+                    val candidate = (if (isHttps) "https://" else "http://") + rest
+                    val blockReason = UrlSecurityValidator.validateRedirectTarget(candidate)
+                    return if (blockReason == null) {
+                        OfflineUnwrapResult(url = candidate, mechanism = "AMP Cache Unwrap")
+                    } else {
+                        OfflineUnwrapResult(url = trimmed, blockedReason = blockReason)
+                    }
+                }
+            }
+
+            val uri = Uri.parse(trimmed)
+            val host = uri.host?.lowercase().orEmpty()
+            val path = uri.path.orEmpty()
+
+            // 2. Google AMP Viewer Path (www.google.com/amp/s/<target>)
+            if (host.contains("google.") && path.lowercase().startsWith("/amp/")) {
+                val googleAmpMatch = GOOGLE_AMP_PATH_REGEX.matchEntire(path)
+                if (googleAmpMatch != null) {
+                    val isHttps = !googleAmpMatch.groupValues[1].isNullOrEmpty()
+                    val restPath = googleAmpMatch.groupValues[2]
+                    val querySuffix = uri.encodedQuery?.let { "?$it" }.orEmpty()
+                    val candidate = (if (isHttps) "https://" else "http://") + restPath + querySuffix
+                    val blockReason = UrlSecurityValidator.validateRedirectTarget(candidate)
+                    return if (blockReason == null) {
+                        OfflineUnwrapResult(url = candidate, mechanism = "AMP Viewer Unwrap")
+                    } else {
+                        OfflineUnwrapResult(url = trimmed, blockedReason = blockReason)
+                    }
+                }
+            }
+
+            // 3. Facebook link shim
             if ((host == "l.facebook.com" || host == "lm.facebook.com" || host.contains("facebook.com")) &&
-                uri.path?.contains("/l.php") == true
+                path.contains("/l.php")
             ) {
                 val u = uri.getQueryParameter("u")
                 if (!u.isNullOrBlank()) {
                     val decoded = URLDecoder.decode(u, StandardCharsets.UTF_8.name()).trim()
                     val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
                     return if (blockReason == null) {
-                        OfflineUnwrapResult(url = decoded)
+                        OfflineUnwrapResult(url = decoded, mechanism = "Facebook Shim Unwrap")
                     } else {
-                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                        OfflineUnwrapResult(url = trimmed, blockedReason = blockReason)
                     }
                 }
             }
 
-            // Google redirect
-            if (host.contains("google.") && uri.path?.contains("/url") == true) {
+            // 4. Google redirect
+            if (host.contains("google.") && path.contains("/url")) {
                 val q = uri.getQueryParameter("q") ?: uri.getQueryParameter("url")
                 if (!q.isNullOrBlank()) {
                     val decoded = URLDecoder.decode(q, StandardCharsets.UTF_8.name()).trim()
                     val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
                     return if (blockReason == null) {
-                        OfflineUnwrapResult(url = decoded)
+                        OfflineUnwrapResult(url = decoded, mechanism = "Google Shim Unwrap")
                     } else {
-                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                        OfflineUnwrapResult(url = trimmed, blockedReason = blockReason)
                     }
                 }
             }
 
-            // Reddit outbound
+            // 5. Reddit outbound
             if (host.contains("out.reddit.com")) {
                 val target = uri.getQueryParameter("url")
                 if (!target.isNullOrBlank()) {
                     val decoded = URLDecoder.decode(target, StandardCharsets.UTF_8.name()).trim()
                     val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
                     return if (blockReason == null) {
-                        OfflineUnwrapResult(url = decoded)
+                        OfflineUnwrapResult(url = decoded, mechanism = "Reddit Shim Unwrap")
                     } else {
-                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                        OfflineUnwrapResult(url = trimmed, blockedReason = blockReason)
                     }
                 }
             }

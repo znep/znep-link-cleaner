@@ -34,6 +34,26 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "18.0",
+            buildNumber = 18,
+            releaseDate = "November 2, 2026",
+            title = "Unchanged Link Indicator, Randomized Cyberpunk 'Z' Glitch Engine, In-Place Text Replacement, Canonical AMP/Amazon Simplifier & Redirect Hop Trace",
+            userPrompt = "Give me some ideas for useful features to add that are technically solid. This could include ux changes, but the less ux bloat the better. / Additionally, indicate clearly if the link is unchanged instead of requiring the user to compare the two versions of it. / Also make the Z jiggle more or do other cool visual things randomly.",
+            highlights = listOf(
+                "Added an unmistakable '[ ✓ UNCHANGED // ALREADY CLEAN ]' emerald status badge, '0 B CHANGED' pill, and 'VERIFIED CLEAN LINK // IDENTICAL TO INPUT' notice so users never have to visually diff two identical URLs",
+                "Upgraded the 'Zlc' logo with a 5-mode Randomized Cyberpunk 'Z' Glitch & Stunt Engine (Seismic Tri-Chromatic Jiggle, Horizontal CRT Scanline Slice Tear, Kinetic Snap-Flip, High-Voltage Neon Overdrive with corner sparks, and Quantum Blink) in both the Android UI and web portal",
+                "Added zero-UI In-Place Android Text Selection Replacement (ACTION_PROCESS_TEXT write-back): highlighting a dirty URL inside any editable text field (Signal, WhatsApp, Gmail, Notes) and tapping ZnepLinkCleaner replaces the link in-place without switching apps",
+                "Added Canonical URL Normalization: unwraps Google AMP cache/viewer URLs (*.cdn.ampproject.org/v/s/... and /amp suffixes) and condenses verbose Amazon product paths (/Product-Title-Slug/dp/ASIN/ref=...) down to canonical /dp/<ASIN> permalinks",
+                "Added a collapsible Redirect Hop Chain Inspector that records every intermediate redirect hop (Offline Shim, AMP Unwrap, HTTP 301/302, Meta WebView) and displays the step-by-step trace on demand"
+            ),
+            technicalDetails = listOf(
+                "Added CleanResult.isUnchanged and RedirectHop model in CleanModels.kt; rendered emerald unchanged badge and collapsible hop trace in CleanResultCard.kt",
+                "Upgraded ZlcLogo.kt Canvas and web portal SVG with 5 randomized glitch stunt animations while keeping the 'lc' subscript steady",
+                "Updated MainActivity.kt and MainViewModel.kt to check EXTRA_PROCESS_TEXT_READONLY and return RESULT_OK with EXTRA_PROCESS_TEXT for in-place editable text replacement",
+                "Updated UrlExpander.kt and LinkCleaner.kt with AMP CDN/viewer unwrapping, Amazon /dp/<ASIN> path condensation, and hop chain recording; bumped versionCode to 18 and versionName to 18.0"
+            )
+        ),
+        ReleaseNote(
             version = "17.0",
             buildNumber = 17,
             releaseDate = "November 2, 2026",

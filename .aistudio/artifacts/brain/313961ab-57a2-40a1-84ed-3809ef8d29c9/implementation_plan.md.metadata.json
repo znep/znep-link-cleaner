@@ -1,6 +1,6 @@
 {
-  "summary": "Security hardening plan for ZnepLinkCleaner v16.0: SSRF & scheme protection in UrlExpander, strict domain/cookie/storage isolation in FacebookWebViewExpander, phishing/homograph/credential/cleartext/APK risk detection in LinkCleaner & CleanResultCard, Offline-Only expansion mode toggle in Protection settings, and synchronized v16.0 release history & Git commit.",
-  "updatedAt": "2026-11-02T23:53:37.736390202Z",
+  "summary": "Updated implementation plan for ZnepLinkCleaner v18.0 adding a Randomized Cyberpunk 'Z' Glitch & Stunt Engine (seismic RGB split jiggle, horizontal scanline slice tear, snap-flip/skew, neon voltage surge with micro-sparks, and quantum blink) alongside the Unchanged Link indicator, In-Place Android Text Selection Replacement, Canonical AMP/Amazon URL Normalization, and Collapsible Redirect Hop Inspector.",
+  "updatedAt": "2026-11-03T01:37:13.716240775Z",
   "requestFeedback": true,
   "userFacing": true
 }

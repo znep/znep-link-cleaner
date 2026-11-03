@@ -1,9 +1,20 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v17.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v18.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v18.0] — Build 18 (November 2, 2026)
+### Unchanged Link Indicator, Randomized Cyberpunk 'Z' Glitch Engine, In-Place Text Replacement, Canonical AMP/Amazon Simplifier & Redirect Hop Trace
+- **Triggering User Prompt**:
+  > *"Give me some ideas for useful features to add that are technically solid. This could include ux changes, but the less ux bloat the better. / Additionally, indicate clearly if the link is unchanged instead of requiring the user to compare the two versions of it. / Also make the Z jiggle more or do other cool visual things randomly."*
+- **Highlights**:
+  - Added an unmistakable **`[ ✓ UNCHANGED // ALREADY CLEAN ]`** emerald status badge, `0 B CHANGED` pill, and `"VERIFIED CLEAN LINK // IDENTICAL TO INPUT"` notice on `CleanResultCard` so users never have to visually diff two identical URLs.
+  - Upgraded the `Zlc` logo with a **5-mode Randomized Cyberpunk `Z` Glitch & Stunt Engine** (Seismic Tri-Chromatic Jiggle, Horizontal CRT Scanline Slice Tear, Kinetic Snap-Flip, High-Voltage Neon Overdrive with corner sparks, and Quantum Blink) in both the Android UI (`ZlcLogo.kt`) and web portal (`index.html`, `repo.html`).
+  - Added zero-UI **In-Place Android Text Selection Replacement (`ACTION_PROCESS_TEXT` write-back)**: highlighting a dirty URL inside any editable text field (Signal, WhatsApp, Gmail, Notes) and tapping **ZnepLinkCleaner** replaces the link in-place without switching apps.
+  - Added **Canonical URL Normalization**: unwraps Google AMP cache/viewer URLs (`*.cdn.ampproject.org/v/s/...` and `/amp` suffixes) and condenses verbose Amazon product paths (`/Product-Title-Slug/dp/ASIN/ref=...`) down to canonical `/dp/<ASIN>` permalinks.
+  - Added a collapsible **Redirect Hop Chain Inspector** that records every intermediate redirect hop (`Offline Shim`, `AMP Cache Unwrap`, `HTTP 301`/`302`, `Meta WebView`) and displays the step-by-step trace on demand.
 
 ## [v17.0] — Build 17 (November 2, 2026)
 ### Google Play Publishing Version Bump (v17.0 / Build 17) & Tagged GitHub Release Sync

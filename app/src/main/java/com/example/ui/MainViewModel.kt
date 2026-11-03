@@ -129,6 +129,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Synchronously cleans selected text for Android's editable ACTION_PROCESS_TEXT write-back
+     * so the highlighted link is replaced in-place inside the host app with zero UI switch.
+     */
+    fun cleanSynchronouslyForInPlaceReplacement(text: String): CleanResult {
+        val bounded = text.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+        val result = LinkCleaner.cleanText(
+            inputText = bounded,
+            keepAmazonAffiliate = keepAmazonAffiliate.value,
+            strictMode = strictMode.value,
+            offlineOnlyMode = true
+        )
+        viewModelScope.launch {
+            saveResultToDatabase(result)
+        }
+        return result
+    }
+
+    /**
      * Explicitly expands the current shortlink on-demand (e.g., when Offline-Only Mode deferred automatic expansion).
      */
     fun expandCurrentLinkNow() {

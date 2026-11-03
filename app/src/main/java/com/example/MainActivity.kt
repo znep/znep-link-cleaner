@@ -1,11 +1,15 @@
 package com.example
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import com.example.cleaner.LinkCleaner
+import com.example.cleaner.UrlSecurityValidator
 import com.example.ui.MainScreen
 import com.example.ui.MainViewModel
 import com.example.ui.theme.CleanLinkTheme
@@ -18,7 +22,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        handleIncomingIntent(intent)
+        if (handleIncomingIntent(intent)) {
+            return
+        }
         setupShareShortcuts()
 
         setContent {
@@ -53,24 +59,48 @@ class MainActivity : ComponentActivity() {
         handleIncomingIntent(intent)
     }
 
-    private fun handleIncomingIntent(intent: Intent?) {
-        if (intent == null) return
+    /**
+     * Returns true if the intent was handled as an immediate in-place text replacement
+     * and the Activity is finishing without rendering the full UI.
+     */
+    private fun handleIncomingIntent(intent: Intent?): Boolean {
+        if (intent == null) return false
 
         if (Intent.ACTION_SEND == intent.action && intent.type?.startsWith("text/") == true) {
             val sharedText = (intent.getStringExtra(Intent.EXTRA_TEXT)
                 ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
-                ?.take(com.example.cleaner.UrlSecurityValidator.MAX_INPUT_LENGTH)
+                ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
 
             if (!sharedText.isNullOrBlank()) {
                 viewModel.processInputText(sharedText, isSharedIntent = true)
             }
+            return false
         } else if (Intent.ACTION_PROCESS_TEXT == intent.action && intent.type?.startsWith("text/") == true) {
             val processedText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
                 ?.toString()
-                ?.take(com.example.cleaner.UrlSecurityValidator.MAX_INPUT_LENGTH)
+                ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+            val isReadOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
+
             if (!processedText.isNullOrBlank()) {
-                viewModel.processInputText(processedText, isSharedIntent = true)
+                if (!isReadOnly && LinkCleaner.containsLink(processedText)) {
+                    val result = viewModel.cleanSynchronouslyForInPlaceReplacement(processedText)
+                    val resultIntent = Intent().apply {
+                        putExtra(Intent.EXTRA_PROCESS_TEXT, result.cleanedText)
+                    }
+                    setResult(Activity.RESULT_OK, resultIntent)
+                    val toastMsg = if (result.isUnchanged) {
+                        "Link already clean (unchanged)"
+                    } else {
+                        "Link cleaned in-place (-${result.bytesSaved}B)"
+                    }
+                    Toast.makeText(applicationContext, toastMsg, Toast.LENGTH_SHORT).show()
+                    finish()
+                    return true
+                } else {
+                    viewModel.processInputText(processedText, isSharedIntent = true)
+                }
             }
         }
+        return false
     }
 }

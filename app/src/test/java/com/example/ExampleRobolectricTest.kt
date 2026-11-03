@@ -180,10 +180,40 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `detect unchanged clean links vs modified links`() {
+        val cleanInput = "https://znep.com/projects/linkcleaner"
+        val cleanRes = LinkCleaner.cleanText(cleanInput)
+        assertTrue(cleanRes.isUnchanged)
+        assertEquals(cleanInput, cleanRes.cleanedUrl)
+        assertEquals(0, cleanRes.bytesSaved)
+
+        val dirtyInput = "https://znep.com/projects/linkcleaner?utm_source=newsletter"
+        val dirtyRes = LinkCleaner.cleanText(dirtyInput)
+        assertFalse(dirtyRes.isUnchanged)
+        assertEquals("https://znep.com/projects/linkcleaner", dirtyRes.cleanedUrl)
+    }
+
+    @Test
+    fun `unwrap Google AMP cache and condense Amazon ASIN paths with hop trace`() {
+        val ampInput = "https://www-theverge-com.cdn.ampproject.org/v/s/www.theverge.com/2026/11/02/tech-news/amp?utm_source=twitter&amp=1"
+        val ampRes = LinkCleaner.cleanText(ampInput)
+        assertEquals("https://www.theverge.com/2026/11/02/tech-news", ampRes.cleanedUrl)
+        assertFalse(ampRes.isUnchanged)
+        assertTrue(ampRes.redirectHops.size >= 2)
+        assertEquals("AMP Cache Unwrap", ampRes.redirectHops.last().mechanism)
+
+        val amznInput = "https://www.amazon.com/Apple-AirPods-Wireless-Earbuds-Charging/dp/B08N5WRWNW/ref=sr_1_1?crid=289EHQ99W&keywords=airpods"
+        val amznRes = LinkCleaner.cleanText(amznInput)
+        assertEquals("https://www.amazon.com/dp/B08N5WRWNW", amznRes.cleanedUrl)
+        assertFalse(amznRes.isUnchanged)
+        assertTrue(amznRes.strippedParams.any { it.key == "amazon_path_slug" })
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(17, releases.size)
-        assertEquals("17.0", releases.first().version)
+        assertEquals(18, releases.size)
+        assertEquals("18.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

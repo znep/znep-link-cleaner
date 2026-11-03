@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CleanResult
 import com.example.model.ExpansionWarningType
+import com.example.model.RedirectHop
 import com.example.model.SecurityAdvisory
 import com.example.model.SecuritySeverity
 import com.example.model.StrippedParam
@@ -64,6 +65,10 @@ fun CleanResultCard(
     modifier: Modifier = Modifier
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    val isUnchanged = result.isUnchanged
+    val hasWarnings = result.warningType != ExpansionWarningType.NONE || result.securityAdvisories.isNotEmpty()
+    val emeraldAccent = Color(0xFF10B981)
+    val emeraldContainer = Color(0xFF062E22)
 
     Card(
         modifier = modifier
@@ -73,7 +78,14 @@ fun CleanResultCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        border = BorderStroke(
+            width = 1.5.dp,
+            color = if (isUnchanged && !hasWarnings) {
+                emeraldAccent.copy(alpha = 0.6f)
+            } else {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            }
+        )
     ) {
         Column(
             modifier = Modifier
@@ -86,19 +98,49 @@ fun CleanResultCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
-                    ) {
-                        Text(
-                            text = "[ CLEANED ]",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    if (isUnchanged) {
+                        val badgeLabel = if (hasWarnings) {
+                            "[ UNCHANGED // SEE ADVISORY ]"
+                        } else {
+                            "[ ✓ UNCHANGED // ALREADY CLEAN ]"
+                        }
+                        val badgeBorder = if (hasWarnings) Color(0xFFF59E0B) else emeraldAccent
+                        val badgeBg = if (hasWarnings) Color(0xFF2B1C06) else emeraldContainer
+                        val badgeText = if (hasWarnings) Color(0xFFFDE68A) else Color(0xFF6EE7B7)
+
+                        Surface(
+                            modifier = Modifier.testTag("status_badge_unchanged"),
+                            shape = RoundedCornerShape(8.dp),
+                            color = badgeBg,
+                            border = BorderStroke(1.dp, badgeBorder.copy(alpha = 0.8f))
+                        ) {
+                            Text(
+                                text = badgeLabel,
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = badgeText,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    } else {
+                        Surface(
+                            modifier = Modifier.testTag("status_badge_cleaned"),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                        ) {
+                            Text(
+                                text = "[ CLEANED ]",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -111,7 +153,24 @@ fun CleanResultCard(
                     )
                 }
 
-                if (result.percentReduction > 0) {
+                if (isUnchanged) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        modifier = Modifier.testTag("delta_badge_unchanged"),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = "0 B CHANGED",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                } else if (result.percentReduction > 0) {
+                    Spacer(modifier = Modifier.width(6.dp))
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -315,15 +374,39 @@ fun CleanResultCard(
                     .clickable { onCopy(result.cleanedUrl) },
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = if (isUnchanged && !hasWarnings) {
+                        emeraldAccent.copy(alpha = 0.45f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    }
+                )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "PURGED LINK //",
+                        text = if (isUnchanged) {
+                            "VERIFIED CLEAN LINK // IDENTICAL TO INPUT"
+                        } else {
+                            "PURGED LINK //"
+                        },
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = if (isUnchanged && !hasWarnings) {
+                            Color(0xFF6EE7B7)
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
                     )
+                    if (isUnchanged && !hasWarnings) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Link is already clean — no tracking parameters, redirect wrappers, or path bloat found.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = 16.sp
+                        )
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = result.cleanedUrl,
@@ -421,19 +504,26 @@ fun CleanResultCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Compact Retro Telemetry Pill HUD
+            val hopCount = (result.redirectHops.size - 1).coerceAtLeast(0)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TelemetryPill(
                     label = if (result.strippedParams.isNotEmpty()) {
-                        "${result.strippedParams.size} TRACKERS PURGED"
-                    } else "0 TRACKERS FOUND"
+                        "${result.strippedParams.size} ITEMS PURGED"
+                    } else if (isUnchanged) {
+                        "UNCHANGED (0 TRACKERS)"
+                    } else {
+                        "0 TRACKERS FOUND"
+                    }
                 )
                 if (result.bytesSaved > 0) {
                     TelemetryPill(label = "-${result.bytesSaved} BYTES")
                 }
-                if (result.expandedFromUrl != null) {
+                if (hopCount > 0) {
+                    TelemetryPill(label = if (hopCount == 1) "1 HOP" else "$hopCount HOPS")
+                } else if (result.expandedFromUrl != null) {
                     TelemetryPill(label = "EXPANDED")
                 }
                 if (result.securityAdvisories.isNotEmpty()) {
@@ -442,19 +532,30 @@ fun CleanResultCard(
             }
 
             // Collapsible Details Section (Decluttered: hidden by default!)
-            if (result.strippedParams.isNotEmpty() || result.expandedFromUrl != null) {
+            if (result.strippedParams.isNotEmpty() || result.expandedFromUrl != null || result.redirectHops.size > 1) {
                 Spacer(modifier = Modifier.height(10.dp))
+                val toggleLabel = when {
+                    showDetails -> "[-] HIDE TELEMETRY & HOP TRACE"
+                    hopCount > 0 && result.strippedParams.isNotEmpty() ->
+                        "[+] VIEW ${result.strippedParams.size} PURGED ITEMS & $hopCount-HOP TRACE"
+                    hopCount > 0 ->
+                        "[+] VIEW $hopCount-HOP REDIRECT TRACE"
+                    else ->
+                        "[+] VIEW ${result.strippedParams.size} PURGED ITEMS"
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
                         .clickable { showDetails = !showDetails }
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .testTag("toggle_telemetry_details"),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (showDetails) "[-] HIDE TELEMETRY BREAKDOWN" else "[+] VIEW ${result.strippedParams.size} PURGED TOKENS",
+                        text = toggleLabel,
                         style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.secondary
@@ -474,7 +575,31 @@ fun CleanResultCard(
                             .padding(top = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        if (result.expandedFromUrl != null) {
+                        if (result.redirectHops.size > 1) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("redirect_hop_trace_card"),
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = "REDIRECT HOP CHAIN TRACE ($hopCount ${if (hopCount == 1) "HOP" else "HOPS"})",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    for (hop in result.redirectHops) {
+                                        RedirectHopRow(hop = hop)
+                                    }
+                                }
+                            }
+                        } else if (result.expandedFromUrl != null) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -502,6 +627,45 @@ fun CleanResultCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RedirectHopRow(hop: RedirectHop) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "#${hop.step} ${hop.host.ifEmpty { "link" }}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                ) {
+                    Text(
+                        text = hop.mechanism,
+                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                    )
+                }
+            }
+            Text(
+                text = hop.url,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace, fontSize = 11.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

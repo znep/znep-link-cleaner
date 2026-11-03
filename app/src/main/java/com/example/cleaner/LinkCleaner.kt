@@ -4,14 +4,18 @@ import android.content.Context
 import android.net.Uri
 import com.example.model.CleanResult
 import com.example.model.ExpansionWarningType
+import com.example.model.RedirectHop
 import com.example.model.StrippedParam
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 object LinkCleaner {
 
     private val URL_REGEX = Regex(
         """(https?://[^\s<>"'\)]+)""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val AMAZON_ASIN_REGEX = Regex(
+        """(?:/dp/|/gp/product/)([A-Z0-9]{10})(?:/.*|$)""",
         RegexOption.IGNORE_CASE
     )
 
@@ -98,6 +102,8 @@ object LinkCleaner {
         "embeds_referring_euri" to ("Media Telemetry" to "External embedding referrer domain"),
         "embeds_referring_origin" to ("Media Telemetry" to "External embedding origin domain"),
         "pp" to ("Media Telemetry" to "Playlist / preview telemetry"),
+        "start_radio" to ("YouTube Telemetry" to "Auto-generated YouTube radio mix session flag"),
+        "rv" to ("YouTube Telemetry" to "Related video recommendation tracking token"),
         "nd" to ("Spotify" to "New device redirect token"),
         "context" to ("Spotify" to "Playback context identifier"),
 
@@ -180,7 +186,11 @@ object LinkCleaner {
         "lipi" to ("LinkedIn" to "LinkedIn page instance telemetry token"),
         "licu" to ("LinkedIn" to "LinkedIn click URL identifier"),
         "mx" to ("Twitter / X" to "Twitter / X marketing telemetry token"),
-        "invite_code" to ("Pinterest" to "User invitation tracking token")
+        "invite_code" to ("Pinterest" to "User invitation tracking token"),
+
+        // Canonical / AMP parameters
+        "amp" to ("AMP Canonicalizer" to "Accelerated Mobile Pages wrapper parameter"),
+        "outputtype" to ("AMP Canonicalizer" to "AMP output format override parameter")
     )
 
     fun containsLink(text: String): Boolean {
@@ -239,6 +249,7 @@ object LinkCleaner {
         var warningType = ExpansionWarningType.NONE
         var warningMessage: String? = null
         var blockedRedirectReason: String? = null
+        val redirectHops = mutableListOf<RedirectHop>()
 
         if (isFbShare) {
             if (enableFacebookWebView && context != null) {
@@ -247,6 +258,22 @@ object LinkCleaner {
                     val resolved = fbResult.getOrThrow()
                     expandedPrimary = resolved
                     wasExpanded = true
+                    redirectHops.add(
+                        RedirectHop(
+                            step = 1,
+                            url = primaryRawUrl,
+                            host = UrlSecurityValidator.extractHost(primaryRawUrl),
+                            mechanism = "Original"
+                        )
+                    )
+                    redirectHops.add(
+                        RedirectHop(
+                            step = 2,
+                            url = resolved,
+                            host = UrlSecurityValidator.extractHost(resolved),
+                            mechanism = "Meta WebView Permalink"
+                        )
+                    )
                 } else {
                     val err = fbResult.exceptionOrNull()
                     if (err is SecurityException) {
@@ -267,6 +294,7 @@ object LinkCleaner {
             expandedPrimary = detailed.finalUrl
             wasExpanded = detailed.wasRedirected
             blockedRedirectReason = detailed.blockedReason
+            redirectHops.addAll(detailed.hops)
 
             if (detailed.blockedReason != null) {
                 warningType = ExpansionWarningType.RED_SECURITY_BLOCKED
@@ -283,6 +311,12 @@ object LinkCleaner {
             strictMode = strictMode,
             externalBlockedReason = blockedRedirectReason
         )
+        if (cleanedPrimary.expandedFromUrl != null) {
+            wasExpanded = true
+            if (redirectHops.isEmpty()) {
+                redirectHops.addAll(cleanedPrimary.redirectHops)
+            }
+        }
 
         var updatedText = trimmed
         val totalStripped = mutableListOf<StrippedParam>()
@@ -330,7 +364,8 @@ object LinkCleaner {
             warningMessage = finalWarningMessage,
             isFacebookShareLink = isFbShare,
             securityAdvisories = cleanedPrimary.securityAdvisories,
-            isOfflineDeferredShortlink = false
+            isOfflineDeferredShortlink = false,
+            redirectHops = redirectHops
         )
     }
 
@@ -371,6 +406,26 @@ object LinkCleaner {
             strictMode = strictMode,
             externalBlockedReason = offlineDetail.blockedReason
         )
+
+        val hops = mutableListOf<RedirectHop>()
+        if (wasExpanded) {
+            hops.add(
+                RedirectHop(
+                    step = 1,
+                    url = primaryRawUrl,
+                    host = UrlSecurityValidator.extractHost(primaryRawUrl),
+                    mechanism = "Original"
+                )
+            )
+            hops.add(
+                RedirectHop(
+                    step = 2,
+                    url = offlineUnwrapped,
+                    host = UrlSecurityValidator.extractHost(offlineUnwrapped),
+                    mechanism = offlineDetail.mechanism ?: "Offline Shim"
+                )
+            )
+        }
 
         var updatedText = trimmed
         val totalStripped = mutableListOf<StrippedParam>()
@@ -421,7 +476,8 @@ object LinkCleaner {
             warningMessage = warningMessage,
             isFacebookShareLink = isFbShare,
             securityAdvisories = cleanedPrimary.securityAdvisories,
-            isOfflineDeferredShortlink = isDeferred
+            isOfflineDeferredShortlink = isDeferred,
+            redirectHops = hops
         )
     }
 
@@ -431,8 +487,10 @@ object LinkCleaner {
         strictMode: Boolean = false,
         externalBlockedReason: String? = null
     ): CleanResult {
-        val offlineDetail = UrlExpander.unwrapOfflineRedirectsDetailed(rawUrl.trim())
+        val trimmedRaw = rawUrl.trim()
+        val offlineDetail = UrlExpander.unwrapOfflineRedirectsDetailed(trimmedRaw)
         val unwrappedUrl = offlineDetail.url
+        val wasOfflineUnwrapped = unwrappedUrl != trimmedRaw
         val blockedReason = externalBlockedReason ?: offlineDetail.blockedReason
 
         val (sanitizedUrl, strippedUserInfo) = UrlSecurityValidator.stripUserInfoIfPresent(unwrappedUrl)
@@ -456,6 +514,17 @@ object LinkCleaner {
 
         val host = UrlSecurityValidator.extractHost(sanitizedUrl).ifEmpty { uri.host?.lowercase().orEmpty() }
         val strippedParams = mutableListOf<StrippedParam>()
+
+        if (wasOfflineUnwrapped && offlineDetail.mechanism != null) {
+            strippedParams.add(
+                StrippedParam(
+                    key = "redirect_wrapper",
+                    value = UrlSecurityValidator.extractHost(trimmedRaw).ifEmpty { "wrapper" },
+                    category = offlineDetail.mechanism,
+                    description = "Unwrapped canonical destination URL from redirect/AMP wrapper"
+                )
+            )
+        }
 
         if (!strippedUserInfo.isNullOrBlank()) {
             strippedParams.add(
@@ -482,6 +551,7 @@ object LinkCleaner {
 
             val shouldStrip = isTrackingParam(
                 paramName = lowerParam,
+                paramValue = firstValue,
                 host = host,
                 keepAmazonAffiliate = keepAmazonAffiliate,
                 strictMode = strictMode
@@ -506,8 +576,13 @@ object LinkCleaner {
         }
 
         var cleanedUri = newUriBuilder.build()
+
+        // Strip trailing /amp or /amp/ path segments on news/article URLs
+        cleanedUri = cleanAmpPathSuffix(cleanedUri, strippedParams)
+
+        // Condense Amazon paths (/Product-Title/dp/ASIN/ref=... -> /dp/ASIN)
         if (isAmazonHost(host)) {
-            cleanedUri = cleanAmazonPath(cleanedUri)
+            cleanedUri = cleanAmazonPath(cleanedUri, strippedParams)
         }
 
         var cleanedUrlString = cleanedUri.toString()
@@ -521,6 +596,25 @@ object LinkCleaner {
             strippedUserInfo = strippedUserInfo,
             blockedRedirectReason = blockedReason
         )
+
+        val hops = if (wasOfflineUnwrapped) {
+            listOf(
+                RedirectHop(
+                    step = 1,
+                    url = trimmedRaw,
+                    host = UrlSecurityValidator.extractHost(trimmedRaw),
+                    mechanism = "Original"
+                ),
+                RedirectHop(
+                    step = 2,
+                    url = unwrappedUrl,
+                    host = host,
+                    mechanism = offlineDetail.mechanism ?: "Offline Shim"
+                )
+            )
+        } else {
+            emptyList()
+        }
 
         val bytesSaved = (rawUrl.length - cleanedUrlString.length).coerceAtLeast(0)
         val percent = if (rawUrl.isNotEmpty()) {
@@ -537,21 +631,28 @@ object LinkCleaner {
             bytesSaved = bytesSaved,
             percentReduction = percent,
             isEntireTextReplaced = true,
-            expandedFromUrl = null,
+            expandedFromUrl = if (wasOfflineUnwrapped) trimmedRaw else null,
             warningType = if (blockedReason != null) ExpansionWarningType.RED_SECURITY_BLOCKED else ExpansionWarningType.NONE,
             warningMessage = blockedReason,
-            securityAdvisories = advisories
+            securityAdvisories = advisories,
+            redirectHops = hops
         )
     }
 
     private fun isTrackingParam(
         paramName: String,
+        paramValue: String,
         host: String,
         keepAmazonAffiliate: Boolean,
         strictMode: Boolean
     ): Boolean {
         if (keepAmazonAffiliate && (paramName == "tag" || paramName == "linkcode")) {
             return false
+        }
+
+        // Only strip outputType when it's an AMP override (outputType=amp)
+        if (paramName == "outputtype") {
+            return paramValue.equals("amp", ignoreCase = true)
         }
 
         if (KNOWN_TRACKING_PARAMS.containsKey(paramName)) {
@@ -686,11 +787,57 @@ object LinkCleaner {
             host == "a.co"
     }
 
-    private fun cleanAmazonPath(uri: Uri): Uri {
+    private fun cleanAmpPathSuffix(uri: Uri, strippedParams: MutableList<StrippedParam>): Uri {
         val path = uri.path ?: return uri
+        if (path.length > 5 && (path.endsWith("/amp", ignoreCase = true) || path.endsWith("/amp/", ignoreCase = true))) {
+            val trimmedPath = path.trimEnd('/').removeSuffix("/amp").removeSuffix("/AMP")
+            if (trimmedPath.isNotEmpty()) {
+                strippedParams.add(
+                    StrippedParam(
+                        key = "/amp",
+                        value = path,
+                        category = "AMP Canonicalizer",
+                        description = "Removed trailing /amp path suffix to restore canonical article URL"
+                    )
+                )
+                return uri.buildUpon().path(trimmedPath).build()
+            }
+        }
+        return uri
+    }
+
+    private fun cleanAmazonPath(uri: Uri, strippedParams: MutableList<StrippedParam>): Uri {
+        val path = uri.path ?: return uri
+
+        // Condense /Product-Title-Slug/dp/<ASIN>/ref=... or /gp/product/<ASIN>/... to /dp/<ASIN>
+        val asinMatch = AMAZON_ASIN_REGEX.find(path)
+        if (asinMatch != null) {
+            val asin = asinMatch.groupValues[1].uppercase()
+            val canonicalPath = "/dp/$asin"
+            if (path != canonicalPath && path != "$canonicalPath/") {
+                strippedParams.add(
+                    StrippedParam(
+                        key = "amazon_path_slug",
+                        value = path,
+                        category = "Amazon Canonicalizer",
+                        description = "Condensed verbose product path & ref= slug to canonical /dp/$asin"
+                    )
+                )
+                return uri.buildUpon().path(canonicalPath).build()
+            }
+        }
+
         val refIndex = path.indexOf("/ref=")
         if (refIndex > 0) {
             val cleanPath = path.substring(0, refIndex)
+            strippedParams.add(
+                StrippedParam(
+                    key = "ref=",
+                    value = path.substring(refIndex),
+                    category = "Amazon Telemetry",
+                    description = "Stripped embedded /ref= path referral tracker"
+                )
+            )
             return uri.buildUpon().path(cleanPath).build()
         }
         return uri
