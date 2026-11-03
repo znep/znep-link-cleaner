@@ -34,6 +34,22 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "21.0",
+            buildNumber = 21,
+            releaseDate = "November 3, 2026",
+            title = "Google Play Publishing Version Bump (v21.0 / Build 21)",
+            userPrompt = "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\".",
+            highlights = listOf(
+                "Incremented versionCode from 20 to 21 and updated versionName to \"21.0\" following Google Play publishing completion for v20.0",
+                "Synchronized v21.0 release notes and triggering prompt across the Android app (ReleaseNotes.kt), linked GitHub repository (README.md & CHANGELOG.md), and web portal (index.html & repo.html)",
+                "Committed v21.0 as a separate prompt-annotated commit on main, tagged v21.0, and pushed to https://github.com/znep/znep-link-cleaner (main, gh-pages, and GitHub Releases)"
+            ),
+            technicalDetails = listOf(
+                "Updated defaultConfig in app/build.gradle.kts with versionCode = 21 and versionName = \"21.0\"",
+                "Verified full release history integrity (v1.0.0 through v21.0) across all in-app, GitHub, and web portal artifacts"
+            )
+        ),
+        ReleaseNote(
             version = "20.0",
             buildNumber = 20,
             releaseDate = "November 3, 2026",

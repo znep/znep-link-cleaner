@@ -1,7 +1,16 @@
 [
   {
-    "sha": "7e49f391c4c0e09fce24a06fda94f792d59dee9a",
-    "short_sha": "7e49f39",
+    "sha": "fa90669444186cf7978f9590c8b1032c56357e97",
+    "short_sha": "fa90669",
+    "author": "Marc Slemko",
+    "date": "2026-11-03",
+    "subject": "Release v21.0 (Build 21): Google Play Publishing Version Bump",
+    "body": "User Prompt: \"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \\\"<new versionCode>.0\\\".\"\n\nChanges:\n- Incremented versionCode from 20 to 21 and updated versionName to \"21.0\" in app/build.gradle.kts following Google Play publishing completion for v20.0.\n- Synchronized v21.0 release notes and triggering prompt across the Android app (ReleaseNotes.kt), linked GitHub repository (README.md & CHANGELOG.md), and web portal (index.html & repo.html).\n- Committed v21.0 as a separate prompt-annotated commit on main, tagged v21.0, and pushed to https://github.com/znep/znep-link-cleaner (main, gh-pages, and GitHub Releases).",
+    "tag": "v21.0"
+  },
+  {
+    "sha": "4ffac511ef6b8f261e2d54673b03457ed4c7724b",
+    "short_sha": "4ffac51",
     "author": "Marc Slemko",
     "date": "2026-11-03",
     "subject": "Release v20.0 (Build 20): Facebook Native Deep-Link (fb://native_post) Base64 Permalink Decoder, wtsid Tracker Purge & GitHub Pages/Releases Hosting",

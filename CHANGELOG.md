@@ -1,9 +1,18 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v20.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v21.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v21.0] — Build 21 (November 3, 2026)
+### Google Play Publishing Version Bump (v21.0 / Build 21)
+- **Triggering User Prompt**:
+  > *"Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"<new versionCode>.0\"."*
+- **Highlights**:
+  - Incremented `versionCode` from `20` to `21` and updated `versionName` to `"21.0"` following Google Play publishing completion for `v20.0`.
+  - Synchronized `v21.0` release notes and triggering prompt across the Android app (`ReleaseNotes.kt`), linked GitHub repository (`README.md` & `CHANGELOG.md`), and web portal (`index.html` & `repo.html`).
+  - Committed `v21.0` as a separate prompt-annotated commit on `main`, tagged `v21.0`, and pushed to `https://github.com/znep/znep-link-cleaner` (`main`, `gh-pages`, and GitHub Releases).
 
 ## [v20.0] — Build 20 (November 3, 2026)
 ### Facebook Native Deep-Link (`fb://native_post`) Base64 Permalink Decoder, `wtsid` Tracker Purge & GitHub Pages/Releases Hosting
