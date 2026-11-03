@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZnepLinkCleaner — Git Repository Browser &amp; Prompt History (linkcleaner.znep.com)</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='24' fill='%23060913'/%3E%3Cpath d='M23.5 31.5H60.5V39.5L36 66.5H60.5V74.5H23.5V66.5L48 39.5H23.5Z' fill='%23A855F7' opacity='0.75'/%3E%3Cpath d='M26 30H63V38L38.5 65H63V73H26V65L50.5 38H26Z' fill='%2338BDF8'/%3E%3Crect x='67.5' y='47' width='5' height='26' fill='%23F8FAFC'/%3E%3Cpath d='M75.5 54H86.5V58.5H80.2V68.5H86.5V73H75.5Z' fill='%237DD3FC'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #121826;
+      --border: #232d42;
+      --accent: #38bdf8;
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --code-bg: #0b1120;
+      --tag-bg: #1e293b;
+      --green: #4ade80;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .zlc-svg {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      cursor: pointer;
+    }
+    @keyframes zQuiver {
+      0%, 88%, 100% { transform: translate(0, 0); }
+      90% { transform: translate(-2.2px, 1.1px); }
+      92% { transform: translate(2.4px, -1.2px); }
+      94% { transform: translate(-1.6px, -0.8px); }
+      96% { transform: translate(1.4px, 0.9px); }
+      98% { transform: translate(-0.8px, 0.4px); }
+    }
+    .z-quiver {
+      animation: zQuiver 3.8s infinite ease-in-out;
+    }
+    h1 {
+      font-size: 1.4rem;
+      color: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-family: monospace;
+    }
+    .nav-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 16px;
+    }
+    .nav-links a:hover { text-decoration: underline; }
+    .downloads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      background: var(--accent);
+      color: #04131f;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .section-header {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 24px 0 12px;
+      color: var(--accent);
+    }
+    .commit-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .commit-subject {
+      font-family: monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+    }
+    .commit-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .prompt-box {
+      background: var(--code-bg);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #e2e8f0;
+    }
+    .prompt-label {
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 0.72rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .commit-changes {
+      list-style-type: disc;
+      padding-left: 20px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .tag-chip {
+      display: inline-block;
+      background: #1e3a5f;
+      color: #60a5fa;
+      border: 1px solid #2563eb;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: monospace;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <svg class="zlc-svg" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg" title="Zlc Cyberpunk Quivering Logo">
+          <rect width="108" height="108" fill="#060913"/>
+          <path d="M23.5 31.5 H60.5 V39.5 L36.0 66.5 H60.5 V74.5 H23.5 V66.5 L48.0 39.5 H23.5 Z" fill="#A855F7" opacity="0.72"/>
+          <g class="z-quiver">
+            <path d="M26.0 30.0 H63.0 V38.0 L38.5 65.0 H63.0 V73.0 H26.0 V65.0 L50.5 38.0 H26.0 Z" fill="#38BDF8"/>
+            <rect x="26.0" y="30.0" width="37.0" height="2.6" fill="#E0F2FE"/>
+          </g>
+          <rect x="67.5" y="47.0" width="5.0" height="26.0" fill="#F8FAFC"/>
+          <path d="M75.5 54.0 H86.5 V58.5 H80.2 V68.5 H86.5 V73.0 H75.5 Z" fill="#7DD3FC"/>
+        </svg>
+        <div>
+          <h1>ZnepLinkCleaner Git Repository Browser</h1>
+          <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" class="badge" style="text-decoration: none;">🐙 github.com/znep/znep-link-cleaner ↗</a>
+            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v22.0 (Build 22)</span>
+            <span class="badge" style="border-color: #a855f7; color: #d8b4fe;">Vibe-Coded PoC</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">com.znep.linkcleaner</span>
+          </div>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="index.html">← Back to Download Portal</a>
+        <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener">🐙 Public GitHub Repo ↗</a>
+        <a href="https://github.com/znep/znep-link-cleaner/releases" target="_blank" rel="noopener">📦 GitHub Releases ↗</a>
+        <a href="diagram.svg" target="_blank">Arch Diagram</a>
+      </div>
+    </header>
+
+    <div class="downloads-grid">
+      <div class="card" style="border-color: rgba(168, 85, 247, 0.55);">
+        <div class="card-title">🐙 Public GitHub Repository</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Live public repository at <code>github.com/znep/znep-link-cleaner</code>. Every release (<code>v1.0.0</code> – <code>v22.0</code>) is committed as a separate Git commit and tag containing the triggering user prompt and changelog.
+        </p>
+        <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #d8b4fe;">
+          git clone https://github.com/znep/znep-link-cleaner.git
+        </div>
+        <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" class="btn" style="background: #a855f7; color: #ffffff;">🐙 Open github.com/znep/znep-link-cleaner ↗</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Git Bundle (Offline Clone)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Complete Git repository packfile synchronized 1:1 with <code>github.com/znep/znep-link-cleaner</code> (<code>v1.0.0</code> – <code>v22.0</code>), including all 22 separate prompt-annotated commits and tags.
+        </p>
+        <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;">
+          git clone ZnepLinkCleaner.bundle zneplinkcleaner
+        </div>
+        <a href="https://github.com/znep/znep-link-cleaner/releases/latest/download/ZnepLinkCleaner.bundle" download class="btn">⬇ Download ZnepLinkCleaner.bundle</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Full Git Zip (.git Included)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          ZIP archive including the full <code>.git</code> database, tags, and prompt-annotated <code>CHANGELOG.md</code> ready to unzip and inspect.
+        </p>
+        <a href="https://github.com/znep/znep-link-cleaner/releases/latest/download/ZnepLinkCleaner-git.zip" download class="btn btn-secondary">⬇ Download ZnepLinkCleaner-git.zip</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Source Tree ZIP (v22.0)</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          Clean v22.0 snapshot of all Kotlin/Compose source files, standing rules (<code>AGENTS.md</code>, <code>CHANGELOG.md</code>), and Gradle build system.
+        </p>
+        <a href="https://github.com/znep/znep-link-cleaner/releases/download/v22.0/ZnepLinkCleaner-v22.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v22.0-source.zip</a>
+      </div>
+    </div>
+
+    <div class="section-header">Synchronized GitHub Release Commits, Prompts &amp; Tags (v1.0.0 – v22.0) — <a href="https://github.com/znep/znep-link-cleaner/commits/main" target="_blank" rel="noopener" style="color: var(--accent);">View on GitHub ↗</a></div>
+
+    <div class="commit-item" style="border-color: rgba(34, 197, 94, 0.5);">
+      <div class="commit-subject"><span class="tag-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e;">tag: v22.0</span>v22.0: Compact 'Zlc' Text Selection Toolbar Action, text/* MIME Expansion, HTTP/HTTPS Smart Selection Link Handler &amp; Partial 'https' Selection Guard</div>
+      <div class="commit-meta">Author: Marc Slemko &lt;marcs@znep.com&gt; • Date: November 3, 2026 • Branch: main (HEAD)</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
+        "What are some example apps that support in place link cleaning? I tried one but it only sent the https part not the whole URL. Can I make zlc show up more often in the various menus that show up after selecting text? [Selected: Broaden PROCESS_TEXT to all text MIME types, Add HTTP/HTTPS link handler for Smart Selection; Label: Zlc; Partial selection: Show a helpful Toast and leave text unchanged]"
+      </div>
+      <ul class="commit-changes">
+        <li>Added a dedicated <code>ProcessTextAlias</code> with the ultra-compact <strong>Zlc</strong> label and <code>android:priority="100"</code> so Android's floating text selection toolbar fits it on the primary bar instead of pushing 15-character <em>"ZnepLinkCleaner"</em> into the overflow menu</li>
+        <li>Broadened <code>ACTION_PROCESS_TEXT</code> intent filters from <code>text/plain</code> to all <code>text/*</code> MIME types (supporting rich-text editors, HTML/Markdown inputs, and custom text views)</li>
+        <li>Added an exported HTTP/HTTPS <code>CATEGORY_BROWSABLE</code> <code>LinkHandlerAlias</code> (<strong>Zlc Clean</strong>) so Android's <code>TextClassifier</code> Smart Selection and link menus can route highlighted URLs directly to ZnepLinkCleaner</li>
+        <li>Implemented a Partial URL Selection Guard (<code>LinkCleaner.isPartialUrlSelection</code>) for <code>ACTION_PROCESS_TEXT</code>: when double-tapping a URL in an input box only highlights <code>https</code> (due to Android stopping word selection at <code>://</code>), <strong>Zlc</strong> shows a helpful Toast and returns <code>RESULT_CANCELED</code> so the user's text remains untouched without hijacking the screen</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v21.0</span>v21.0: Google Play Publishing Version Bump (v21.0 / Build 21)</div>
+      <div class="commit-meta">November 3, 2026 • Build 21 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
+        "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\"."
+      </div>
+      <ul class="commit-changes">
+        <li>Incremented <code>versionCode</code> from 20 to 21 and updated <code>versionName</code> to 21.0 following Google Play publishing completion for <code>v20.0</code></li>
+        <li>Synchronized <code>v21.0</code> release notes and triggering prompt across Android app, linked GitHub repo (<code>README.md</code>, <code>CHANGELOG.md</code>), and web portal (<code>index.html</code>, <code>repo.html</code>)</li>
+        <li>Committed <code>v21.0</code> as a separate prompt-annotated commit on <code>main</code>, tagged <code>v21.0</code>, and pushed to <code>https://github.com/znep/znep-link-cleaner</code> (<code>main</code>, <code>gh-pages</code>, and GitHub Releases)</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v20.0</span>v20.0: Facebook Native Deep-Link (fb://native_post) Base64 Permalink Decoder, wtsid Tracker Purge &amp; GitHub Pages/Releases Hosting</div>
+      <div class="commit-meta">November 3, 2026 • Build 20 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
+        "Does it make sense to setup the git repository so I can host the website on GitHub pages? Or something? Explain each option presented. / This happened trying to expand a Facebook link from a copy from a text field."
+      </div>
+      <ul class="commit-changes">
+        <li>Decoded Facebook native Android app deep-link redirects (<code>fb://native_post/&lt;base64&gt;?wtsid=...</code>, <code>fb://facewebmodal/f?href=...</code>, <code>fb://story/...</code>, and <code>intent://...#Intent;scheme=fb;...</code>) directly into canonical <code>https://www.facebook.com/&lt;actorId&gt;/posts/&lt;postId&gt;</code> permalinks</li>
+        <li>Eliminated false-positive "Security Firewall // Unsafe Redirect Blocked" errors when Facebook mobile web pages attempt to launch the native <code>fb://</code> app scheme during headless WebView expansion</li>
+        <li>Added DOM meta-tag fallback extraction (<code>al:android:url</code>, <code>link[rel=canonical]</code>, <code>og:url</code>) in <code>FacebookWebViewExpander</code> and added <code>wtsid</code>, <code>_rdc</code>, and <code>_rdr</code> to <code>KNOWN_TRACKING_PARAMS</code></li>
+        <li>Deduplicated stacked security advisory banners and clarified the output URL box header when warnings are present in <code>CleanResultCard</code></li>
+        <li>Configured GitHub Pages static deployment (<code>gh-pages</code> + <code>CNAME</code> <code>linkcleaner.znep.com</code>) and automated GitHub Releases binary asset publishing via the GitHub REST API</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v19.0</span>v19.0: Google Play Publishing Version Bump (v19.0 / Build 19)</div>
+      <div class="commit-meta">November 2, 2026 • Build 19 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\"."
+      </div>
+      <ul class="commit-changes">
+        <li>Incremented <code>versionCode</code> from 18 to 19 and updated <code>versionName</code> to 19.0 following Google Play publishing completion for <code>v18.0</code></li>
+        <li>Synchronized <code>v19.0</code> release notes and triggering prompt across Android app, linked GitHub repo (<code>README.md</code>, <code>CHANGELOG.md</code>), and web portal (<code>index.html</code>, <code>repo.html</code>)</li>
+        <li>Committed <code>v19.0</code> as a separate prompt-annotated commit on <code>main</code>, tagged <code>v19.0</code>, and pushed to <code>https://github.com/znep/znep-link-cleaner</code></li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v18.0</span>v18.0: Unchanged Link Indicator, Randomized Cyberpunk 'Z' Glitch Engine, In-Place Text Replacement, Canonical AMP/Amazon Simplifier &amp; Redirect Hop Trace</div>
+      <div class="commit-meta">November 2, 2026 • Build 18 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Give me some ideas for useful features to add that are technically solid. This could include ux changes, but the less ux bloat the better. / Additionally, indicate clearly if the link is unchanged instead of requiring the user to compare the two versions of it. / Also make the Z jiggle more or do other cool visual things randomly."
+      </div>
+      <ul class="commit-changes">
+        <li>Added an unmistakable <code>[ ✓ UNCHANGED // ALREADY CLEAN ]</code> emerald status badge, <code>0 B CHANGED</code> pill, and <code>VERIFIED CLEAN LINK // IDENTICAL TO INPUT</code> notice so users never have to visually diff two identical URLs</li>
+        <li>Upgraded the <code>Zlc</code> logo with a 5-mode Randomized Cyberpunk <code>Z</code> Glitch &amp; Stunt Engine (Seismic Tri-Chromatic Jiggle, Horizontal CRT Scanline Slice Tear, Kinetic Snap-Flip, High-Voltage Neon Overdrive with corner sparks, and Quantum Blink) in both the Android UI and web portal</li>
+        <li>Added zero-UI In-Place Android Text Selection Replacement (<code>ACTION_PROCESS_TEXT</code> write-back) inside editable text fields</li>
+        <li>Added Canonical URL Normalization for Google AMP cache/viewer URLs (<code>*.cdn.ampproject.org/v/s/...</code>, <code>/amp</code>) and verbose Amazon product paths (<code>/dp/&lt;ASIN&gt;</code>)</li>
+        <li>Added a collapsible Redirect Hop Chain Inspector recording every intermediate hop during link unwrapping and expansion</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v17.0</span>v17.0: Google Play Publishing Version Bump (v17.0 / Build 17) &amp; Tagged GitHub Release Sync</div>
+      <div class="commit-meta">November 2, 2026 • Build 17 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\"."
+      </div>
+      <ul class="commit-changes">
+        <li>Incremented <code>versionCode</code> from 16 to 17 and updated <code>versionName</code> to 17.0 following Google Play publishing</li>
+        <li>Synchronized <code>v17.0</code> release notes and triggering prompt across Android app, linked GitHub repo (<code>README.md</code>, <code>CHANGELOG.md</code>), and web portal (<code>index.html</code>, <code>repo.html</code>)</li>
+        <li>Committed <code>v17.0</code> as a separate prompt-annotated commit on <code>main</code>, tagged <code>v17.0</code>, and pushed to <code>https://github.com/znep/znep-link-cleaner</code></li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v16.0</span>v16.0: Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox &amp; Anti-Phishing Advisories</div>
+      <div class="commit-meta">November 2, 2026 • Build 16 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Analyze the app for security concerns including, but not limited to, dangers of processing untrusted links. Recommend improvements. [Selected: Block private IPs and non-HTTPS schemes in UrlExpander; Lock down Facebook WebView domains, cookies, and file access; Detect homograph, user@host, HTTP, and APK phishing risks; Expand automatically by default with a toggle for Offline-Only mode]"
+      </div>
+      <ul class="commit-changes">
+        <li>Implemented <code>UrlSecurityValidator</code> and <code>SafePublicDns</code> in <code>UrlExpander</code> to block SSRF redirects against loopback, RFC1918 LAN, link-local, CGNAT, and cloud metadata IPs</li>
+        <li>Enforced strict <code>http</code>/<code>https</code> scheme validation across all redirect hops, offline link shims, and browser intent launches</li>
+        <li>Hardened <code>FacebookWebViewExpander</code> sandbox: locked navigation and subresource requests strictly to HTTPS official Meta domains, disabled file/content/DOM storage and cookies, and wiped cache/storage on teardown</li>
+        <li>Added anti-phishing &amp; homograph detection that strips deceptive <code>user:pass@host</code> credentials and alerts on Punycode (<code>xn--</code>) lookalike domains, <code>.apk</code>/<code>.exe</code> downloads, raw IPs, and cleartext HTTP links</li>
+        <li>Added <strong>Offline-Only Mode</strong> toggle in Protection settings with on-demand shortlink expansion</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v15.0</span>v15.0: Public GitHub Repo Integration, Live Embedded Commit Explorer &amp; Per-Release Prompt-Annotated Git Commits</div>
+      <div class="commit-meta">November 2, 2026 • Build 15 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "I had to manually push changes to GitHub from the UI and it didn't include the prompt in the commit message as requested. I want every new version published to the website to also be pushed to GitHub as a separate commit. Also note the GitHub repo is public and should be linked to and embedded if possible."
+      </div>
+      <ul class="commit-changes">
+        <li>Linked and embedded the public GitHub repository (<code>https://github.com/znep/znep-link-cleaner</code>) across the web portal (<code>index.html</code> &amp; <code>repo.html</code>) and Android app UI</li>
+        <li>Added a live interactive GitHub Repository &amp; Commit Explorer widget on <code>linkcleaner.znep.com</code> that streams real-time commit metadata and expandable prompt-annotated commit messages</li>
+        <li>Rebuilt and standardized all release Git commits (<code>v1.0.0</code> through <code>v15.0</code>) as separate commits on <code>main</code> whose commit message bodies explicitly include the triggering <code>User Prompt:</code> and release changelog</li>
+        <li>Added automated GitHub remote push daemon (<code>scripts/sync_github.py</code> + <code>server.py</code> <code>.env</code> watcher) so every new version published to the website is pushed as a separate prompt-annotated commit to <code>https://github.com/znep/znep-link-cleaner</code></li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v14.0</span>v14.0: Google Play Publishing Version Bump (v14.0 / Build 14)</div>
+      <div class="commit-meta">November 2, 2026 • Build 14 • Domain: linkcleaner.znep.com</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\"."
+      </div>
+      <ul class="commit-changes">
+        <li>Incremented <code>versionCode</code> from 13 to 14 and updated <code>versionName</code> to 14.0 following Google Play publishing</li>
+        <li>Synchronized v14.0 release notes and triggering prompt across Android app, linked GitHub repo (`README.md`, `CHANGELOG.md`), and web portal (`index.html`, `repo.html`)</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v13.0</span>v13.0: Cyberpunk Quivering 'Zlc' Logo &amp; Linked GitHub / Portal Repository Sync</div>
+      <div class="commit-meta">November 2, 2026 • Build 13 • Domain: linkcleaner.znep.com</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Update the app logo to be a large Z with a smaller \"lc\". Where possible make the Z quiver slightly. It should be cyberpunk inspired but not too complicated. / Also ensure the GitHub repo published is a copy of the linked GitHub repo and the linked GitHub is updated with the prompts and changes for each release. Persist this request."
+      </div>
+      <ul class="commit-changes">
+        <li>Redesigned app logo to a cyberpunk <code>Zlc</code> monogram (large Electric Cyan <code>Z</code> with Neon Purple chromatic glitch + smaller steady <code>lc</code>)</li>
+        <li>Added interactive &amp; periodic quiver animation to the <code>Z</code> in the Android Compose UI and web portal</li>
+        <li>Synchronized workspace Git repository (`README.md`, `CHANGELOG.md`, annotated tags) with the published portal repo (`repo.html`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`)</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v12.0</span>v12.0: Google Play Publishing Version Bump, Direct Nginx Portal Hardening &amp; Cloudflare Reverse-Proxy Support</div>
+      <div class="commit-meta">November 2, 2026 • Build 12</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "The website is down again. / Publishing to Google Play finished. Please bump the version code: increment `versionCode` by 1 in the app build.gradle(.kts) file, and set `versionName` to \"&lt;new versionCode&gt;.0\". / Remove the dns setup instructions from the website, they are only for me not the public. Also, the option A cloud flare setup is redirecting me to the run.app name not proxying. Note I'm on a free cloud flare plan."
+      </div>
+      <ul class="commit-changes">
+        <li>Bumped <code>versionCode</code> to 12 and <code>versionName</code> to 12.0 following Google Play publishing</li>
+        <li>Removed internal DNS setup instructions from the public web portal and configured Nginx with <code>absolute_redirect off</code></li>
+        <li>Hardened public web portal by configuring Nginx (PID 5) to serve <code>/app/applet/download_portal</code> directly + self-healing <code>server.py</code> daemon</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v2.0.0</span>v2.0.0: Rebrand to ZnepLinkCleaner (com.znep.linkcleaner), prompt-tracked release notes &amp; Vibe-Coded PoC</div>
+      <div class="commit-meta">November 2, 2026 • Build 11 • Domain: linkcleaner.znep.com</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Before we go further, I want to rename the app. The name should still indicate what it does but be unique in a way that might be legally protectable in the future. Perhaps include \"znep\"... Choose ZnepLinkCleaner. I own znep.com. The app can live under that name, and you can give me DNS entries to setup make linkcleaner.znep.com resolve to the website. Don't worry about backwards compatibility. Ensure you are recording prompts as part of the release notes and have clear messaging the app is a vibe coded proof of concept, and that this instruction sticks in the future."
+      </div>
+      <ul class="commit-changes">
+        <li>Full rebrand to ZnepLinkCleaner across Android UI, system Share Sheet targets, and web portal (`com.znep.linkcleaner`)</li>
+        <li>Added prominent "Vibe-Coded Proof of Concept" messaging and embedded triggering User Prompts across all release notes</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.9.0</span>v1.9.0: Strip Instagram exln, Threads xmt, Reddit shrid &amp; multi-platform tracking parameters</div>
+      <div class="commit-meta">November 2, 2026 • Build 10</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Instagram links still have an exln param that looks like tracking. Should it be removed? If so, update the app and also look for other missing tracking params."
+      </div>
+      <ul class="commit-changes">
+        <li>Stripped Instagram <code>exln</code>, <code>obrf</code>, <code>vrfl</code>, Threads <code>xmt</code>/<code>slof</code>, Reddit <code>shrid</code>, TikTok <code>u_code</code>/<code>ttclid</code>, and LinkedIn/eBay/AliExpress trackers</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.8.0</span>v1.8.0: Share Sheet prominence, Direct Share shortcuts, full release history &amp; 24/7 public portal watchdog</div>
+      <div class="commit-meta">November 2, 2026 • Build 9</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "The website is no longer public, ensure it remains public and analyze why previous attempts reverted. Always include the full release notes history on the webpage and within the app somewhere. You don't need to include prompts that don't modify the app itself. In addition, provide tips on how to make the app show up earlier and more prominently in the share dialogue. Modify the app if possible to help."
+      </div>
+      <ul class="commit-changes">
+        <li>Added Direct Share Target Shortcut (<code>shortcuts.xml</code>), intent filter priority=100, and full release history viewer</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.7.0</span>v1.7.0: On-device headless WebView Facebook /share/ expander &amp; Red/Orange warning banners</div>
+      <div class="commit-meta">November 2, 2026 • Build 8</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add Option 1 (on-device headless Android WebView resolution) for Facebook share links (/share/p/, /share/r/, etc.) to resolve client-side JS redirects to canonical permalinks. Implement a red warning when Facebook share links fail to expand and an orange advisory for unexpanded shorteners. Include technical details for Facebook share links in the app without cluttering the main screen, and provide a config setting to disable Option 1 (enabled by default)."
+      </div>
+      <ul class="commit-changes">
+        <li>Implemented <code>FacebookWebViewExpander</code> with on-device JS interception and Red/Orange expansion warnings</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.6.0</span>v1.6.0: Architecture topology diagram, repo browser &amp; web portal infrastructure</div>
+      <div class="commit-meta">November 1, 2026 • Build 7</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Create a public download portal webpage hosting the signed APK, an offline Git bundle, a source archive, an interactive Git repository browser, and a visual system architecture diagram."
+      </div>
+      <ul class="commit-changes">
+        <li>Generated architecture topology diagram, standalone Git Repository Browser (`repo.html`), and web download portal</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.5.0</span>v1.5.0: Retro monospace terminal aesthetics, auto-copy/auto-close &amp; custom adaptive icon</div>
+      <div class="commit-meta">October 30, 2026 • Build 6</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Restyle the UI with a sleek retro/cyberpunk monospace terminal aesthetic, add auto-copy on share and auto-close after reshare options, and design a custom adaptive launcher icon."
+      </div>
+      <ul class="commit-changes">
+        <li>Added retro monospace typography, auto-copy on share, and auto-close after resharing</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.4.0</span>v1.4.0: Strict cleaning mode &amp; Amazon affiliate tag preservation</div>
+      <div class="commit-meta">October 28, 2026 • Build 5</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add a Protection / Rules tab with a toggle to preserve Amazon creator affiliate tags while stripping tracking parameters, plus a Strict Cleaning Mode for aggressive heuristic token removal."
+      </div>
+      <ul class="commit-changes">
+        <li>Added Protection / Rules tab with Amazon affiliate preservation and Strict Cleaning Mode</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.3.0</span>v1.3.0: Room SQLite local history &amp; privacy telemetry stats</div>
+      <div class="commit-meta">October 26, 2026 • Build 4</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add a local Room database to record cleaned link history on-device and show privacy stats (links cleaned, trackers removed, and bytes saved)."
+      </div>
+      <ul class="commit-changes">
+        <li>Implemented on-device Room SQLite history and privacy telemetry dashboard</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.2.0</span>v1.2.0: Shortener HTTP 301/302 redirect traversal engine</div>
+      <div class="commit-meta">October 24, 2026 • Build 3</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Support expanding shortened links like TikTok (vt.tiktok.com), Amazon (a.co, amzn.to), bit.ly, and t.co by following HTTP redirects before cleaning the destination URL."
+      </div>
+      <ul class="commit-changes">
+        <li>Added `UrlExpander` to traverse HTTP 301/302 redirects for TikTok, YouTube, Amazon, bit.ly, and t.co</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.1.0</span>v1.1.0: Material 3 dynamic theming, clipboard detection &amp; parameter dictionary</div>
+      <div class="commit-meta">October 22, 2026 • Build 2</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Add Material 3 theming, automatic clipboard link detection with a quick-paste button, and a searchable dictionary of known tracking parameters."
+      </div>
+      <ul class="commit-changes">
+        <li>Added Material 3 dynamic theming, clipboard link detection, and searchable tracking parameter dictionary</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v1.0.0</span>v1.0.0: Initial release — pure on-device link sanitizer</div>
+      <div class="commit-meta">October 20, 2026 • Build 1</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; USER PROMPT //</span>
+        "Build an Android app that receives shared links from the Android Share Sheet, strips tracking parameters like utm_source, fbclid, and gclid, and lets you copy or reshare the clean URL."
+      </div>
+      <ul class="commit-changes">
+        <li>Initial release with offline tracker stripping (`utm_*`, `fbclid`, `gclid`) and Android Share Sheet integration</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

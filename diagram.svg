@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="primary" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+    <linearGradient id="cardBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="redWarning" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#991b1b" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+    <linearGradient id="orangeWarning" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9a3412" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="680" rx="20" fill="url(#bg)"/>
+  <rect width="1198" height="678" x="1" y="1" rx="20" fill="none" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Title & Banner -->
+  <text x="60" y="55" font-family="monospace" font-size="23" font-weight="bold" fill="#38bdf8">ZNEPLINKCLEANER v2.0.0 // VIBE-CODED PROOF OF CONCEPT TOPOLOGY</text>
+  <text x="60" y="80" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">Package: com.znep.linkcleaner • Domain: linkcleaner.znep.com • Multi-Platform Tracker Purger &amp; Headless WebView Resolver</text>
+
+  <!-- COLUMN 1: Android Client Input -->
+  <g transform="translate(60, 110)" filter="url(#shadow)">
+    <rect width="250" height="520" rx="14" fill="url(#cardBg)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="250" height="42" rx="14" fill="#0284c7" fill-opacity="0.2"/>
+    <text x="16" y="27" font-family="monospace" font-size="14" font-weight="bold" fill="#38bdf8">1. INGESTION ENGINE</text>
+
+    <!-- Content Items -->
+    <g transform="translate(16, 60)">
+      <rect width="218" height="65" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="25" font-family="monospace" font-size="12" font-weight="bold" fill="#f8fafc">Android Share Sheet</text>
+      <text x="12" y="45" font-family="sans-serif" font-size="11" fill="#94a3b8">Intent.ACTION_SEND trigger</text>
+    </g>
+
+    <g transform="translate(16, 140)">
+      <rect width="218" height="65" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="25" font-family="monospace" font-size="12" font-weight="bold" fill="#f8fafc">Clipboard Fast-Paste</text>
+      <text x="12" y="45" font-family="sans-serif" font-size="11" fill="#94a3b8">One-tap paste + auto-detect</text>
+    </g>
+
+    <g transform="translate(16, 220)">
+      <rect width="218" height="110" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="25" font-family="monospace" font-size="12" font-weight="bold" fill="#f8fafc">URL Parsing &amp; Classifier</text>
+      <text x="12" y="45" font-family="sans-serif" font-size="10" fill="#94a3b8">• Facebook share (/share/p/)</text>
+      <text x="12" y="65" font-family="sans-serif" font-size="10" fill="#94a3b8">• Standard Shorteners (bit.ly)</text>
+      <text x="12" y="85" font-family="sans-serif" font-size="10" fill="#94a3b8">• Standard Web Links</text>
+    </g>
+
+    <g transform="translate(16, 345)">
+      <rect width="218" height="150" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="25" font-family="monospace" font-size="12" font-weight="bold" fill="#f8fafc">Local Configuration</text>
+      <text x="12" y="48" font-family="sans-serif" font-size="10" fill="#cbd5e1">✓ Headless FB WebView: ON</text>
+      <text x="12" y="68" font-family="sans-serif" font-size="10" fill="#cbd5e1">✓ Auto-Copy on Share: ON</text>
+      <text x="12" y="88" font-family="sans-serif" font-size="10" fill="#cbd5e1">✓ Amazon Affiliate: Keep</text>
+      <text x="12" y="108" font-family="sans-serif" font-size="10" fill="#cbd5e1">✓ Strict Mode: Optional</text>
+    </g>
+  </g>
+
+  <!-- Connectors 1 to 2 -->
+  <path d="M 310 250 L 350 250" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4" fill="none"/>
+
+  <!-- COLUMN 2: Expansion & Sanitization -->
+  <g transform="translate(350, 110)" filter="url(#shadow)">
+    <rect width="280" height="520" rx="14" fill="url(#cardBg)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="280" height="42" rx="14" fill="#0284c7" fill-opacity="0.2"/>
+    <text x="16" y="27" font-family="monospace" font-size="14" font-weight="bold" fill="#38bdf8">2. RESOLUTION &amp; PURGING</text>
+
+    <!-- Facebook Headless WebView -->
+    <g transform="translate(16, 60)">
+      <rect width="248" height="140" rx="8" fill="#0b1120" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="12" y="24" font-family="monospace" font-size="11" font-weight="bold" fill="#38bdf8">[OPTION 1] HEADLESS WEBVIEW</text>
+      <text x="12" y="44" font-family="sans-serif" font-size="10" fill="#e2e8f0">• Target: facebook.com/share/p/*</text>
+      <text x="12" y="62" font-family="sans-serif" font-size="10" fill="#94a3b8">• Executes XMiBUrlWrapper JS</text>
+      <text x="12" y="80" font-family="sans-serif" font-size="10" fill="#94a3b8">• Intercepts canonical permalink</text>
+      <text x="12" y="98" font-family="sans-serif" font-size="10" fill="#94a3b8">• 6.5s timeout &amp; memory cleanup</text>
+      <text x="12" y="118" font-family="sans-serif" font-size="10" fill="#4ade80">• 100% on-device, no API keys</text>
+    </g>
+
+    <!-- HTTP Shortener Redirects -->
+    <g transform="translate(16, 215)">
+      <rect width="248" height="90" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="22" font-family="monospace" font-size="11" font-weight="bold" fill="#f8fafc">HTTP 301/302 Traversal</text>
+      <text x="12" y="42" font-family="sans-serif" font-size="10" fill="#94a3b8">• bit.ly, t.co, vt.tiktok.com, a.co</text>
+      <text x="12" y="60" font-family="sans-serif" font-size="10" fill="#94a3b8">• Follows location headers safely</text>
+      <text x="12" y="78" font-family="sans-serif" font-size="10" fill="#94a3b8">• Strips intermediate trackers</text>
+    </g>
+
+    <!-- Tracker Purging Engine -->
+    <g transform="translate(16, 320)">
+      <rect width="248" height="175" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="12" y="24" font-family="monospace" font-size="11" font-weight="bold" fill="#f8fafc">Tracker Stripping Core</text>
+      <text x="12" y="46" font-family="sans-serif" font-size="10" fill="#94a3b8">• Instagram exln, igsh, obrf, vrfl</text>
+      <text x="12" y="64" font-family="sans-serif" font-size="10" fill="#94a3b8">• Meta fbclid, mibextid, Threads xmt</text>
+      <text x="12" y="82" font-family="sans-serif" font-size="10" fill="#94a3b8">• TikTok _t, _r, u_code, ttclid</text>
+      <text x="12" y="100" font-family="sans-serif" font-size="10" fill="#94a3b8">• Reddit shrid • LinkedIn li_fat_id</text>
+      <text x="12" y="120" font-family="sans-serif" font-size="10" fill="#94a3b8">• Amazon, eBay, AliExpress, UTM</text>
+      <text x="12" y="145" font-family="monospace" font-size="10" font-weight="bold" fill="#4ade80">→ Zero Data Leaves Device</text>
+    </g>
+  </g>
+
+  <!-- Connectors 2 to 3 -->
+  <path d="M 630 250 L 670 250" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4" fill="none"/>
+
+  <!-- COLUMN 3: Warning System & Presentation -->
+  <g transform="translate(670, 110)" filter="url(#shadow)">
+    <rect width="240" height="520" rx="14" fill="url(#cardBg)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="240" height="42" rx="14" fill="#0284c7" fill-opacity="0.2"/>
+    <text x="16" y="27" font-family="monospace" font-size="14" font-weight="bold" fill="#38bdf8">3. WARNINGS &amp; UI</text>
+
+    <!-- Red Warning Card -->
+    <g transform="translate(14, 60)">
+      <rect width="212" height="120" rx="8" fill="#450a0a" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#fca5a5">[ ⚠️ RED WARNING ]</text>
+      <text x="10" y="40" font-family="sans-serif" font-size="10" font-weight="bold" fill="#fef2f2">Facebook Expansion Failed</text>
+      <text x="10" y="60" font-family="sans-serif" font-size="9" fill="#fecaca">• Login gate / private post</text>
+      <text x="10" y="75" font-family="sans-serif" font-size="9" fill="#fecaca">• Disabled in preferences</text>
+      <text x="10" y="92" font-family="sans-serif" font-size="9" fill="#f87171">Action: Link to Tech Details</text>
+    </g>
+
+    <!-- Orange Advisory Card -->
+    <g transform="translate(14, 195)">
+      <rect width="212" height="110" rx="8" fill="#431407" stroke="#ea580c" stroke-width="1.5"/>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#fdba74">[ ⚠️ ORANGE ADVISORY ]</text>
+      <text x="10" y="40" font-family="sans-serif" font-size="10" font-weight="bold" fill="#fff7ed">Unexpanded Shortlink</text>
+      <text x="10" y="58" font-family="sans-serif" font-size="9" fill="#fed7aa">• bit.ly, t.co failed network</text>
+      <text x="10" y="74" font-family="sans-serif" font-size="9" fill="#fed7aa">• Slug retains opaque tracking</text>
+      <text x="10" y="90" font-family="sans-serif" font-size="9" fill="#fb923c">Informed user decision alert</text>
+    </g>
+
+    <!-- Clean Output & Actions -->
+    <g transform="translate(14, 320)">
+      <rect width="212" height="175" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="10" y="24" font-family="monospace" font-size="11" font-weight="bold" fill="#4ade80">Clean Result Card</text>
+      <text x="10" y="46" font-family="sans-serif" font-size="10" fill="#94a3b8">• Cleaned Monospace URL</text>
+      <text x="10" y="64" font-family="sans-serif" font-size="10" fill="#94a3b8">• One-tap Retro Copy</text>
+      <text x="10" y="82" font-family="sans-serif" font-size="10" fill="#94a3b8">• Instant System Reshare</text>
+      <text x="10" y="100" font-family="sans-serif" font-size="10" fill="#94a3b8">• Room SQLite History</text>
+      <text x="10" y="125" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Rules Tab &amp; Deep Dive</text>
+      <text x="10" y="145" font-family="sans-serif" font-size="9" fill="#94a3b8">Explains Facebook token shim</text>
+    </g>
+  </g>
+
+  <!-- Connectors 3 to 4 -->
+  <path d="M 910 250 L 950 250" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4" fill="none"/>
+
+  <!-- COLUMN 4: Deployment & Host -->
+  <g transform="translate(950, 110)" filter="url(#shadow)">
+    <rect width="190" height="520" rx="14" fill="url(#cardBg)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="190" height="42" rx="14" fill="#0284c7" fill-opacity="0.2"/>
+    <text x="16" y="27" font-family="monospace" font-size="14" font-weight="bold" fill="#38bdf8">4. WEB PORTAL</text>
+
+    <g transform="translate(12, 60)">
+      <rect width="166" height="110" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Cloud Run Backend</text>
+      <text x="10" y="42" font-family="sans-serif" font-size="9" fill="#94a3b8">• Hosted in us-east1</text>
+      <text x="10" y="58" font-family="sans-serif" font-size="9" fill="#94a3b8">• Fully managed by</text>
+      <text x="10" y="74" font-family="sans-serif" font-size="9" fill="#f8fafc">Google AI Studio</text>
+      <text x="10" y="92" font-family="sans-serif" font-size="9" fill="#4ade80">• $0 cost to user</text>
+    </g>
+
+    <g transform="translate(12, 185)">
+      <rect width="166" height="120" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Artifacts &amp; Git</text>
+      <text x="10" y="42" font-family="sans-serif" font-size="9" fill="#94a3b8">• ZnepLinkCleaner.apk</text>
+      <text x="10" y="58" font-family="sans-serif" font-size="9" fill="#94a3b8">• ZnepLinkCleaner.bundle</text>
+      <text x="10" y="74" font-family="sans-serif" font-size="9" fill="#94a3b8">• Full .git &amp; Prompts</text>
+      <text x="10" y="90" font-family="sans-serif" font-size="9" fill="#94a3b8">• HTML repo browser</text>
+    </g>
+
+    <g transform="translate(12, 320)">
+      <rect width="166" height="175" rx="8" fill="#0b1120" stroke="#1e293b"/>
+      <text x="10" y="22" font-family="monospace" font-size="10" font-weight="bold" fill="#38bdf8">Domain &amp; Access</text>
+      <text x="10" y="44" font-family="monospace" font-size="8" fill="#4ade80">linkcleaner.znep.com</text>
+      <text x="10" y="64" font-family="monospace" font-size="8" fill="#cbd5e1">com.znep.linkcleaner</text>
+      <text x="10" y="88" font-family="sans-serif" font-size="9" fill="#94a3b8">24/7 Public Watchdog:</text>
+      <text x="10" y="106" font-family="sans-serif" font-size="8" fill="#4ade80">Nginx Lua Auth Bypassed</text>
+      <text x="10" y="122" font-family="sans-serif" font-size="8" fill="#4ade80">Persistent Port 3000</text>
+      <text x="10" y="142" font-family="sans-serif" font-size="8" fill="#38bdf8">Vibe-Coded PoC</text>
+    </g>
+  </g>
+</svg>
