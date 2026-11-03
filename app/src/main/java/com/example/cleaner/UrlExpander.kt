@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
@@ -25,12 +26,20 @@ object UrlExpander {
         val finalUrl: String,
         val wasRedirected: Boolean,
         val isOpaqueShortener: Boolean,
-        val failedToRedirect: Boolean
+        val failedToRedirect: Boolean,
+        val blockedReason: String? = null
+    )
+
+    data class OfflineUnwrapResult(
+        val url: String,
+        val blockedReason: String? = null
     )
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(6, TimeUnit.SECONDS)
-        .readTimeout(6, TimeUnit.SECONDS)
+        .dns(UrlSecurityValidator.SafePublicDns)
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .callTimeout(8, TimeUnit.SECONDS)
         .followRedirects(false)
         .followSslRedirects(false)
         .build()
@@ -118,7 +127,8 @@ object UrlExpander {
     }
 
     /**
-     * Expands a short link by following HTTP 301/302 redirects up to maxRedirects.
+     * Expands a short link by following HTTP 301/302 redirects up to maxRedirects,
+     * enforcing SSRF and scheme security checks at every hop.
      */
     suspend fun expandUrl(url: String, maxRedirects: Int = 6): String {
         return expandUrlDetailed(url, maxRedirects).finalUrl
@@ -126,23 +136,53 @@ object UrlExpander {
 
     suspend fun expandUrlDetailed(url: String, maxRedirects: Int = 6): DetailedExpansion = withContext(Dispatchers.IO) {
         val trimmed = url.trim()
-        val offline = unwrapOfflineRedirects(trimmed)
+        val offlineResult = unwrapOfflineRedirectsDetailed(trimmed)
+        val offline = offlineResult.url
         val isOpaque = isOpaqueShortener(trimmed)
+
+        if (offlineResult.blockedReason != null) {
+            return@withContext DetailedExpansion(
+                finalUrl = offline,
+                wasRedirected = false,
+                isOpaqueShortener = isOpaque,
+                failedToRedirect = true,
+                blockedReason = offlineResult.blockedReason
+            )
+        }
+
+        val initialBlockReason = UrlSecurityValidator.validateRedirectTarget(offline)
+        if (initialBlockReason != null) {
+            return@withContext DetailedExpansion(
+                finalUrl = offline,
+                wasRedirected = false,
+                isOpaqueShortener = isOpaque,
+                failedToRedirect = true,
+                blockedReason = initialBlockReason
+            )
+        }
 
         if (!shouldExpand(offline)) {
             return@withContext DetailedExpansion(
                 finalUrl = offline,
                 wasRedirected = offline != trimmed,
                 isOpaqueShortener = isOpaque,
-                failedToRedirect = false
+                failedToRedirect = false,
+                blockedReason = null
             )
         }
 
         var currentUrl = offline
         var redirectCount = 0
+        var blockedReason: String? = null
 
         try {
             while (redirectCount < maxRedirects) {
+                val hopBlockReason = UrlSecurityValidator.validateRedirectTarget(currentUrl)
+                if (hopBlockReason != null) {
+                    blockedReason = hopBlockReason
+                    break
+                }
+
                 val request = Request.Builder()
                     .url(currentUrl)
                     .header("User-Agent", USER_AGENT)
@@ -155,22 +195,27 @@ object UrlExpander {
                     if (code in 300..399) {
                         val location = response.header("Location")
                         if (!location.isNullOrBlank()) {
-                            val resolvedUri = Uri.parse(currentUrl).buildUpon()
-                            val nextUri = Uri.parse(location)
-                            currentUrl = if (nextUri.isAbsolute) {
-                                location
-                            } else {
-                                val scheme = resolvedUri.build().scheme ?: "https"
-                                val host = resolvedUri.build().host ?: ""
-                                "$scheme://$host$location"
+                            val candidateUrl = resolveRedirectLocation(currentUrl, location.trim())
+                            val candidateBlockReason = UrlSecurityValidator.validateRedirectTarget(candidateUrl)
+                            if (candidateBlockReason != null) {
+                                blockedReason = candidateBlockReason
+                                return@withContext DetailedExpansion(
+                                    finalUrl = currentUrl,
+                                    wasRedirected = currentUrl != trimmed,
+                                    isOpaqueShortener = isOpaque,
+                                    failedToRedirect = true,
+                                    blockedReason = candidateBlockReason
+                                )
                             }
+                            currentUrl = candidateUrl
                             redirectCount++
                         } else {
                             return@withContext DetailedExpansion(
                                 finalUrl = currentUrl,
                                 wasRedirected = currentUrl != trimmed,
                                 isOpaqueShortener = isOpaque,
-                                failedToRedirect = currentUrl == trimmed
+                                failedToRedirect = currentUrl == trimmed,
+                                blockedReason = null
                             )
                         }
                     } else {
@@ -178,13 +223,20 @@ object UrlExpander {
                             finalUrl = currentUrl,
                             wasRedirected = currentUrl != trimmed,
                             isOpaqueShortener = isOpaque,
-                            failedToRedirect = currentUrl == trimmed
+                            failedToRedirect = currentUrl == trimmed,
+                            blockedReason = null
                         )
                     }
                 }
             }
+        } catch (e: SecurityException) {
+            blockedReason = e.message ?: "Blocked unsafe network redirect."
+        } catch (e: java.net.UnknownHostException) {
+            if (e.message?.contains("Blocked") == true) {
+                blockedReason = e.message
+            }
         } catch (_: Exception) {
-            // Network error
+            // Network timeout or connection failure
         }
 
         val wasRedirected = currentUrl != trimmed
@@ -192,15 +244,42 @@ object UrlExpander {
             finalUrl = currentUrl,
             wasRedirected = wasRedirected,
             isOpaqueShortener = isOpaque,
-            failedToRedirect = !wasRedirected
+            failedToRedirect = !wasRedirected || blockedReason != null,
+            blockedReason = blockedReason
         )
+    }
+
+    internal fun resolveRedirectLocation(baseUrl: String, location: String): String {
+        return try {
+            val nextUri = Uri.parse(location)
+            if (nextUri.isAbsolute) {
+                location
+            } else {
+                val resolved = URI(baseUrl).resolve(location).toString()
+                resolved
+            }
+        } catch (_: Exception) {
+            val baseUri = Uri.parse(baseUrl)
+            val scheme = baseUri.scheme ?: "https"
+            val host = baseUri.host ?: ""
+            if (location.startsWith("/")) {
+                "$scheme://$host$location"
+            } else {
+                "$scheme://$host/$location"
+            }
+        }
     }
 
     /**
      * Handles link shims that can be unwrapped instantly without network
-     * (e.g. l.facebook.com/l.php?u=... or google.com/url?q=...).
+     * (e.g. l.facebook.com/l.php?u=... or google.com/url?q=...), while validating
+     * that the unwrapped target is a safe public HTTP/HTTPS URL.
      */
     fun unwrapOfflineRedirects(url: String): String {
+        return unwrapOfflineRedirectsDetailed(url).url
+    }
+
+    fun unwrapOfflineRedirectsDetailed(url: String): OfflineUnwrapResult {
         try {
             val uri = Uri.parse(url)
             val host = uri.host?.lowercase().orEmpty()
@@ -210,29 +289,47 @@ object UrlExpander {
                 uri.path?.contains("/l.php") == true
             ) {
                 val u = uri.getQueryParameter("u")
-                if (!u.isNullOrBlank() && u.startsWith("http")) {
-                    return URLDecoder.decode(u, StandardCharsets.UTF_8.name())
+                if (!u.isNullOrBlank()) {
+                    val decoded = URLDecoder.decode(u, StandardCharsets.UTF_8.name()).trim()
+                    val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
+                    return if (blockReason == null) {
+                        OfflineUnwrapResult(url = decoded)
+                    } else {
+                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                    }
                 }
             }
 
             // Google redirect
             if (host.contains("google.") && uri.path?.contains("/url") == true) {
                 val q = uri.getQueryParameter("q") ?: uri.getQueryParameter("url")
-                if (!q.isNullOrBlank() && q.startsWith("http")) {
-                    return URLDecoder.decode(q, StandardCharsets.UTF_8.name())
+                if (!q.isNullOrBlank()) {
+                    val decoded = URLDecoder.decode(q, StandardCharsets.UTF_8.name()).trim()
+                    val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
+                    return if (blockReason == null) {
+                        OfflineUnwrapResult(url = decoded)
+                    } else {
+                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                    }
                 }
             }
 
             // Reddit outbound
             if (host.contains("out.reddit.com")) {
                 val target = uri.getQueryParameter("url")
-                if (!target.isNullOrBlank() && target.startsWith("http")) {
-                    return URLDecoder.decode(target, StandardCharsets.UTF_8.name())
+                if (!target.isNullOrBlank()) {
+                    val decoded = URLDecoder.decode(target, StandardCharsets.UTF_8.name()).trim()
+                    val blockReason = UrlSecurityValidator.validateRedirectTarget(decoded)
+                    return if (blockReason == null) {
+                        OfflineUnwrapResult(url = decoded)
+                    } else {
+                        OfflineUnwrapResult(url = url, blockedReason = blockReason)
+                    }
                 }
             }
         } catch (_: Exception) {
             // Keep original
         }
-        return url
+        return OfflineUnwrapResult(url = url)
     }
 }

@@ -57,14 +57,17 @@ class MainActivity : ComponentActivity() {
         if (intent == null) return
 
         if (Intent.ACTION_SEND == intent.action && intent.type?.startsWith("text/") == true) {
-            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-                ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+            val sharedText = (intent.getStringExtra(Intent.EXTRA_TEXT)
+                ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
+                ?.take(com.example.cleaner.UrlSecurityValidator.MAX_INPUT_LENGTH)
 
             if (!sharedText.isNullOrBlank()) {
                 viewModel.processInputText(sharedText, isSharedIntent = true)
             }
         } else if (Intent.ACTION_PROCESS_TEXT == intent.action && intent.type?.startsWith("text/") == true) {
-            val processedText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+            val processedText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+                ?.toString()
+                ?.take(com.example.cleaner.UrlSecurityValidator.MAX_INPUT_LENGTH)
             if (!processedText.isNullOrBlank()) {
                 viewModel.processInputText(processedText, isSharedIntent = true)
             }

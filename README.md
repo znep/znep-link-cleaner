@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v15.0 (Build 15)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v16.0 (Build 16)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal ([https://linkcleaner.znep.com](https://linkcleaner.znep.com)) with public source & prompt-tracked Git history at **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**. Built iteratively through natural-language prompts in Google AI Studio, every prompt that modified the application and its corresponding changes are permanently recorded in each separate Git commit message, this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,25 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v15.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v16.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
 3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active.
-4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v15.0-source.zip`.
+4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v16.0-source.zip`.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v15.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v16.0`)
+
+### `v16.0` (Build 16) — November 2, 2026
+**Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox & Anti-Phishing Advisories**
+- **User Prompt**:
+  > *"Analyze the app for security concerns including, but not limited to, dangers of processing untrusted links. Recommend improvements. [Selected: Block private IPs and non-HTTPS schemes in UrlExpander; Lock down Facebook WebView domains, cookies, and file access; Detect homograph, user@host, HTTP, and APK phishing risks; Expand automatically by default with a toggle for Offline-Only mode]"*
+- **Changes**:
+  - Implemented `UrlSecurityValidator` and `SafePublicDns` in `UrlExpander` to block SSRF redirects against loopback, RFC1918 LAN, link-local, CGNAT, and cloud metadata IPs (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`, IPv6 `::1`/`fe80::`).
+  - Enforced strict `http`/`https` scheme validation across all redirect hops, offline link shims, and browser intent launches (blocking `javascript:`, `intent:`, `file:`, `content:`, and `data:` URI injection).
+  - Hardened `FacebookWebViewExpander` sandbox: locked navigation and subresource requests strictly to HTTPS official Meta domains, disabled file/content/DOM storage and cookies, and wiped cache/storage on teardown.
+  - Added anti-phishing & homograph detection that strips deceptive `user:pass@host` credentials and alerts on Punycode (`xn--`) lookalike domains, `.apk`/`.exe` downloads, raw IPs, and cleartext HTTP links.
+  - Added **Offline-Only Mode** toggle in Protection settings to prevent automatic outbound network requests on untrusted shortlinks, with an on-demand **"Expand Shortlink Now"** button.
 
 ### `v15.0` (Build 15) — November 2, 2026
 **Public GitHub Repo Integration, Live Embedded Commit Explorer & Per-Release Prompt-Annotated Git Commits**

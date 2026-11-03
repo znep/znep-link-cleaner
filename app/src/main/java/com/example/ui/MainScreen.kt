@@ -84,6 +84,7 @@ fun MainScreen(viewModel: MainViewModel) {
     val keepAmazon by viewModel.keepAmazonAffiliate.collectAsStateWithLifecycle()
     val strictMode by viewModel.strictMode.collectAsStateWithLifecycle()
     val enableFacebookWebView by viewModel.enableFacebookWebViewExpansion.collectAsStateWithLifecycle()
+    val offlineOnlyMode by viewModel.offlineOnlyMode.collectAsStateWithLifecycle()
 
     // Handle ViewModel events
     LaunchedEffect(Unit) {
@@ -189,7 +190,8 @@ fun MainScreen(viewModel: MainViewModel) {
                         onOpenBrowser = { viewModel.openInBrowser(context, it) },
                         onLoadSample = { viewModel.loadSample(it) },
                         copiedTextState = copiedTextState,
-                        onViewFacebookDetails = { selectedTab = MainTab.RULES }
+                        onViewFacebookDetails = { selectedTab = MainTab.RULES },
+                        onExpandShortlinkNow = { viewModel.expandCurrentLinkNow() }
                     )
                 }
                 MainTab.HISTORY -> {
@@ -209,11 +211,13 @@ fun MainScreen(viewModel: MainViewModel) {
                         keepAmazon = keepAmazon,
                         strictMode = strictMode,
                         enableFacebookWebView = enableFacebookWebView,
+                        offlineOnlyMode = offlineOnlyMode,
                         onAutoCopyChanged = { viewModel.setAutoCopy(it) },
                         onAutoCloseChanged = { viewModel.setAutoClose(it) },
                         onKeepAmazonChanged = { viewModel.setKeepAmazon(it) },
                         onStrictModeChanged = { viewModel.setStrictMode(it) },
                         onEnableFacebookWebViewChanged = { viewModel.setEnableFacebookWebViewExpansion(it) },
+                        onOfflineOnlyModeChanged = { viewModel.setOfflineOnlyMode(it) },
                         onPracticeShare = {
                             viewModel.shareLink(context, "https://example.com/share-target-test?utm_source=android_sharesheet&fbclid=practice123")
                         }

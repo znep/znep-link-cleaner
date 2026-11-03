@@ -1,6 +1,6 @@
 {
-  "summary": "Revised implementation plan adding full GitHub and Published Git Repository synchronization (including prompts and release notes across README.md, CHANGELOG.md, annotated Git tags, repo.html, Git bundle, and standing instructions in AGENTS.md) alongside the Cyberpunk Zlc Quivering Logo redesign.",
-  "updatedAt": "2026-11-02T23:15:58.180800075Z",
+  "summary": "Security hardening plan for ZnepLinkCleaner v16.0: SSRF & scheme protection in UrlExpander, strict domain/cookie/storage isolation in FacebookWebViewExpander, phishing/homograph/credential/cleartext/APK risk detection in LinkCleaner & CleanResultCard, Offline-Only expansion mode toggle in Protection settings, and synchronized v16.0 release history & Git commit.",
+  "updatedAt": "2026-11-02T23:53:37.736390202Z",
   "requestFeedback": true,
   "userFacing": true
 }

@@ -70,6 +70,7 @@ fun CleanScreen(
     onLoadSample: (SampleType) -> Unit,
     copiedTextState: String?,
     onViewFacebookDetails: () -> Unit = {},
+    onExpandShortlinkNow: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -300,7 +301,8 @@ fun CleanScreen(
                 onCopy = onCopyCleaned,
                 onShare = onShareCleaned,
                 onOpenBrowser = onOpenBrowser,
-                onViewFacebookDetails = onViewFacebookDetails
+                onViewFacebookDetails = onViewFacebookDetails,
+                onExpandShortlinkNow = onExpandShortlinkNow
             )
         }
 

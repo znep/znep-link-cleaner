@@ -126,10 +126,64 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `block SSRF private and loopback IPs and non-http schemes`() {
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("127.0.0.1"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("10.0.0.1"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("172.16.5.4"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("192.168.1.1"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("169.254.169.254"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("localhost"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("router.local"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("[::1]"))
+        assertFalse(com.example.cleaner.UrlSecurityValidator.isPrivateOrLoopbackHost("example.com"))
+
+        // Offline shim attempting to redirect to private LAN IP or javascript: URI must be blocked
+        val ssrfShim = "https://l.facebook.com/l.php?u=http%3A%2F%2F169.254.169.254%2Flatest%2Fmeta-data%2F"
+        val ssrfResult = LinkCleaner.cleanText(ssrfShim)
+        assertEquals(com.example.model.ExpansionWarningType.RED_SECURITY_BLOCKED, ssrfResult.warningType)
+        assertTrue(ssrfResult.securityAdvisories.any { it.code == "BLOCKED_UNSAFE_REDIRECT" })
+
+        val jsShim = "https://www.google.com/url?q=javascript%3Aalert(1)"
+        val jsResult = LinkCleaner.cleanText(jsShim)
+        assertEquals(com.example.model.ExpansionWarningType.RED_SECURITY_BLOCKED, jsResult.warningType)
+    }
+
+    @Test
+    fun `strip user@host credentials and detect homograph and apk phishing risks`() {
+        val spoofInput = "https://google.com:login@evil-phish.example.com/update.apk?utm_source=phish"
+        val spoofResult = LinkCleaner.cleanText(spoofInput)
+        assertEquals("https://evil-phish.example.com/update.apk", spoofResult.cleanedUrl)
+        assertTrue(spoofResult.strippedParams.any { it.key == "userInfo@" })
+        assertTrue(spoofResult.securityAdvisories.any { it.code == "EMBEDDED_CREDENTIALS_SPOOF" })
+        assertTrue(spoofResult.securityAdvisories.any { it.code == "EXECUTABLE_DOWNLOAD_RISK" })
+
+        val homographInput = "http://xn--pple-43d.com/login?fbclid=123"
+        val homographResult = LinkCleaner.cleanText(homographInput)
+        assertEquals("http://xn--pple-43d.com/login", homographResult.cleanedUrl)
+        assertTrue(homographResult.securityAdvisories.any { it.code == "IDN_HOMOGRAPH_RISK" })
+        assertTrue(homographResult.securityAdvisories.any { it.code == "CLEARTEXT_HTTP" })
+    }
+
+    @Test
+    fun `enforce Facebook WebView HTTPS domain sandbox and Offline-Only mode`() = kotlinx.coroutines.runBlocking {
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isAllowedFacebookWebViewUrl("https://www.facebook.com/share/p/18V4XJ9abc/"))
+        assertTrue(com.example.cleaner.UrlSecurityValidator.isAllowedFacebookWebViewUrl("https://m.facebook.com/story.php?story_fbid=123&id=456"))
+        assertFalse(com.example.cleaner.UrlSecurityValidator.isAllowedFacebookWebViewUrl("http://www.facebook.com/share/p/18V4XJ9abc/"))
+        assertFalse(com.example.cleaner.UrlSecurityValidator.isAllowedFacebookWebViewUrl("https://evil-site.com/share/p/18V4XJ9abc/"))
+        assertFalse(com.example.cleaner.UrlSecurityValidator.isAllowedFacebookWebViewUrl("file:///android_asset/exploit.html"))
+
+        val shortlink = "https://bit.ly/3xyzabc?utm_source=test"
+        val offlineResult = LinkCleaner.cleanTextAsync(shortlink, offlineOnlyMode = true)
+        assertTrue(offlineResult.isOfflineDeferredShortlink)
+        assertEquals(com.example.model.ExpansionWarningType.ORANGE_UNEXPANDED_SHORTLINK, offlineResult.warningType)
+        assertEquals("https://bit.ly/3xyzabc", offlineResult.cleanedUrl)
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(15, releases.size)
-        assertEquals("15.0", releases.first().version)
+        assertEquals(16, releases.size)
+        assertEquals("16.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

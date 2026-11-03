@@ -27,6 +27,11 @@ class PreferencesManager(context: Context) {
         MutableStateFlow(prefs.getBoolean(KEY_ENABLE_FB_WEBVIEW, true))
     val enableFacebookWebViewExpansion: StateFlow<Boolean> = _enableFacebookWebViewExpansion.asStateFlow()
 
+    // Security Option: Offline-Only Mode (No automatic outbound network expansion)
+    private val _offlineOnlyMode =
+        MutableStateFlow(prefs.getBoolean(KEY_OFFLINE_ONLY_MODE, false))
+    val offlineOnlyMode: StateFlow<Boolean> = _offlineOnlyMode.asStateFlow()
+
     fun setAutoCopyOnShare(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_AUTO_COPY, enabled).apply()
         _autoCopyOnShare.value = enabled
@@ -52,11 +57,17 @@ class PreferencesManager(context: Context) {
         _enableFacebookWebViewExpansion.value = enabled
     }
 
+    fun setOfflineOnlyMode(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_OFFLINE_ONLY_MODE, enabled).apply()
+        _offlineOnlyMode.value = enabled
+    }
+
     companion object {
         private const val KEY_AUTO_COPY = "auto_copy_on_share"
         private const val KEY_AUTO_CLOSE = "auto_close_after_reshare"
         private const val KEY_KEEP_AMAZON = "keep_amazon_affiliate"
         private const val KEY_STRICT_MODE = "strict_mode"
         private const val KEY_ENABLE_FB_WEBVIEW = "enable_fb_webview_expansion"
+        private const val KEY_OFFLINE_ONLY_MODE = "offline_only_mode"
     }
 }

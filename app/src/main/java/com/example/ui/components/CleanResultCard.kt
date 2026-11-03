@@ -17,8 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.model.CleanResult
 import com.example.model.ExpansionWarningType
+import com.example.model.SecurityAdvisory
+import com.example.model.SecuritySeverity
 import com.example.model.StrippedParam
 
 @Composable
@@ -56,6 +60,7 @@ fun CleanResultCard(
     onShare: (String) -> Unit,
     onOpenBrowser: (String) -> Unit,
     onViewFacebookDetails: (() -> Unit)? = null,
+    onExpandShortlinkNow: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showDetails by remember { mutableStateOf(false) }
@@ -123,8 +128,36 @@ fun CleanResultCard(
                 }
             }
 
-            // Warnings: Red for Facebook expansion failed, Orange for unexpanded shortlink
+            // Warnings: Red for Security Blocked or Facebook expansion failed, Orange for unexpanded/offline shortlink
             when (result.warningType) {
+                ExpansionWarningType.RED_SECURITY_BLOCKED -> {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                            .testTag("security_blocked_banner"),
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF380707),
+                        border = BorderStroke(1.5.dp, Color(0xFFEF4444))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "[ 🛡️ SECURITY FIREWALL // UNSAFE REDIRECT BLOCKED ]",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFFCA5A5)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = result.warningMessage
+                                    ?: "ZnepLinkCleaner blocked a redirect to a non-public IP address or disallowed URI scheme.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFFEE2E2),
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+                }
                 ExpansionWarningType.RED_FACEBOOK_FAILED -> {
                     Surface(
                         modifier = Modifier
@@ -180,7 +213,11 @@ fun CleanResultCard(
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(
-                                text = "[ ⚠️ ADVISORY // UNEXPANDED SHORTLINK ]",
+                                text = if (result.isOfflineDeferredShortlink) {
+                                    "[ 🛡️ OFFLINE-ONLY MODE // SHORTLINK EXPANSION DEFERRED ]"
+                                } else {
+                                    "[ ⚠️ ADVISORY // UNEXPANDED SHORTLINK ]"
+                                },
                                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFFDBA74)
@@ -193,10 +230,79 @@ fun CleanResultCard(
                                 color = Color(0xFFFFEDD5),
                                 lineHeight = 16.sp
                             )
+                            if (result.isOfflineDeferredShortlink && onExpandShortlinkNow != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = onExpandShortlinkNow,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(38.dp)
+                                        .testTag("expand_shortlink_now_button"),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, Color(0xFFF97316))
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ElectricBolt,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFDBA74),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "[ EXPAND SHORTLINK NOW ]",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFFDBA74)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
                 ExpansionWarningType.NONE -> { /* No warning needed */ }
+            }
+
+            // Security Advisories Banner (Homograph, user@host, APK download, Cleartext HTTP, Raw IP)
+            if (result.securityAdvisories.isNotEmpty()) {
+                val hasHighSeverity = result.securityAdvisories.any { it.severity == SecuritySeverity.HIGH }
+                val borderColor = if (hasHighSeverity) Color(0xFFEF4444) else Color(0xFFF59E0B)
+                val bgColor = if (hasHighSeverity) Color(0xFF310B14) else Color(0xFF2B1C06)
+                val titleColor = if (hasHighSeverity) Color(0xFFFCA5A5) else Color(0xFFFDE68A)
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                        .testTag("security_advisories_banner"),
+                    shape = RoundedCornerShape(10.dp),
+                    color = bgColor,
+                    border = BorderStroke(1.5.dp, borderColor)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Security,
+                                contentDescription = null,
+                                tint = titleColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "[ SECURITY & PHISHING ADVISORIES (${result.securityAdvisories.size}) ]",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = titleColor
+                            )
+                        }
+
+                        for (advisory in result.securityAdvisories) {
+                            SecurityAdvisoryItem(advisory = advisory)
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -330,6 +436,9 @@ fun CleanResultCard(
                 if (result.expandedFromUrl != null) {
                     TelemetryPill(label = "EXPANDED")
                 }
+                if (result.securityAdvisories.isNotEmpty()) {
+                    TelemetryPill(label = "${result.securityAdvisories.size} SEC ALERT")
+                }
             }
 
             // Collapsible Details Section (Decluttered: hidden by default!)
@@ -394,6 +503,50 @@ fun CleanResultCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SecurityAdvisoryItem(advisory: SecurityAdvisory) {
+    val badgeColor = when (advisory.severity) {
+        SecuritySeverity.HIGH -> Color(0xFFEF4444)
+        SecuritySeverity.MEDIUM -> Color(0xFFF59E0B)
+        SecuritySeverity.LOW -> Color(0xFF38BDF8)
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 2.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = badgeColor.copy(alpha = 0.22f),
+                border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.7f))
+            ) {
+                Text(
+                    text = advisory.severity.name,
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = badgeColor,
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = advisory.title,
+                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFFEE2E2)
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = advisory.description,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFFFECACA),
+            lineHeight = 15.sp
+        )
     }
 }
 

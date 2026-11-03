@@ -7,8 +7,10 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cleaner.FacebookWebViewExpander
 import com.example.cleaner.LinkCleaner
 import com.example.cleaner.UrlExpander
+import com.example.cleaner.UrlSecurityValidator
 import com.example.data.AppDatabase
 import com.example.data.CleanStats
 import com.example.data.CleanedLinkEntity
@@ -51,6 +53,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val keepAmazonAffiliate = prefs.keepAmazonAffiliate
     val strictMode = prefs.strictMode
     val enableFacebookWebViewExpansion = prefs.enableFacebookWebViewExpansion
+    val offlineOnlyMode = prefs.offlineOnlyMode
 
     val history: StateFlow<List<CleanedLinkEntity>> = dao.getAllLinks()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -74,7 +77,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
     fun updateInputText(text: String) {
-        _inputText.value = text
+        _inputText.value = text.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
     }
 
     fun clearInput() {
@@ -85,30 +88,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun processInputText(text: String, isSharedIntent: Boolean = false) {
-        val trimmed = text.trim()
+        val trimmed = text.trim().take(UrlSecurityValidator.MAX_INPUT_LENGTH)
         if (trimmed.isEmpty()) return
 
         _inputText.value = trimmed
         _isFromShareIntent.value = isSharedIntent
 
         viewModelScope.launch {
+            val isOfflineOnly = offlineOnlyMode.value
             // First immediate offline clean
             val initial = LinkCleaner.cleanText(
                 inputText = trimmed,
                 keepAmazonAffiliate = keepAmazonAffiliate.value,
-                strictMode = strictMode.value
+                strictMode = strictMode.value,
+                offlineOnlyMode = isOfflineOnly
             )
             _cleanResult.value = initial
 
-            // If it's a redirect / shortener link or Facebook share link, expand it asynchronously
-            if (UrlExpander.shouldExpand(trimmed) || com.example.cleaner.FacebookWebViewExpander.isFacebookShareLink(trimmed)) {
+            // If it's a redirect / shortener link or Facebook share link, expand it asynchronously unless Offline-Only Mode is active
+            if (!isOfflineOnly && (UrlExpander.shouldExpand(trimmed) || FacebookWebViewExpander.isFacebookShareLink(trimmed))) {
                 _isExpanding.value = true
                 val expandedResult = LinkCleaner.cleanTextAsync(
                     inputText = trimmed,
                     context = getApplication(),
                     enableFacebookWebView = enableFacebookWebViewExpansion.value,
                     keepAmazonAffiliate = keepAmazonAffiliate.value,
-                    strictMode = strictMode.value
+                    strictMode = strictMode.value,
+                    offlineOnlyMode = false
                 )
                 _cleanResult.value = expandedResult
                 _isExpanding.value = false
@@ -122,8 +128,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Explicitly expands the current shortlink on-demand (e.g., when Offline-Only Mode deferred automatic expansion).
+     */
+    fun expandCurrentLinkNow() {
+        val currentInput = _inputText.value.trim()
+        if (currentInput.isEmpty()) return
+
+        viewModelScope.launch {
+            _isExpanding.value = true
+            val expandedResult = LinkCleaner.cleanTextAsync(
+                inputText = currentInput,
+                context = getApplication(),
+                enableFacebookWebView = enableFacebookWebViewExpansion.value,
+                keepAmazonAffiliate = keepAmazonAffiliate.value,
+                strictMode = strictMode.value,
+                offlineOnlyMode = false
+            )
+            _cleanResult.value = expandedResult
+            _isExpanding.value = false
+            saveResultToDatabase(expandedResult)
+        }
+    }
+
     private suspend fun saveResultToDatabase(result: CleanResult) {
-        if (result.cleanedUrl.isNotEmpty() && result.cleanedUrl.startsWith("http")) {
+        if (result.cleanedUrl.isNotEmpty() && UrlSecurityValidator.isSafeHttpUrl(result.cleanedUrl)) {
             val summary = if (result.expandedFromUrl != null) {
                 "Expanded shortlink, " + result.strippedParams.joinToString(", ") { it.key }
             } else {
@@ -181,8 +210,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun openInBrowser(context: Context, url: String) {
+        if (!UrlSecurityValidator.isSafeHttpUrl(url)) {
+            viewModelScope.launch {
+                _uiEvents.emit(UiEvent.ShowToast("Blocked unsafe non-HTTP/HTTPS URL scheme"))
+            }
+            return
+        }
         try {
-            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url.trim())).apply {
+                addCategory(Intent.CATEGORY_BROWSABLE)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             context.startActivity(intent)
@@ -243,6 +279,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     fun setEnableFacebookWebViewExpansion(enabled: Boolean) {
         prefs.setEnableFacebookWebViewExpansion(enabled)
+        if (_inputText.value.isNotEmpty()) {
+            processInputText(_inputText.value, _isFromShareIntent.value)
+        }
+    }
+    fun setOfflineOnlyMode(enabled: Boolean) {
+        prefs.setOfflineOnlyMode(enabled)
         if (_inputText.value.isNotEmpty()) {
             processInputText(_inputText.value, _isFromShareIntent.value)
         }

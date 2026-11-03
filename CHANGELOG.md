@@ -1,9 +1,20 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v15.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v16.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v16.0] — Build 16 (November 2, 2026)
+### Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox & Anti-Phishing Advisories
+- **Triggering User Prompt**:
+  > *"Analyze the app for security concerns including, but not limited to, dangers of processing untrusted links. Recommend improvements. [Selected: Block private IPs and non-HTTPS schemes in UrlExpander; Lock down Facebook WebView domains, cookies, and file access; Detect homograph, user@host, HTTP, and APK phishing risks; Expand automatically by default with a toggle for Offline-Only mode]"*
+- **Highlights**:
+  - Implemented `UrlSecurityValidator` and `SafePublicDns` in `UrlExpander` to block SSRF redirects against loopback, RFC1918 LAN, link-local, CGNAT, and cloud metadata IPs (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.169.254`, IPv6 `::1`/`fe80::`).
+  - Enforced strict `http`/`https` scheme validation across all redirect hops, offline link shims, and browser intent launches (blocking `javascript:`, `intent:`, `file:`, `content:`, and `data:` URI injection).
+  - Hardened `FacebookWebViewExpander` sandbox: locked navigation and subresource requests strictly to HTTPS official Meta domains, disabled file/content/DOM storage and cookies, and wiped cache/storage on teardown.
+  - Added anti-phishing & homograph detection that strips deceptive `user:pass@host` credentials and alerts on Punycode (`xn--`) lookalike domains, `.apk`/`.exe` downloads, raw IPs, and cleartext HTTP links.
+  - Added **Offline-Only Mode** toggle in Protection settings to prevent automatic outbound network requests on untrusted shortlinks, with an on-demand **"Expand Shortlink Now"** button.
 
 ## [v15.0] — Build 15 (November 2, 2026)
 ### Public GitHub Repo Integration, Live Embedded Commit Explorer & Per-Release Prompt-Annotated Git Commits

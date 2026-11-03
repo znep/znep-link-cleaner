@@ -64,11 +64,13 @@ fun RulesScreen(
     keepAmazon: Boolean,
     strictMode: Boolean,
     enableFacebookWebView: Boolean,
+    offlineOnlyMode: Boolean = false,
     onAutoCopyChanged: (Boolean) -> Unit,
     onAutoCloseChanged: (Boolean) -> Unit,
     onKeepAmazonChanged: (Boolean) -> Unit,
     onStrictModeChanged: (Boolean) -> Unit,
     onEnableFacebookWebViewChanged: (Boolean) -> Unit,
+    onOfflineOnlyModeChanged: (Boolean) -> Unit = {},
     onPracticeShare: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -127,7 +129,7 @@ fun RulesScreen(
             }
             Spacer(modifier = Modifier.height(14.dp))
             Text(
-                text = "Preferences",
+                text = "Preferences & Security Controls",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -173,6 +175,49 @@ fun RulesScreen(
                         subtitle = "Run an on-device headless WebView engine to resolve Facebook /share/p/ & /share/r/ links into permanent post URLs",
                         checked = enableFacebookWebView,
                         onCheckedChange = onEnableFacebookWebViewChanged
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    SettingToggleRow(
+                        title = "Offline-Only Mode (No Network Expansion)",
+                        subtitle = "Never make automatic outbound HTTP/WebView connections for untrusted shortlinks (prevents canary token triggering & IP leaks; allows manual on-demand expansion)",
+                        checked = offlineOnlyMode,
+                        onCheckedChange = onOfflineOnlyModeChanged
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Untrusted Link Security Hardening",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "• SSRF & Private IP Firewall: SafePublicDns & redirect hop validation block redirects to 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254, and IPv6 loopback/link-local.\n" +
+                            "• Strict URI Scheme Guard: Rejects javascript:, intent:, file:, content:, and data: schemes across redirect hops, offline shims, and browser launches.\n" +
+                            "• Sandboxed Facebook WebView: Enforces HTTPS-only official Meta domains, disables file/content access and cookies, blocks external subresources, and wipes WebStorage on teardown.\n" +
+                            "• Anti-Phishing & Homograph Advisories: Automatically strips embedded user:pass@host credentials and flags Punycode (xn--) homographs, .apk/.exe downloads, raw IPs, and cleartext HTTP.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
                     )
                 }
             }

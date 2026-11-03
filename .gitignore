@@ -10,6 +10,7 @@
 .cxx
 *.apk
 *.aab
+.env
 download_portal/*.apk
 download_portal/*.bundle
 download_portal/*.zip

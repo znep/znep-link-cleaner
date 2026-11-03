@@ -34,6 +34,26 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "16.0",
+            buildNumber = 16,
+            releaseDate = "November 2, 2026",
+            title = "Untrusted Link Security Hardening, SSRF Firewall, WebView Sandbox & Anti-Phishing Advisories",
+            userPrompt = "Analyze the app for security concerns including, but not limited to, dangers of processing untrusted links. Recommend improvements. [Selected: Block private IPs and non-HTTPS schemes in UrlExpander; Lock down Facebook WebView domains, cookies, and file access; Detect homograph, user@host, HTTP, and APK phishing risks; Expand automatically by default with a toggle for Offline-Only mode]",
+            highlights = listOf(
+                "Implemented UrlSecurityValidator and SafePublicDns in UrlExpander to block SSRF redirects against loopback, RFC1918 LAN, link-local, CGNAT, and cloud metadata IPs (127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254, IPv6 ::1/fe80::)",
+                "Enforced strict http/https scheme validation across all redirect hops, offline link shims, and browser intent launches (blocking javascript:, intent:, file:, content:, and data: URI injection)",
+                "Hardened FacebookWebViewExpander sandbox: locked navigation and subresource requests strictly to HTTPS official Meta domains, disabled file/content/DOM storage and cookies, and wiped cache/storage on teardown",
+                "Added anti-phishing & homograph detection that strips deceptive user:pass@host credentials and alerts on Punycode (xn--) lookalike domains, .apk/.exe downloads, raw IPs, and cleartext HTTP links",
+                "Added Offline-Only Mode toggle in Protection settings to prevent automatic outbound network requests on untrusted shortlinks, with an on-demand 'Expand Shortlink Now' button"
+            ),
+            technicalDetails = listOf(
+                "Created UrlSecurityValidator.kt with SafePublicDns, validateRedirectTarget, isAllowedFacebookWebViewUrl, stripUserInfoIfPresent, and analyzeSecurityRisks",
+                "Capped input text processing at 8 KB and limited automatic multi-URL network expansions to 3 per text block",
+                "Added SecurityAdvisory HUD banners and Offline-Only on-demand expansion button in CleanResultCard.kt",
+                "Bumped versionCode to 16 and versionName to 16.0"
+            )
+        ),
+        ReleaseNote(
             version = "15.0",
             buildNumber = 15,
             releaseDate = "November 2, 2026",

@@ -188,7 +188,8 @@ object LinkCleaner {
     }
 
     fun extractLinks(text: String): List<String> {
-        return URL_REGEX.findAll(text).map { it.value.trim() }.toList()
+        val bounded = text.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+        return URL_REGEX.findAll(bounded).map { it.value.trim() }.toList()
     }
 
     /**
@@ -199,9 +200,10 @@ object LinkCleaner {
         context: Context? = null,
         enableFacebookWebView: Boolean = true,
         keepAmazonAffiliate: Boolean = false,
-        strictMode: Boolean = false
+        strictMode: Boolean = false,
+        offlineOnlyMode: Boolean = false
     ): CleanResult {
-        val trimmed = inputText.trim()
+        val trimmed = inputText.trim().take(UrlSecurityValidator.MAX_INPUT_LENGTH)
         val urls = extractLinks(trimmed)
 
         if (urls.isEmpty()) {
@@ -220,6 +222,15 @@ object LinkCleaner {
             )
         }
 
+        if (offlineOnlyMode) {
+            return cleanText(
+                inputText = trimmed,
+                keepAmazonAffiliate = keepAmazonAffiliate,
+                strictMode = strictMode,
+                offlineOnlyMode = true
+            )
+        }
+
         val primaryRawUrl = urls.first()
         val isFbShare = FacebookWebViewExpander.isFacebookShareLink(primaryRawUrl)
 
@@ -227,6 +238,7 @@ object LinkCleaner {
         var wasExpanded = false
         var warningType = ExpansionWarningType.NONE
         var warningMessage: String? = null
+        var blockedRedirectReason: String? = null
 
         if (isFbShare) {
             if (enableFacebookWebView && context != null) {
@@ -236,9 +248,15 @@ object LinkCleaner {
                     expandedPrimary = resolved
                     wasExpanded = true
                 } else {
-                    // Option 1 could not resolve to permalink (e.g. login wall or timeout)
-                    warningType = ExpansionWarningType.RED_FACEBOOK_FAILED
-                    warningMessage = "Facebook share link could not be expanded to a permalink (requires login session or post is restricted). Tracking parameters were still purged."
+                    val err = fbResult.exceptionOrNull()
+                    if (err is SecurityException) {
+                        blockedRedirectReason = err.message
+                        warningType = ExpansionWarningType.RED_SECURITY_BLOCKED
+                        warningMessage = err.message
+                    } else {
+                        warningType = ExpansionWarningType.RED_FACEBOOK_FAILED
+                        warningMessage = "Facebook share link could not be expanded to a permalink (requires login session or post is restricted). Tracking parameters were still purged."
+                    }
                 }
             } else {
                 warningType = ExpansionWarningType.RED_FACEBOOK_FAILED
@@ -248,21 +266,39 @@ object LinkCleaner {
             val detailed = UrlExpander.expandUrlDetailed(primaryRawUrl)
             expandedPrimary = detailed.finalUrl
             wasExpanded = detailed.wasRedirected
+            blockedRedirectReason = detailed.blockedReason
 
-            if (detailed.failedToRedirect && detailed.isOpaqueShortener) {
+            if (detailed.blockedReason != null) {
+                warningType = ExpansionWarningType.RED_SECURITY_BLOCKED
+                warningMessage = detailed.blockedReason
+            } else if (detailed.failedToRedirect && detailed.isOpaqueShortener) {
                 warningType = ExpansionWarningType.ORANGE_UNEXPANDED_SHORTLINK
                 warningMessage = "Shortlink could not be expanded via network. Opaque tracking IDs may remain inside the shortener slug. Proceed with caution."
             }
         }
 
-        val cleanedPrimary = cleanSingleUrl(expandedPrimary, keepAmazonAffiliate, strictMode)
+        val cleanedPrimary = cleanSingleUrl(
+            rawUrl = expandedPrimary,
+            keepAmazonAffiliate = keepAmazonAffiliate,
+            strictMode = strictMode,
+            externalBlockedReason = blockedRedirectReason
+        )
 
         var updatedText = trimmed
         val totalStripped = mutableListOf<StrippedParam>()
         totalStripped.addAll(cleanedPrimary.strippedParams)
 
+        var networkExpansionsUsed = if (isFbShare || UrlExpander.shouldExpand(primaryRawUrl)) 1 else 0
+
         for (url in urls) {
-            val expanded = if (url == primaryRawUrl) expandedPrimary else UrlExpander.expandUrl(url)
+            val expanded = if (url == primaryRawUrl) {
+                expandedPrimary
+            } else if (networkExpansionsUsed < UrlSecurityValidator.MAX_NETWORK_EXPANSIONS_PER_INPUT && UrlExpander.shouldExpand(url)) {
+                networkExpansionsUsed++
+                UrlExpander.expandUrl(url)
+            } else {
+                UrlExpander.unwrapOfflineRedirects(url)
+            }
             val cleaned = if (url == primaryRawUrl) cleanedPrimary else cleanSingleUrl(expanded, keepAmazonAffiliate, strictMode)
             if (url != primaryRawUrl) {
                 totalStripped.addAll(cleaned.strippedParams)
@@ -276,6 +312,9 @@ object LinkCleaner {
             ((bytesSaved.toDouble() / trimmed.length.toDouble()) * 100).toInt().coerceIn(0, 100)
         } else 0
 
+        val finalWarningType = if (warningType != ExpansionWarningType.NONE) warningType else cleanedPrimary.warningType
+        val finalWarningMessage = warningMessage ?: cleanedPrimary.warningMessage
+
         return CleanResult(
             originalText = trimmed,
             cleanedText = updatedText,
@@ -287,21 +326,24 @@ object LinkCleaner {
             percentReduction = percent,
             isEntireTextReplaced = isSingleUrl,
             expandedFromUrl = if (wasExpanded) primaryRawUrl else null,
-            warningType = warningType,
-            warningMessage = warningMessage,
-            isFacebookShareLink = isFbShare
+            warningType = finalWarningType,
+            warningMessage = finalWarningMessage,
+            isFacebookShareLink = isFbShare,
+            securityAdvisories = cleanedPrimary.securityAdvisories,
+            isOfflineDeferredShortlink = false
         )
     }
 
     /**
-     * Synchronous cleaning fallback.
+     * Synchronous cleaning (or Offline-Only Mode cleaning).
      */
     fun cleanText(
         inputText: String,
         keepAmazonAffiliate: Boolean = false,
-        strictMode: Boolean = false
+        strictMode: Boolean = false,
+        offlineOnlyMode: Boolean = false
     ): CleanResult {
-        val trimmed = inputText.trim()
+        val trimmed = inputText.trim().take(UrlSecurityValidator.MAX_INPUT_LENGTH)
         val urls = extractLinks(trimmed)
 
         if (urls.isEmpty()) {
@@ -320,9 +362,15 @@ object LinkCleaner {
         }
 
         val primaryRawUrl = urls.first()
-        val offlineUnwrapped = UrlExpander.unwrapOfflineRedirects(primaryRawUrl)
+        val offlineDetail = UrlExpander.unwrapOfflineRedirectsDetailed(primaryRawUrl)
+        val offlineUnwrapped = offlineDetail.url
         val wasExpanded = offlineUnwrapped != primaryRawUrl
-        val cleanedPrimary = cleanSingleUrl(offlineUnwrapped, keepAmazonAffiliate, strictMode)
+        val cleanedPrimary = cleanSingleUrl(
+            rawUrl = offlineUnwrapped,
+            keepAmazonAffiliate = keepAmazonAffiliate,
+            strictMode = strictMode,
+            externalBlockedReason = offlineDetail.blockedReason
+        )
 
         var updatedText = trimmed
         val totalStripped = mutableListOf<StrippedParam>()
@@ -343,6 +391,21 @@ object LinkCleaner {
             ((bytesSaved.toDouble() / trimmed.length.toDouble()) * 100).toInt().coerceIn(0, 100)
         } else 0
 
+        val isFbShare = FacebookWebViewExpander.isFacebookShareLink(primaryRawUrl)
+        val needsNetworkExpansion = isFbShare || UrlExpander.shouldExpand(offlineUnwrapped)
+        val isDeferred = offlineOnlyMode && needsNetworkExpansion
+
+        val warningType = when {
+            cleanedPrimary.warningType != ExpansionWarningType.NONE -> cleanedPrimary.warningType
+            isDeferred -> ExpansionWarningType.ORANGE_UNEXPANDED_SHORTLINK
+            else -> ExpansionWarningType.NONE
+        }
+        val warningMessage = when {
+            cleanedPrimary.warningMessage != null -> cleanedPrimary.warningMessage
+            isDeferred -> "Offline-Only Mode is active: network redirect expansion was skipped to prevent outbound network connections. Tap 'Expand Shortlink Now' below if you trust this link."
+            else -> null
+        }
+
         return CleanResult(
             originalText = trimmed,
             cleanedText = updatedText,
@@ -353,18 +416,29 @@ object LinkCleaner {
             bytesSaved = bytesSaved,
             percentReduction = percent,
             isEntireTextReplaced = isSingleUrl,
-            expandedFromUrl = if (wasExpanded) primaryRawUrl else null
+            expandedFromUrl = if (wasExpanded) primaryRawUrl else null,
+            warningType = warningType,
+            warningMessage = warningMessage,
+            isFacebookShareLink = isFbShare,
+            securityAdvisories = cleanedPrimary.securityAdvisories,
+            isOfflineDeferredShortlink = isDeferred
         )
     }
 
     fun cleanSingleUrl(
         rawUrl: String,
         keepAmazonAffiliate: Boolean = false,
-        strictMode: Boolean = false
+        strictMode: Boolean = false,
+        externalBlockedReason: String? = null
     ): CleanResult {
-        val unwrappedUrl = UrlExpander.unwrapOfflineRedirects(rawUrl.trim())
+        val offlineDetail = UrlExpander.unwrapOfflineRedirectsDetailed(rawUrl.trim())
+        val unwrappedUrl = offlineDetail.url
+        val blockedReason = externalBlockedReason ?: offlineDetail.blockedReason
+
+        val (sanitizedUrl, strippedUserInfo) = UrlSecurityValidator.stripUserInfoIfPresent(unwrappedUrl)
+
         val uri = try {
-            Uri.parse(unwrappedUrl)
+            Uri.parse(sanitizedUrl)
         } catch (_: Exception) {
             return CleanResult(
                 originalText = rawUrl,
@@ -380,8 +454,19 @@ object LinkCleaner {
             )
         }
 
-        val host = uri.host?.lowercase().orEmpty()
+        val host = UrlSecurityValidator.extractHost(sanitizedUrl).ifEmpty { uri.host?.lowercase().orEmpty() }
         val strippedParams = mutableListOf<StrippedParam>()
+
+        if (!strippedUserInfo.isNullOrBlank()) {
+            strippedParams.add(
+                StrippedParam(
+                    key = "userInfo@",
+                    value = strippedUserInfo,
+                    category = "Security / Anti-Phishing",
+                    description = "Stripped embedded URL authority credentials (user@host phishing vector)"
+                )
+            )
+        }
 
         val newUriBuilder = uri.buildUpon().clearQuery()
         val queryParamNames = try {
@@ -431,6 +516,12 @@ object LinkCleaner {
             cleanedUrlString = cleanedUrlString.dropLast(1)
         }
 
+        val advisories = UrlSecurityValidator.analyzeSecurityRisks(
+            url = cleanedUrlString,
+            strippedUserInfo = strippedUserInfo,
+            blockedRedirectReason = blockedReason
+        )
+
         val bytesSaved = (rawUrl.length - cleanedUrlString.length).coerceAtLeast(0)
         val percent = if (rawUrl.isNotEmpty()) {
             ((bytesSaved.toDouble() / rawUrl.length.toDouble()) * 100).toInt().coerceIn(0, 100)
@@ -446,7 +537,10 @@ object LinkCleaner {
             bytesSaved = bytesSaved,
             percentReduction = percent,
             isEntireTextReplaced = true,
-            expandedFromUrl = null
+            expandedFromUrl = null,
+            warningType = if (blockedReason != null) ExpansionWarningType.RED_SECURITY_BLOCKED else ExpansionWarningType.NONE,
+            warningMessage = blockedReason,
+            securityAdvisories = advisories
         )
     }
 

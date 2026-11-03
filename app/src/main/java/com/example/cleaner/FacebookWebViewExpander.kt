@@ -5,19 +5,25 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.ByteArrayInputStream
 import kotlin.coroutines.resume
 
 /**
- * Headless WebView-based expander for Facebook share links (Option 1).
- * Spins up a lightweight off-screen WebView to execute Meta's client-side
- * redirect scripts and retrieve the canonical permalink without requiring API keys.
+ * Hardened headless WebView-based expander for Facebook share links (Option 1).
+ * Spins up an isolated off-screen WebView locked strictly to official HTTPS Facebook
+ * domains, with file/content access disabled, third-party cookies blocked, and
+ * storage cleared upon teardown.
  */
 object FacebookWebViewExpander {
 
@@ -46,21 +52,36 @@ object FacebookWebViewExpander {
         url: String,
         timeoutMs: Long = 6500L
     ): Result<String> {
+        if (!UrlSecurityValidator.isAllowedFacebookWebViewUrl(url)) {
+            return Result.failure(
+                SecurityException("Blocked non-HTTPS or non-Facebook URL from loading in WebView.")
+            )
+        }
+
         return withTimeoutOrNull(timeoutMs) {
             withContext(Dispatchers.Main) {
                 suspendCancellableCoroutine { continuation ->
                     var isFinished = false
                     var webView: WebView? = null
 
+                    fun cleanupWebView(target: WebView?) {
+                        try {
+                            target?.stopLoading()
+                            target?.clearHistory()
+                            target?.clearCache(true)
+                            target?.loadUrl("about:blank")
+                            WebStorage.getInstance().deleteAllData()
+                            CookieManager.getInstance().removeAllCookies(null)
+                            target?.destroy()
+                        } catch (_: Exception) {
+                            // Ignore cleanup exceptions
+                        }
+                    }
+
                     fun finish(result: Result<String>) {
                         if (!isFinished) {
                             isFinished = true
-                            try {
-                                webView?.stopLoading()
-                                webView?.destroy()
-                            } catch (_: Exception) {
-                                // Ignore cleanup exceptions
-                            }
+                            cleanupWebView(webView)
                             webView = null
                             if (continuation.isActive) {
                                 continuation.resume(result)
@@ -69,11 +90,28 @@ object FacebookWebViewExpander {
                     }
 
                     try {
+                        val cookieManager = CookieManager.getInstance()
+                        cookieManager.setAcceptCookie(false)
+
                         val view = WebView(context.applicationContext)
                         webView = view
+                        cookieManager.setAcceptThirdPartyCookies(view, false)
+
                         val settings = view.settings
                         settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
+                        settings.domStorageEnabled = false
+                        settings.allowFileAccess = false
+                        settings.allowContentAccess = false
+                        @Suppress("DEPRECATION")
+                        settings.allowFileAccessFromFileURLs = false
+                        @Suppress("DEPRECATION")
+                        settings.allowUniversalAccessFromFileURLs = false
+                        @Suppress("DEPRECATION")
+                        settings.saveFormData = false
+                        settings.javaScriptCanOpenWindowsAutomatically = false
+                        settings.setSupportMultipleWindows(false)
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                        settings.cacheMode = WebSettings.LOAD_NO_CACHE
                         settings.loadsImagesAutomatically = false // Save bandwidth
                         settings.blockNetworkImage = true         // Save bandwidth
                         settings.userAgentString = USER_AGENT
@@ -83,7 +121,15 @@ object FacebookWebViewExpander {
                                 view: WebView?,
                                 request: WebResourceRequest?
                             ): Boolean {
-                                val nextUrl = request?.url?.toString() ?: return false
+                                val nextUrl = request?.url?.toString() ?: return true
+                                if (!UrlSecurityValidator.isAllowedFacebookWebViewUrl(nextUrl)) {
+                                    finish(
+                                        Result.failure(
+                                            SecurityException("Blocked WebView navigation to external or non-HTTPS URL: $nextUrl")
+                                        )
+                                    )
+                                    return true
+                                }
                                 if (isResolvedPermalink(nextUrl)) {
                                     finish(Result.success(nextUrl))
                                     return true
@@ -91,10 +137,34 @@ object FacebookWebViewExpander {
                                 return false
                             }
 
+                            override fun shouldInterceptRequest(
+                                view: WebView?,
+                                request: WebResourceRequest?
+                            ): WebResourceResponse? {
+                                val reqUrl = request?.url?.toString().orEmpty()
+                                if (!UrlSecurityValidator.isAllowedFacebookWebViewUrl(reqUrl)) {
+                                    return WebResourceResponse(
+                                        "text/plain",
+                                        "UTF-8",
+                                        403,
+                                        "Forbidden by ZnepLinkCleaner WebView Sandbox",
+                                        emptyMap(),
+                                        ByteArrayInputStream(ByteArray(0))
+                                    )
+                                }
+                                return super.shouldInterceptRequest(view, request)
+                            }
+
                             override fun onPageStarted(view: WebView?, currentUrl: String?, favicon: Bitmap?) {
                                 super.onPageStarted(view, currentUrl, favicon)
                                 currentUrl?.let {
-                                    if (isResolvedPermalink(it)) {
+                                    if (!UrlSecurityValidator.isAllowedFacebookWebViewUrl(it)) {
+                                        finish(
+                                            Result.failure(
+                                                SecurityException("Blocked WebView page load outside Facebook HTTPS sandbox.")
+                                            )
+                                        )
+                                    } else if (isResolvedPermalink(it)) {
                                         finish(Result.success(it))
                                     }
                                 }
@@ -103,7 +173,7 @@ object FacebookWebViewExpander {
                             override fun onPageFinished(view: WebView?, currentUrl: String?) {
                                 super.onPageFinished(view, currentUrl)
                                 currentUrl?.let {
-                                    if (isResolvedPermalink(it)) {
+                                    if (UrlSecurityValidator.isAllowedFacebookWebViewUrl(it) && isResolvedPermalink(it)) {
                                         finish(Result.success(it))
                                     }
                                 }
@@ -117,12 +187,7 @@ object FacebookWebViewExpander {
 
                     continuation.invokeOnCancellation {
                         Handler(Looper.getMainLooper()).post {
-                            try {
-                                webView?.stopLoading()
-                                webView?.destroy()
-                            } catch (_: Exception) {
-                                // Ignore cleanup exceptions
-                            }
+                            cleanupWebView(webView)
                             webView = null
                         }
                     }
@@ -136,6 +201,7 @@ object FacebookWebViewExpander {
      * rather than an unresolved /share/ slug or a login redirect.
      */
     fun isResolvedPermalink(url: String): Boolean {
+        if (!UrlSecurityValidator.isAllowedFacebookWebViewUrl(url)) return false
         val uri = try { Uri.parse(url) } catch (_: Exception) { return false }
         val path = uri.path?.lowercase().orEmpty()
 
