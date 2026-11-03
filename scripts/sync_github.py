@@ -310,8 +310,8 @@ def sync_github_release_assets(token):
     if not commits:
         return False, "No commits found"
 
-    latest = commits[0]
-    tag_name = latest.get("tag") or "v19.0"
+    latest = next((c for c in commits if c.get("tag")), commits[0])
+    tag_name = latest.get("tag") or "v20.0"
     ver_num = tag_name.lstrip("v")
     release_title = latest.get("subject") or f"ZnepLinkCleaner {tag_name}"
     release_body = latest.get("body") or f"Release {tag_name}"
