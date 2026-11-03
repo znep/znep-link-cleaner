@@ -61,28 +61,60 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Returns true if the intent was handled as an immediate in-place text replacement
-     * and the Activity is finishing without rendering the full UI.
+     * or partial-selection guard and the Activity is finishing without rendering the full UI.
      */
     private fun handleIncomingIntent(intent: Intent?): Boolean {
         if (intent == null) return false
 
-        if (Intent.ACTION_SEND == intent.action && intent.type?.startsWith("text/") == true) {
-            val sharedText = (intent.getStringExtra(Intent.EXTRA_TEXT)
-                ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
-                ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+        when (intent.action) {
+            Intent.ACTION_SEND -> {
+                if (intent.type?.startsWith("text/") == true || intent.hasExtra(Intent.EXTRA_TEXT)) {
+                    val sharedText = (intent.getStringExtra(Intent.EXTRA_TEXT)
+                        ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
+                        ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
 
-            if (!sharedText.isNullOrBlank()) {
-                viewModel.processInputText(sharedText, isSharedIntent = true)
+                    if (!sharedText.isNullOrBlank()) {
+                        viewModel.processInputText(sharedText, isSharedIntent = true)
+                    }
+                }
+                return false
             }
-            return false
-        } else if (Intent.ACTION_PROCESS_TEXT == intent.action && intent.type?.startsWith("text/") == true) {
-            val processedText = intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
-                ?.toString()
-                ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
-            val isReadOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
 
-            if (!processedText.isNullOrBlank()) {
-                if (!isReadOnly && LinkCleaner.containsLink(processedText)) {
+            Intent.ACTION_VIEW -> {
+                val viewUrl = intent.dataString?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+                if (!viewUrl.isNullOrBlank()) {
+                    viewModel.processInputText(viewUrl, isSharedIntent = true)
+                }
+                return false
+            }
+
+            Intent.ACTION_PROCESS_TEXT -> {
+                val processedText = (intent.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)
+                    ?: intent.getCharSequenceExtra(Intent.EXTRA_TEXT))
+                    ?.toString()
+                    ?.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
+                val isReadOnly = intent.getBooleanExtra(Intent.EXTRA_PROCESS_TEXT_READONLY, true)
+
+                if (processedText.isNullOrBlank()) {
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
+                    return true
+                }
+
+                if (!LinkCleaner.containsLink(processedText)) {
+                    val trimmedToken = processedText.trim().take(24)
+                    val toastMsg = if (LinkCleaner.isPartialUrlSelection(processedText)) {
+                        "Only '$trimmedToken' was selected — drag selection handles across the full URL or tap Select All"
+                    } else {
+                        "No complete URL in selection — highlight the full link first"
+                    }
+                    Toast.makeText(applicationContext, toastMsg, Toast.LENGTH_LONG).show()
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
+                    return true
+                }
+
+                if (!isReadOnly) {
                     val result = viewModel.cleanSynchronouslyForInPlaceReplacement(processedText)
                     val resultIntent = Intent().apply {
                         putExtra(Intent.EXTRA_PROCESS_TEXT, result.cleanedText)
@@ -98,6 +130,7 @@ class MainActivity : ComponentActivity() {
                     return true
                 } else {
                     viewModel.processInputText(processedText, isSharedIntent = true)
+                    return false
                 }
             }
         }

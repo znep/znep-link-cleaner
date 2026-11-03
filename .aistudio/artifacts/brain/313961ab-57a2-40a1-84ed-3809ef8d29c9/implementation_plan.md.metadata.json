@@ -1,6 +1,6 @@
 {
-  "summary": "Updated implementation plan for ZnepLinkCleaner v18.0 adding a Randomized Cyberpunk 'Z' Glitch & Stunt Engine (seismic RGB split jiggle, horizontal scanline slice tear, snap-flip/skew, neon voltage surge with micro-sparks, and quantum blink) alongside the Unchanged Link indicator, In-Place Android Text Selection Replacement, Canonical AMP/Amazon URL Normalization, and Collapsible Redirect Hop Inspector.",
-  "updatedAt": "2026-11-03T01:37:13.716240775Z",
+  "summary": "Implementation plan for expanding ZnepLinkCleaner's presence in Android text selection and link menus (`Zlc` short action label, `text/*` MIME coverage, `ACTION_VIEW` HTTP/HTTPS Smart Selection link handler, and partial-selection `https` guard with Toast feedback).",
+  "updatedAt": "2026-11-03T20:40:40.622783847Z",
   "requestFeedback": true,
   "userFacing": true
 }

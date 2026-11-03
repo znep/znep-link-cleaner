@@ -196,8 +196,41 @@ object LinkCleaner {
         "outputtype" to ("AMP Canonicalizer" to "AMP output format override parameter")
     )
 
+    private val PARTIAL_URL_SCHEME_TOKENS = setOf(
+        "http",
+        "https",
+        "http:",
+        "https:",
+        "http:/",
+        "https:/",
+        "http://",
+        "https://",
+        "fb",
+        "fb:",
+        "fb:/",
+        "fb://",
+        "intent",
+        "intent:",
+        "intent://",
+        "www",
+        "www."
+    )
+
     fun containsLink(text: String): Boolean {
         return URL_REGEX.containsMatchIn(text)
+    }
+
+    /**
+     * Returns true when the selected text is an incomplete URL scheme/prefix (such as "https"
+     * or "https://") caused by Android's editable text word-boundary tokenizer stopping at
+     * punctuation (`:` or `/`) on a double-tap or long-press.
+     */
+    fun isPartialUrlSelection(text: String): Boolean {
+        val candidate = text.trim().lowercase()
+        if (candidate.isEmpty() || containsLink(candidate)) return false
+        if (candidate in PARTIAL_URL_SCHEME_TOKENS) return true
+        return (candidate.startsWith("http://") || candidate.startsWith("https://") || candidate.startsWith("fb://")) &&
+            candidate.substringAfter("://").isBlank()
     }
 
     fun extractLinks(text: String): List<String> {

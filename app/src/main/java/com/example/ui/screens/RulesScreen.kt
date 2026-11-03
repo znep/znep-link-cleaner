@@ -398,7 +398,7 @@ fun RulesScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Share Sheet Prominence Tips",
+                                text = "Share Sheet & Text Selection Menus",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -413,7 +413,7 @@ fun RulesScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "How to make ZnepLinkCleaner appear in the first position and top row of Android's system share sheet.",
+                        text = "How ZnepLinkCleaner ('Zlc') surfaces in floating text selection bars, Smart Link menus, and the Android Share Sheet.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -424,20 +424,20 @@ fun RulesScreen(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             FacebookTechPoint(
-                                title = "1. Pin ZnepLinkCleaner to the Front (Most Effective) 📌",
-                                description = "Open any app (like Chrome, YouTube, or Instagram) > Tap Share > Locate ZnepLinkCleaner in the app row > Long-press its icon > Tap 'Pin'. Android will lock ZnepLinkCleaner permanently to the #1 spot in your system share dialog across all apps!"
+                                title = "1. In-Place Text Selection ('Zlc' Floating Toolbar) ✂️",
+                                description = "In apps with standard editable text fields (Google Messages, Gmail, Signal, WhatsApp, Keep, Markor, Obsidian), highlight the full URL and tap 'Zlc' in the popup toolbar to strip trackers in-place without switching apps. Tip: Double-tapping a URL inside an input box often only highlights 'https' because Android stops word selection at '://'. Drag the selection handles across the full URL (or tap Select All) first — if only 'https' is selected, Zlc warns you via a Toast and leaves your text untouched."
                             )
                             FacebookTechPoint(
-                                title = "2. Active Direct Share Target Shortcut (Built-in) ⚡",
-                                description = "ZnepLinkCleaner defines an active <share-target> in shortcuts.xml and publishes dynamic ShortcutInfo targets. This qualifies ZnepLinkCleaner to appear in Android's prioritized Direct Share top row carousel."
+                                title = "2. Smart Link Selection & HTTP/HTTPS Link Handler ('Zlc Clean') 🔗",
+                                description = "ZnepLinkCleaner registers an HTTP/HTTPS BROWSABLE link handler ('Zlc Clean') and supports all text/* MIME types with priority=100, enabling Android's TextClassifier Smart Selection and link menus to route URLs directly to ZnepLinkCleaner."
                             )
                             FacebookTechPoint(
-                                title = "3. Resolver Intent Filter Priority (priority=100) 🎯",
-                                description = "ZnepLinkCleaner's manifest declares high priority for text/plain and text/* shares, boosting resolver affinity on Samsung OneUI, Motorola, Xiaomi, and AOSP share sheets."
+                                title = "3. Pin ZnepLinkCleaner in the Share Sheet 📌",
+                                description = "Open any app (like Chrome, YouTube, or Instagram) > Tap Share > Locate ZnepLinkCleaner in the app row > Long-press its icon > Tap 'Pin'. Android locks ZnepLinkCleaner permanently to the #1 spot in your system share dialog across all apps."
                             )
                             FacebookTechPoint(
-                                title = "4. Usage Frequency & Recency Heuristic 📈",
-                                description = "Android's on-device sharesheet ranking model prioritizes recently and frequently chosen targets. Selecting ZnepLinkCleaner 2-3 times naturally promotes its ranking."
+                                title = "4. Active Direct Share Target & Resolver Priority ⚡",
+                                description = "ZnepLinkCleaner defines an active <share-target> in shortcuts.xml and declares android:priority=\"100\" across SEND, PROCESS_TEXT, and VIEW intent filters to maximize prominence."
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))

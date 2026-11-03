@@ -1,9 +1,19 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v21.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v22.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v22.0] — Build 22 (November 3, 2026)
+### Compact `'Zlc'` Text Selection Toolbar Action, `text/*` MIME Expansion, HTTP/HTTPS Smart Selection Link Handler & Partial `'https'` Selection Guard
+- **Triggering User Prompt**:
+  > *"What are some example apps that support in place link cleaning? I tried one but it only sent the https part not the whole URL. Can I make zlc show up more often in the various menus that show up after selecting text? [Selected: Broaden PROCESS_TEXT to all text MIME types, Add HTTP/HTTPS link handler for Smart Selection; Label: Zlc; Partial selection: Show a helpful Toast and leave text unchanged]"*
+- **Highlights**:
+  - Added a dedicated `ProcessTextAlias` with the ultra-compact **`Zlc`** label and `android:priority="100"` so Android's floating text selection toolbar fits it on the primary bar instead of pushing 15-character `"ZnepLinkCleaner"` into the `⋮` overflow menu.
+  - Broadened `ACTION_PROCESS_TEXT` intent filters from `text/plain` to all `text/*` MIME types (supporting rich-text editors, HTML/Markdown inputs, and custom text views).
+  - Added an exported HTTP/HTTPS `CATEGORY_BROWSABLE` `LinkHandlerAlias` (`"Zlc Clean"`) so Android's `TextClassifier` Smart Selection and link menus can route highlighted URLs directly to ZnepLinkCleaner.
+  - Implemented a Partial URL Selection Guard (`LinkCleaner.isPartialUrlSelection`) for `ACTION_PROCESS_TEXT`: when double-tapping a URL in an input box only highlights `"https"` (due to Android stopping word selection at `://`), `Zlc` shows a helpful Toast and returns `RESULT_CANCELED` so the user's text remains untouched without hijacking the screen.
 
 ## [v21.0] — Build 21 (November 3, 2026)
 ### Google Play Publishing Version Bump (v21.0 / Build 21)

@@ -34,6 +34,23 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "22.0",
+            buildNumber = 22,
+            releaseDate = "November 3, 2026",
+            title = "Compact 'Zlc' Text Selection Toolbar Action, text/* MIME Expansion, HTTP/HTTPS Smart Selection Link Handler & Partial 'https' Selection Guard",
+            userPrompt = "What are some example apps that support in place link cleaning? I tried one but it only sent the https part not the whole URL. Can I make zlc show up more often in the various menus that show up after selecting text? [Selected: Broaden PROCESS_TEXT to all text MIME types, Add HTTP/HTTPS link handler for Smart Selection; Label: Zlc; Partial selection: Show a helpful Toast and leave text unchanged]",
+            highlights = listOf(
+                "Added a dedicated ProcessTextAlias with the ultra-compact 'Zlc' label and priority=100 so Android's floating text selection toolbar fits it on the primary bar instead of pushing 15-character 'ZnepLinkCleaner' into the overflow menu",
+                "Broadened ACTION_PROCESS_TEXT intent filters from text/plain to all text/* MIME types (supporting rich-text editors, HTML/Markdown inputs, and custom text views)",
+                "Added an exported HTTP/HTTPS BROWSABLE LinkHandlerAlias ('Zlc Clean') so Android's TextClassifier Smart Selection and link menus can route highlighted URLs directly to ZnepLinkCleaner",
+                "Implemented a Partial URL Selection Guard (isPartialUrlSelection) for ACTION_PROCESS_TEXT: when double-tapping a URL in an input box only highlights 'https' (due to Android stopping word selection at '://'), Zlc shows a helpful Toast and returns RESULT_CANCELED so the user's text remains untouched without hijacking the screen"
+            ),
+            technicalDetails = listOf(
+                "Configured .ProcessTextAlias (label 'Zlc', text/plain + text/*, priority 100) and .LinkHandlerAlias (label 'Zlc Clean', ACTION_VIEW, CATEGORY_BROWSABLE, http/https) in AndroidManifest.xml",
+                "Added LinkCleaner.isPartialUrlSelection(text) and updated MainActivity.handleIncomingIntent to handle ACTION_VIEW URLs and return Activity.RESULT_CANCELED with Toast guidance on incomplete PROCESS_TEXT selections; bumped versionCode to 22 and versionName to 22.0"
+            )
+        ),
+        ReleaseNote(
             version = "21.0",
             buildNumber = 21,
             releaseDate = "November 3, 2026",

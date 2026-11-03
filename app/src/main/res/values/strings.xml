@@ -4,4 +4,6 @@
     <string name="action_copy_clean">Copy Clean Link</string>
     <string name="link_copied_toast">Clean link copied to clipboard!</string>
     <string name="share_chooser_title">Share clean link via</string>
+    <string name="process_text_label">Zlc</string>
+    <string name="link_handler_label">Zlc Clean</string>
 </resources>

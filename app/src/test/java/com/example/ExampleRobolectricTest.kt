@@ -228,10 +228,60 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `detect partial scheme selections like https and handle ACTION_PROCESS_TEXT gracefully`() {
+        assertTrue(LinkCleaner.isPartialUrlSelection("https"))
+        assertTrue(LinkCleaner.isPartialUrlSelection("http"))
+        assertTrue(LinkCleaner.isPartialUrlSelection("https:"))
+        assertTrue(LinkCleaner.isPartialUrlSelection("https://"))
+        assertTrue(LinkCleaner.isPartialUrlSelection("fb://"))
+        assertTrue(LinkCleaner.isPartialUrlSelection("www."))
+        assertFalse(LinkCleaner.isPartialUrlSelection("https://example.com?utm_source=test"))
+        assertFalse(LinkCleaner.isPartialUrlSelection("hello world"))
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        assertEquals("Zlc", context.getString(R.string.process_text_label))
+        assertEquals("Zlc Clean", context.getString(R.string.link_handler_label))
+
+        // Partial "https" selection in ACTION_PROCESS_TEXT should cancel in-place replacement, show Toast, and finish immediately
+        val partialIntent = android.content.Intent(android.content.Intent.ACTION_PROCESS_TEXT).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_PROCESS_TEXT, "https")
+            putExtra(android.content.Intent.EXTRA_PROCESS_TEXT_READONLY, false)
+        }
+        org.robolectric.Robolectric.buildActivity(MainActivity::class.java, partialIntent).use { controller ->
+            controller.create()
+            val activity = controller.get()
+            assertTrue(activity.isFinishing)
+            val shadowActivity = org.robolectric.Shadows.shadowOf(activity)
+            assertEquals(android.app.Activity.RESULT_CANCELED, shadowActivity.resultCode)
+            val toastText = org.robolectric.shadows.ShadowToast.getTextOfLatestToast()
+            assertTrue(toastText != null && toastText.contains("Only 'https' was selected"))
+        }
+
+        // Complete URL selection in editable ACTION_PROCESS_TEXT should return RESULT_OK with cleaned URL
+        val fullUrlIntent = android.content.Intent(android.content.Intent.ACTION_PROCESS_TEXT).apply {
+            type = "text/html"
+            putExtra(android.content.Intent.EXTRA_PROCESS_TEXT, "https://example.com/page?utm_source=newsletter&fbclid=123")
+            putExtra(android.content.Intent.EXTRA_PROCESS_TEXT_READONLY, false)
+        }
+        org.robolectric.Robolectric.buildActivity(MainActivity::class.java, fullUrlIntent).use { controller ->
+            controller.create()
+            val activity = controller.get()
+            assertTrue(activity.isFinishing)
+            val shadowActivity = org.robolectric.Shadows.shadowOf(activity)
+            assertEquals(android.app.Activity.RESULT_OK, shadowActivity.resultCode)
+            assertEquals(
+                "https://example.com/page",
+                shadowActivity.resultIntent.getStringExtra(android.content.Intent.EXTRA_PROCESS_TEXT)
+            )
+        }
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(21, releases.size)
-        assertEquals("21.0", releases.first().version)
+        assertEquals(22, releases.size)
+        assertEquals("22.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

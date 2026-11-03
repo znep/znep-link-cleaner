@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v21.0 (Build 21)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v22.0 (Build 22)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal ([https://linkcleaner.znep.com](https://linkcleaner.znep.com)) with public source & prompt-tracked Git history at **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**. Built iteratively through natural-language prompts in Google AI Studio, every prompt that modified the application and its corresponding changes are permanently recorded in each separate Git commit message, this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,24 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v21.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v22.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
 3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active, alongside GitHub Pages (`gh-pages`) and GitHub Releases binary hosting.
-4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v21.0-source.zip`.
+4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v22.0-source.zip`.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v21.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v22.0`)
+
+### `v22.0` (Build 22) — November 3, 2026
+**Compact `'Zlc'` Text Selection Toolbar Action, `text/*` MIME Expansion, HTTP/HTTPS Smart Selection Link Handler & Partial `'https'` Selection Guard**
+- **User Prompt**:
+  > *"What are some example apps that support in place link cleaning? I tried one but it only sent the https part not the whole URL. Can I make zlc show up more often in the various menus that show up after selecting text? [Selected: Broaden PROCESS_TEXT to all text MIME types, Add HTTP/HTTPS link handler for Smart Selection; Label: Zlc; Partial selection: Show a helpful Toast and leave text unchanged]"*
+- **Changes**:
+  - Added a dedicated `ProcessTextAlias` with the ultra-compact **`Zlc`** label and `android:priority="100"` so Android's floating text selection toolbar fits it on the primary bar instead of pushing 15-character `"ZnepLinkCleaner"` into the `⋮` overflow menu.
+  - Broadened `ACTION_PROCESS_TEXT` intent filters from `text/plain` to all `text/*` MIME types (supporting rich-text editors, HTML/Markdown inputs, and custom text views).
+  - Added an exported HTTP/HTTPS `CATEGORY_BROWSABLE` `LinkHandlerAlias` (`"Zlc Clean"`) so Android's `TextClassifier` Smart Selection and link menus can route highlighted URLs directly to ZnepLinkCleaner.
+  - Implemented a Partial URL Selection Guard (`LinkCleaner.isPartialUrlSelection`) for `ACTION_PROCESS_TEXT`: when double-tapping a URL in an input box only highlights `"https"` (due to Android stopping word selection at `://`), `Zlc` shows a helpful Toast and returns `RESULT_CANCELED` so the user's text remains untouched without hijacking the screen.
 
 ### `v21.0` (Build 21) — November 3, 2026
 **Google Play Publishing Version Bump (v21.0 / Build 21)**
