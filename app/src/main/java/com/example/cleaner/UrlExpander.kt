@@ -18,9 +18,34 @@ object UrlExpander {
         "fb.me", "m.me", "fb.watch", "ig.me", "l.facebook.com", "lm.facebook.com",
         "a.co", "amzn.to", "amzn.eu", "amzn.asia",
         "t.co", "lnkd.in", "youtu.be",
-        "spotify.link", "spoti.fi", "redd.it", "pin.it",
+        "spotify.link", "spoti.fi", "redd.it", "reddit.com/r/*/s/*", "reddit.com/u/*/s/*", "pin.it",
         "bit.ly", "tinyurl.com", "t.ly", "is.gd", "v.gd", "rb.gy",
         "buff.ly", "ow.ly", "rebrand.ly", "cutt.ly", "shorturl.at", "git.io", "qrco.de", "goo.gl"
+    )
+
+    private val REDDIT_OPAQUE_SHARE_PATH_REGEX = Regex(
+        """^/(?:r|u|user)/[A-Za-z0-9_.-]+/s/[A-Za-z0-9_-]+/?$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val HTML_CANONICAL_LINK_REGEX = Regex(
+        """<link[^>]+rel\s*=\s*["']canonical["'][^>]+href\s*=\s*["'](https?://[^"']+)["']""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val HTML_CANONICAL_HREF_FIRST_REGEX = Regex(
+        """<link[^>]+href\s*=\s*["'](https?://[^"']+)["'][^>]+rel\s*=\s*["']canonical["']""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val HTML_OG_URL_REGEX = Regex(
+        """<meta[^>]+property\s*=\s*["']og:url["'][^>]+content\s*=\s*["'](https?://[^"']+)["']""",
+        RegexOption.IGNORE_CASE
+    )
+
+    private val HTML_META_REFRESH_REGEX = Regex(
+        """<meta[^>]+http-equiv\s*=\s*["']refresh["'][^>]+content\s*=\s*["'][^"']*url=(https?://[^"'\s>]+)["']""",
+        RegexOption.IGNORE_CASE
     )
 
     private val AMP_CDN_REGEX = Regex(
@@ -61,6 +86,27 @@ object UrlExpander {
         "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
     /**
+     * Returns true when a URL is a Reddit opaque share link of the form:
+     * - https://www.reddit.com/r/<subreddit>/s/<shareId>
+     * - https://www.reddit.com/u/<username>/s/<shareId>
+     * - https://www.reddit.com/user/<username>/s/<shareId>
+     */
+    fun isRedditOpaqueShareLink(url: String): Boolean {
+        return try {
+            val uri = Uri.parse(url.trim())
+            val host = uri.host?.lowercase().orEmpty()
+            val path = uri.path.orEmpty()
+            isRedditHost(host) && REDDIT_OPAQUE_SHARE_PATH_REGEX.matches(path)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun isRedditHost(host: String): Boolean {
+        return host == "reddit.com" || host.endsWith(".reddit.com")
+    }
+
+    /**
      * Checks whether a URL is from a known shortener or redirect domain
      * that should be expanded via HTTP.
      */
@@ -69,6 +115,11 @@ object UrlExpander {
             val uri = Uri.parse(url)
             val host = uri.host?.lowercase().orEmpty()
             val path = uri.path?.lowercase().orEmpty()
+
+            // Reddit opaque share links (/r/<sub>/s/<id>, /u/<user>/s/<id>, /user/<user>/s/<id>)
+            if (isRedditHost(host) && REDDIT_OPAQUE_SHARE_PATH_REGEX.matches(path)) {
+                return true
+            }
 
             // TikTok short link domains
             if (host == "vt.tiktok.com" ||
@@ -124,6 +175,10 @@ object UrlExpander {
             val path = uri.path.orEmpty()
             if (path.length <= 1) return false
 
+            if (isRedditHost(host) && REDDIT_OPAQUE_SHARE_PATH_REGEX.matches(path)) {
+                return true
+            }
+
             host == "bit.ly" || host == "tinyurl.com" || host == "t.ly" ||
             host == "is.gd" || host == "v.gd" || host == "rb.gy" ||
             host == "buff.ly" || host == "ow.ly" || host == "rebrand.ly" ||
@@ -137,6 +192,32 @@ object UrlExpander {
         } catch (_: Exception) {
             false
         }
+    }
+
+    /**
+     * Extracts a canonical destination URL from an HTML response body when an opaque share endpoint
+     * (such as Reddit /r/<sub>/s/<id>) returns HTTP 200 with a canonical link, og:url, or meta refresh
+     * pointing to the full /comments/<postId>/<title_slug>/ permalink.
+     */
+    internal fun extractCanonicalFromHtmlBody(currentUrl: String, htmlBody: String): String? {
+        if (htmlBody.isBlank()) return null
+        val candidates = listOfNotNull(
+            HTML_CANONICAL_LINK_REGEX.find(htmlBody)?.groupValues?.getOrNull(1),
+            HTML_CANONICAL_HREF_FIRST_REGEX.find(htmlBody)?.groupValues?.getOrNull(1),
+            HTML_OG_URL_REGEX.find(htmlBody)?.groupValues?.getOrNull(1),
+            HTML_META_REFRESH_REGEX.find(htmlBody)?.groupValues?.getOrNull(1)
+        )
+        for (raw in candidates) {
+            val unescaped = raw.trim()
+                .replace("&amp;", "&")
+            if (unescaped.isNotEmpty() &&
+                !unescaped.equals(currentUrl, ignoreCase = true) &&
+                !isRedditOpaqueShareLink(unescaped)
+            ) {
+                return unescaped
+            }
+        }
+        return null
     }
 
     /**
@@ -273,6 +354,59 @@ object UrlExpander {
                                 hops = if (hops.size > 1) hops else emptyList()
                             )
                         }
+                    } else if (code == 200 && isRedditOpaqueShareLink(currentUrl)) {
+                        val htmlSnippet = try {
+                            response.body?.source()?.let { source ->
+                                source.request(64 * 1024L)
+                                source.buffer.clone().readString(
+                                    minOf(source.buffer.size, 64 * 1024L),
+                                    StandardCharsets.UTF_8
+                                )
+                            }.orEmpty()
+                        } catch (_: Exception) {
+                            ""
+                        }
+                        val extractedCanonical = extractCanonicalFromHtmlBody(currentUrl, htmlSnippet)
+                        if (!extractedCanonical.isNullOrBlank()) {
+                            val candidateBlockReason = UrlSecurityValidator.validateRedirectTarget(extractedCanonical)
+                            if (candidateBlockReason != null) {
+                                blockedReason = candidateBlockReason
+                                return@withContext DetailedExpansion(
+                                    finalUrl = currentUrl,
+                                    wasRedirected = currentUrl != trimmed,
+                                    isOpaqueShortener = isOpaque,
+                                    failedToRedirect = true,
+                                    blockedReason = candidateBlockReason,
+                                    hops = if (hops.size > 1) hops else emptyList()
+                                )
+                            }
+                            currentUrl = extractedCanonical
+                            redirectCount++
+                            hops.add(
+                                RedirectHop(
+                                    step = hops.size + 1,
+                                    url = currentUrl,
+                                    host = UrlSecurityValidator.extractHost(currentUrl),
+                                    mechanism = "Reddit Canonical Permalink"
+                                )
+                            )
+                            return@withContext DetailedExpansion(
+                                finalUrl = currentUrl,
+                                wasRedirected = currentUrl != trimmed,
+                                isOpaqueShortener = isOpaque,
+                                failedToRedirect = false,
+                                blockedReason = null,
+                                hops = if (hops.size > 1) hops else emptyList()
+                            )
+                        }
+                        return@withContext DetailedExpansion(
+                            finalUrl = currentUrl,
+                            wasRedirected = currentUrl != trimmed,
+                            isOpaqueShortener = isOpaque,
+                            failedToRedirect = currentUrl == trimmed,
+                            blockedReason = null,
+                            hops = if (hops.size > 1) hops else emptyList()
+                        )
                     } else {
                         return@withContext DetailedExpansion(
                             finalUrl = currentUrl,

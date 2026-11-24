@@ -76,6 +76,8 @@ fun MainScreen(viewModel: MainViewModel) {
     val cleanResult by viewModel.cleanResult.collectAsStateWithLifecycle()
     val isExpanding by viewModel.isExpanding.collectAsStateWithLifecycle()
     val isFromShareIntent by viewModel.isFromShareIntent.collectAsStateWithLifecycle()
+    val accessAssessment by viewModel.accessAssessment.collectAsStateWithLifecycle()
+    val archiveLookupState by viewModel.archiveLookupState.collectAsStateWithLifecycle()
     val history by viewModel.history.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
 
@@ -95,7 +97,9 @@ fun MainScreen(viewModel: MainViewModel) {
                 }
                 is UiEvent.LinkCopied -> {
                     copiedTextState = event.text
-                    snackbarHostState.showSnackbar("Clean link copied to clipboard!")
+                    if (event.toastMessage.isNotBlank()) {
+                        snackbarHostState.showSnackbar(event.toastMessage)
+                    }
                 }
                 is UiEvent.FinishActivity -> {
                     (context as? Activity)?.finish()
@@ -182,6 +186,8 @@ fun MainScreen(viewModel: MainViewModel) {
                         cleanResult = cleanResult,
                         isExpanding = isExpanding,
                         isFromShareIntent = isFromShareIntent,
+                        accessAssessment = accessAssessment,
+                        archiveLookupState = archiveLookupState,
                         onInputChanged = { viewModel.updateInputText(it) },
                         onCleanClicked = { viewModel.processInputText(it) },
                         onClearClicked = { viewModel.clearInput() },
@@ -191,7 +197,10 @@ fun MainScreen(viewModel: MainViewModel) {
                         onLoadSample = { viewModel.loadSample(it) },
                         copiedTextState = copiedTextState,
                         onViewFacebookDetails = { selectedTab = MainTab.RULES },
-                        onExpandShortlinkNow = { viewModel.expandCurrentLinkNow() }
+                        onExpandShortlinkNow = { viewModel.expandCurrentLinkNow() },
+                        onSearchArchives = { viewModel.searchArchivesForCurrentLink() },
+                        onCopyArchiveBundle = { viewModel.copyArchiveBundle(it) },
+                        onShareArchiveBundle = { viewModel.shareArchiveBundle(context, it) }
                     )
                 }
                 MainTab.HISTORY -> {

@@ -180,6 +180,15 @@ object LinkCleaner {
         "share_id" to ("Reddit" to "Reddit share link tracking token"),
         "shrid" to ("Reddit" to "Reddit user share identity tracking token"),
         "rdt" to ("Reddit" to "Reddit tracking token"),
+        "rdt_cid" to ("Reddit Ads" to "Reddit click identifier for conversion attribution"),
+        "\$deep_link" to ("Reddit Telemetry" to "Reddit mobile deep-link redirect flag"),
+        "correlation_id" to ("Reddit Telemetry" to "Reddit share redirect correlation identifier"),
+        "ref_campaign" to ("Reddit Telemetry" to "Reddit referral campaign tracking token"),
+        "ref_source" to ("Reddit Telemetry" to "Reddit referral source tracking token"),
+        "_branch_match_id" to ("Branch.io / Reddit" to "Branch.io cross-platform deep-link attribution identifier"),
+        "_branch_referrer" to ("Branch.io / Reddit" to "Branch.io encoded referrer attribution payload"),
+        "post_fullname" to ("Reddit Telemetry" to "Reddit share redirect post fullname metadata parameter"),
+        "chainedposts" to ("Reddit Telemetry" to "Reddit recommendation feed chain tracking parameter"),
         "trackingId" to ("LinkedIn" to "LinkedIn internal event tracking ID"),
         "refId" to ("LinkedIn" to "LinkedIn referral identifier"),
         "midToken" to ("LinkedIn" to "LinkedIn messaging tracking token"),
@@ -728,8 +737,14 @@ object LinkCleaner {
         }
 
         // Reddit tracking parameters
-        if (host.contains("reddit.com")) {
-            if (paramName == "shrid" || paramName == "share_id" || paramName == "rdt") {
+        if (host.contains("reddit.com") || host == "redd.it") {
+            if (paramName == "shrid" || paramName == "share_id" || paramName == "rdt" ||
+                paramName == "rdt_cid" || paramName == "\$deep_link" || paramName == "%24deep_link" ||
+                paramName == "deep_link" || paramName == "correlation_id" || paramName == "ref_campaign" ||
+                paramName == "ref_source" || paramName == "ref" || paramName == "_branch_match_id" ||
+                paramName == "_branch_referrer" || paramName == "post_fullname" ||
+                paramName == "chainedposts"
+            ) {
                 return true
             }
         }

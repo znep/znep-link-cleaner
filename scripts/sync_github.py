@@ -157,9 +157,84 @@ def ensure_all_release_commits_tagged():
     return tagged
 
 
+def auto_commit_new_release_if_needed():
+    """
+    If ReleaseNotes.kt and app/build.gradle.kts contain a newer version than the latest
+    tagged commit on main, automatically creates the prompt-annotated release commit and tag.
+    """
+    try:
+        gradle_path = os.path.join(ROOT_DIR, "app", "build.gradle.kts")
+        notes_path = os.path.join(ROOT_DIR, "app", "src", "main", "java", "com", "example", "model", "ReleaseNotes.kt")
+        if not os.path.exists(gradle_path) or not os.path.exists(notes_path):
+            return
+        ver_match = re.search(r'versionName\s*=\s*"([^"]+)"', open(gradle_path, "r", encoding="utf-8").read())
+        if not ver_match:
+            return
+        ver = ver_match.group(1)
+        tag_name = f"v{ver}"
+
+        existing_tag = run_git(["rev-list", "-n", "1", tag_name], check=False)
+        status_res = run_git(["status", "--porcelain"], check=False)
+        if existing_tag.returncode == 0 and not status_res.stdout.strip():
+            return
+
+        notes_text = open(notes_path, "r", encoding="utf-8").read()
+        block_pattern = re.compile(
+            r'ReleaseNote\(\s*version\s*=\s*"' + re.escape(ver) + r'".*?title\s*=\s*"([^"]+)".*?userPrompt\s*=\s*"([^"]+)".*?highlights\s*=\s*listOf\((.*?)\)\s*,',
+            re.DOTALL,
+        )
+        m = block_pattern.search(notes_text)
+        if not m:
+            return
+        title = m.group(1).strip()
+        user_prompt = m.group(2).strip()
+        highlights_raw = m.group(3)
+        highlights = [h.replace('\\$', '$') for h in re.findall(r'"([^"]+)"', highlights_raw)]
+
+        author_env = {
+            "GIT_AUTHOR_NAME": "Marc Slemko",
+            "GIT_AUTHOR_EMAIL": "marcs@znep.com",
+            "GIT_COMMITTER_NAME": "Marc Slemko",
+            "GIT_COMMITTER_EMAIL": "marcs@znep.com",
+        }
+        run_git(
+            [
+                "add",
+                "app/",
+                "README.md",
+                "CHANGELOG.md",
+                "download_portal/index.html",
+                "download_portal/repo.html",
+                "scripts/sync_github.py",
+                "server.py",
+            ],
+            env=author_env,
+            check=False,
+        )
+        changes_bullets = "\n".join(f"- {h}" for h in highlights)
+        commit_msg = f'{tag_name}: {title}\n\nUser Prompt:\n"{user_prompt}"\n\nChanges:\n{changes_bullets}'
+        if existing_tag.returncode == 0:
+            run_git(["commit", "--amend", "-m", commit_msg], env=author_env, check=False)
+        else:
+            run_git(["commit", "-m", commit_msg], env=author_env, check=False)
+        run_git(["tag", "-f", "-a", tag_name, "-m", f"Release {tag_name}: {title}"], env=author_env, check=False)
+
+        # Remove stale bundle/git-zip so self_heal_portal_artifacts rebuilds them with the new commit
+        for fname in ("ZnepLinkCleaner.bundle", "ZnepLinkCleaner-git.zip", f"ZnepLinkCleaner-{tag_name}-source.zip"):
+            fpath = os.path.join(PORTAL_DIR, fname)
+            if os.path.exists(fpath):
+                try:
+                    os.remove(fpath)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+
 def export_git_commits_json():
     """Exports all release commits on main to download_portal/git_commits.json for the embedded GitHub widget."""
     os.makedirs(PORTAL_DIR, exist_ok=True)
+    auto_commit_new_release_if_needed()
     ensure_all_release_commits_tagged()
 
     tags_res = run_git(["tag", "-l"], check=False)
@@ -401,6 +476,7 @@ def push_if_token_available(force_push=False):
 
 
 def _push_if_token_available_locked(force_push=False):
+    export_git_commits_json()
     token = load_env_token()
     if not token:
         return False, "GITHUB_TOKEN not set in .env"

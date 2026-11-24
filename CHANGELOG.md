@@ -1,9 +1,19 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v22.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v23.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v23.0] — Build 23 (November 23, 2026)
+### Reddit Opaque Share Link (`/r/<sub>/s/<id>` & `/u/<user>/s/<id>`) Expansion, Readable Title Permalink Resolution & Deep-Link Tracker Purge
+- **Triggering User Prompt**:
+  > *"I tried to expand a Reddit link from the https://www.reddit.com/r/Seattle/s/XXXXXXXXXX form to a readable untracked link with the reddit and title included. [Selected: Expand both /r/<sub>/s/<id> and /u/<user>/s/<id> share links; Comment threads: Keep readable path + comment ID, strip all tracking params]"*
+- **Highlights**:
+  - Added automatic HTTP redirect & canonical permalink expansion for Reddit opaque share links (`reddit.com/r/<subreddit>/s/<id>`, `reddit.com/u/<user>/s/<id>`, and `reddit.com/user/<user>/s/<id>`) into human-readable `https://www.reddit.com/r/<subreddit>/comments/<postId>/<post_title_slug>/` URLs.
+  - Preserved full comment thread context paths (`/r/<subreddit>/comments/<postId>/<title_slug>/<commentId>/`) when expanding Reddit comment share links while stripping all tracking query parameters.
+  - Expanded Reddit telemetry & Branch.io deep-link tracker dictionary to purge `$deep_link`, `%24deep_link`, `correlation_id`, `ref`, `ref_campaign`, `ref_source`, `_branch_match_id`, `_branch_referrer`, `rdt_cid`, `post_fullname`, and `chainedPosts` alongside `share_id`, `shrid`, and `rdt`.
+  - Added HTML `canonical`/`og:url`/`meta-refresh` fallback resolution in `UrlExpander` when Reddit serves a 200 HTML redirect response, plus bounded network expansion for in-place `ACTION_PROCESS_TEXT` (`'Zlc'`) replacements and a `[ Reddit ]` test chip.
 
 ## [v22.0] — Build 22 (November 3, 2026)
 ### Compact `'Zlc'` Text Selection Toolbar Action, `text/*` MIME Expansion, HTTP/HTTPS Smart Selection Link Handler & Partial `'https'` Selection Guard

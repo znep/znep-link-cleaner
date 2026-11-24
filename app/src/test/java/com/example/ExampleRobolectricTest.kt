@@ -278,10 +278,64 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `detect and clean reddit opaque s share links and preserve comment thread paths`() {
+        val subredditShare = "https://www.reddit.com/r/Seattle/s/XXXXXXXXXX"
+        val userShare = "https://www.reddit.com/u/spez/s/YYYYYYYYYY"
+        val userFullShare = "https://old.reddit.com/user/SeattleMod/s/ZZZZZZZZZZ/"
+        val canonicalPost = "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/"
+
+        assertTrue(com.example.cleaner.UrlExpander.isRedditOpaqueShareLink(subredditShare))
+        assertTrue(com.example.cleaner.UrlExpander.isRedditOpaqueShareLink(userShare))
+        assertTrue(com.example.cleaner.UrlExpander.isRedditOpaqueShareLink(userFullShare))
+        assertFalse(com.example.cleaner.UrlExpander.isRedditOpaqueShareLink(canonicalPost))
+
+        assertTrue(com.example.cleaner.UrlExpander.shouldExpand(subredditShare))
+        assertTrue(com.example.cleaner.UrlExpander.shouldExpand(userShare))
+        assertTrue(com.example.cleaner.UrlExpander.isOpaqueShortener(subredditShare))
+        assertTrue(com.example.cleaner.UrlExpander.isOpaqueShortener(userShare))
+        assertFalse(com.example.cleaner.UrlExpander.shouldExpand(canonicalPost))
+
+        // Verify HTML canonical fallback extraction for Reddit /s/ pages returning 200 HTML
+        val mockHtml = """
+            <html><head>
+            <link rel="canonical" href="https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/?%24deep_link=true&amp;correlation_id=9f8e7d6c-5b4a-3210&amp;ref=share&amp;ref_source=link" />
+            </head></html>
+        """.trimIndent()
+        val extractedCanonical = com.example.cleaner.UrlExpander.extractCanonicalFromHtmlBody(subredditShare, mockHtml)
+        assertEquals(
+            "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/?%24deep_link=true&correlation_id=9f8e7d6c-5b4a-3210&ref=share&ref_source=link",
+            extractedCanonical
+        )
+
+        // Verify post permalink after /s/ redirect strips all Reddit & Branch.io deep-link telemetry
+        val redirectedPostUrl =
+            "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/?%24deep_link=true&correlation_id=9f8e7d6c-5b4a-3210&ref=share&ref_campaign=share_button&ref_source=link&share_id=XyZ987654&shrid=ab12cd34&_branch_match_id=123456789&utm_source=share&utm_medium=android_app"
+        val cleanedPost = LinkCleaner.cleanText(redirectedPostUrl)
+        assertEquals(
+            "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/",
+            cleanedPost.cleanedUrl
+        )
+        assertTrue(cleanedPost.strippedParams.any { it.key == "\$deep_link" })
+        assertTrue(cleanedPost.strippedParams.any { it.key == "correlation_id" })
+        assertTrue(cleanedPost.strippedParams.any { it.key == "ref" })
+        assertTrue(cleanedPost.strippedParams.any { it.key == "ref_source" })
+        assertTrue(cleanedPost.strippedParams.any { it.key == "_branch_match_id" })
+
+        // Verify comment thread permalink preserves readable path + comment ID while stripping tracking params
+        val redirectedCommentUrl =
+            "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/k9xyz12/?%24deep_link=true&correlation_id=11223344&ref=share&ref_source=link&share_id=abc999&utm_name=androidcss"
+        val cleanedComment = LinkCleaner.cleanText(redirectedCommentUrl)
+        assertEquals(
+            "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/k9xyz12/",
+            cleanedComment.cleanedUrl
+        )
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(22, releases.size)
-        assertEquals("22.0", releases.first().version)
+        assertEquals(23, releases.size)
+        assertEquals("23.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

@@ -51,8 +51,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cleaner.LinkCleaner
+import com.example.cleaner.UrlSecurityValidator
+import com.example.model.AccessAssessment
+import com.example.model.ArchiveCandidate
+import com.example.model.ArchiveLookupState
 import com.example.model.CleanResult
 import com.example.ui.SampleType
+import com.example.ui.components.ArchiveRecoverySection
 import com.example.ui.components.CleanResultCard
 
 @Composable
@@ -61,6 +66,8 @@ fun CleanScreen(
     cleanResult: CleanResult?,
     isExpanding: Boolean,
     isFromShareIntent: Boolean,
+    accessAssessment: AccessAssessment? = null,
+    archiveLookupState: ArchiveLookupState = ArchiveLookupState.Idle,
     onInputChanged: (String) -> Unit,
     onCleanClicked: (String) -> Unit,
     onClearClicked: () -> Unit,
@@ -71,6 +78,9 @@ fun CleanScreen(
     copiedTextState: String?,
     onViewFacebookDetails: () -> Unit = {},
     onExpandShortlinkNow: () -> Unit = {},
+    onSearchArchives: () -> Unit = {},
+    onCopyArchiveBundle: (ArchiveCandidate) -> Unit = {},
+    onShareArchiveBundle: (ArchiveCandidate) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -292,7 +302,7 @@ fun CleanScreen(
             }
         }
 
-        // Cleaned Result Card
+        // Cleaned Result Card + Orthogonal Paywall / Archive Recovery Section
         if (cleanResult != null) {
             val isCurrentCopied = copiedTextState == cleanResult.cleanedUrl || copiedTextState == cleanResult.cleanedText
             CleanResultCard(
@@ -304,6 +314,19 @@ fun CleanScreen(
                 onViewFacebookDetails = onViewFacebookDetails,
                 onExpandShortlinkNow = onExpandShortlinkNow
             )
+
+            if (UrlSecurityValidator.isSafeHttpUrl(cleanResult.cleanedUrl)) {
+                ArchiveRecoverySection(
+                    cleanedUrl = cleanResult.cleanedUrl,
+                    accessAssessment = accessAssessment,
+                    archiveLookupState = archiveLookupState,
+                    copiedTextState = copiedTextState,
+                    onSearchArchives = onSearchArchives,
+                    onCopyArchiveBundle = onCopyArchiveBundle,
+                    onShareArchiveBundle = onShareArchiveBundle,
+                    onOpenArchive = onOpenBrowser
+                )
+            }
         }
 
         // Decluttered Minimalist Quick Samples
@@ -323,6 +346,8 @@ fun CleanScreen(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                RetroChip(label = "[ Paywall ]", onClick = { onLoadSample(SampleType.PAYWALLED_ARTICLE) })
+                RetroChip(label = "[ Reddit ]", onClick = { onLoadSample(SampleType.REDDIT) })
                 RetroChip(label = "[ TikTok ]", onClick = { onLoadSample(SampleType.TIKTOK_SHARE) })
                 RetroChip(label = "[ Facebook ]", onClick = { onLoadSample(SampleType.FACEBOOK_META) })
                 RetroChip(label = "[ Instagram ]", onClick = { onLoadSample(SampleType.INSTAGRAM) })

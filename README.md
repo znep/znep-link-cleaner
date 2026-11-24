@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v22.0 (Build 22)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v23.0 (Build 23)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal ([https://linkcleaner.znep.com](https://linkcleaner.znep.com)) with public source & prompt-tracked Git history at **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**. Built iteratively through natural-language prompts in Google AI Studio, every prompt that modified the application and its corresponding changes are permanently recorded in each separate Git commit message, this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,24 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v22.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v23.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
 3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active, alongside GitHub Pages (`gh-pages`) and GitHub Releases binary hosting.
-4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v22.0-source.zip`.
+4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v23.0-source.zip`.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v22.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v23.0`)
+
+### `v23.0` (Build 23) — November 23, 2026
+**Reddit Opaque Share Link (`/r/<sub>/s/<id>` & `/u/<user>/s/<id>`) Expansion, Readable Title Permalink Resolution & Deep-Link Tracker Purge**
+- **User Prompt**:
+  > *"I tried to expand a Reddit link from the https://www.reddit.com/r/Seattle/s/XXXXXXXXXX form to a readable untracked link with the reddit and title included. [Selected: Expand both /r/<sub>/s/<id> and /u/<user>/s/<id> share links; Comment threads: Keep readable path + comment ID, strip all tracking params]"*
+- **Changes**:
+  - Added automatic HTTP redirect & canonical permalink expansion for Reddit opaque share links (`reddit.com/r/<subreddit>/s/<id>`, `reddit.com/u/<user>/s/<id>`, and `reddit.com/user/<user>/s/<id>`) into human-readable `https://www.reddit.com/r/<subreddit>/comments/<postId>/<post_title_slug>/` URLs.
+  - Preserved full comment thread context paths (`/r/<subreddit>/comments/<postId>/<title_slug>/<commentId>/`) when expanding Reddit comment share links while stripping all tracking query parameters.
+  - Expanded Reddit telemetry & Branch.io deep-link tracker dictionary to purge `$deep_link`, `%24deep_link`, `correlation_id`, `ref`, `ref_campaign`, `ref_source`, `_branch_match_id`, `_branch_referrer`, `rdt_cid`, `post_fullname`, and `chainedPosts` alongside `share_id`, `shrid`, and `rdt`.
+  - Added HTML `canonical`/`og:url`/`meta-refresh` fallback resolution in `UrlExpander` when Reddit serves a 200 HTML redirect response, plus bounded network expansion for in-place `ACTION_PROCESS_TEXT` (`'Zlc'`) replacements and a `[ Reddit ]` test chip.
 
 ### `v22.0` (Build 22) — November 3, 2026
 **Compact `'Zlc'` Text Selection Toolbar Action, `text/*` MIME Expansion, HTTP/HTTPS Smart Selection Link Handler & Partial `'https'` Selection Guard**

@@ -201,7 +201,7 @@
           <h1>ZnepLinkCleaner Git Repository Browser</h1>
           <div style="margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" class="badge" style="text-decoration: none;">🐙 github.com/znep/znep-link-cleaner ↗</a>
-            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v22.0 (Build 22)</span>
+            <span class="badge" style="border-color: #22c55e; color: #4ade80;">v23.0 (Build 23)</span>
             <span class="badge" style="border-color: #a855f7; color: #d8b4fe;">Vibe-Coded PoC</span>
             <span style="font-size: 0.8rem; color: var(--text-muted);">com.znep.linkcleaner</span>
           </div>
@@ -219,7 +219,7 @@
       <div class="card" style="border-color: rgba(168, 85, 247, 0.55);">
         <div class="card-title">🐙 Public GitHub Repository</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Live public repository at <code>github.com/znep/znep-link-cleaner</code>. Every release (<code>v1.0.0</code> – <code>v22.0</code>) is committed as a separate Git commit and tag containing the triggering user prompt and changelog.
+          Live public repository at <code>github.com/znep/znep-link-cleaner</code>. Every release (<code>v1.0.0</code> – <code>v23.0</code>) is committed as a separate Git commit and tag containing the triggering user prompt and changelog.
         </p>
         <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #d8b4fe;">
           git clone https://github.com/znep/znep-link-cleaner.git
@@ -230,7 +230,7 @@
       <div class="card">
         <div class="card-title">Git Bundle (Offline Clone)</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Complete Git repository packfile synchronized 1:1 with <code>github.com/znep/znep-link-cleaner</code> (<code>v1.0.0</code> – <code>v22.0</code>), including all 22 separate prompt-annotated commits and tags.
+          Complete Git repository packfile synchronized 1:1 with <code>github.com/znep/znep-link-cleaner</code> (<code>v1.0.0</code> – <code>v23.0</code>), including all 23 separate prompt-annotated commits and tags.
         </p>
         <div style="margin-top: 6px; font-family: monospace; font-size: 0.75rem; color: #38bdf8;">
           git clone ZnepLinkCleaner.bundle zneplinkcleaner
@@ -247,19 +247,34 @@
       </div>
 
       <div class="card">
-        <div class="card-title">Source Tree ZIP (v22.0)</div>
+        <div class="card-title">Source Tree ZIP (v23.0)</div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          Clean v22.0 snapshot of all Kotlin/Compose source files, standing rules (<code>AGENTS.md</code>, <code>CHANGELOG.md</code>), and Gradle build system.
+          Clean v23.0 snapshot of all Kotlin/Compose source files, standing rules (<code>AGENTS.md</code>, <code>CHANGELOG.md</code>), and Gradle build system.
         </p>
-        <a href="https://github.com/znep/znep-link-cleaner/releases/download/v22.0/ZnepLinkCleaner-v22.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v22.0-source.zip</a>
+        <a href="https://github.com/znep/znep-link-cleaner/releases/download/v23.0/ZnepLinkCleaner-v23.0-source.zip" download class="btn btn-secondary">⬇ ZnepLinkCleaner-v23.0-source.zip</a>
       </div>
     </div>
 
-    <div class="section-header">Synchronized GitHub Release Commits, Prompts &amp; Tags (v1.0.0 – v22.0) — <a href="https://github.com/znep/znep-link-cleaner/commits/main" target="_blank" rel="noopener" style="color: var(--accent);">View on GitHub ↗</a></div>
+    <div class="section-header">Synchronized GitHub Release Commits, Prompts &amp; Tags (v1.0.0 – v23.0) — <a href="https://github.com/znep/znep-link-cleaner/commits/main" target="_blank" rel="noopener" style="color: var(--accent);">View on GitHub ↗</a></div>
 
     <div class="commit-item" style="border-color: rgba(34, 197, 94, 0.5);">
-      <div class="commit-subject"><span class="tag-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e;">tag: v22.0</span>v22.0: Compact 'Zlc' Text Selection Toolbar Action, text/* MIME Expansion, HTTP/HTTPS Smart Selection Link Handler &amp; Partial 'https' Selection Guard</div>
-      <div class="commit-meta">Author: Marc Slemko &lt;marcs@znep.com&gt; • Date: November 3, 2026 • Branch: main (HEAD)</div>
+      <div class="commit-subject"><span class="tag-chip" style="background: rgba(34, 197, 94, 0.2); color: #4ade80; border-color: #22c55e;">tag: v23.0</span>v23.0: Reddit Opaque Share Link (/r/&lt;sub&gt;/s/&lt;id&gt; &amp; /u/&lt;user&gt;/s/&lt;id&gt;) Expansion, Readable Title Permalink Resolution &amp; Deep-Link Tracker Purge</div>
+      <div class="commit-meta">Author: Marc Slemko &lt;marcs@znep.com&gt; • Date: November 23, 2026 • Branch: main (HEAD)</div>
+      <div class="prompt-box">
+        <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
+        "I tried to expand a Reddit link from the https://www.reddit.com/r/Seattle/s/XXXXXXXXXX form to a readable untracked link with the reddit and title included. [Selected: Expand both /r/&lt;sub&gt;/s/&lt;id&gt; and /u/&lt;user&gt;/s/&lt;id&gt; share links; Comment threads: Keep readable path + comment ID, strip all tracking params]"
+      </div>
+      <ul class="commit-changes">
+        <li>Added automatic HTTP redirect &amp; canonical permalink expansion for Reddit opaque share links (<code>reddit.com/r/&lt;subreddit&gt;/s/&lt;id&gt;</code>, <code>reddit.com/u/&lt;user&gt;/s/&lt;id&gt;</code>, and <code>reddit.com/user/&lt;user&gt;/s/&lt;id&gt;</code>) into human-readable <code>https://www.reddit.com/r/&lt;subreddit&gt;/comments/&lt;postId&gt;/&lt;post_title_slug&gt;/</code> URLs</li>
+        <li>Preserved full comment thread context paths (<code>/r/&lt;subreddit&gt;/comments/&lt;postId&gt;/&lt;title_slug&gt;/&lt;commentId&gt;/</code>) when expanding Reddit comment share links while stripping all tracking query parameters</li>
+        <li>Expanded Reddit telemetry &amp; Branch.io deep-link tracker dictionary to purge <code>$deep_link</code>, <code>%24deep_link</code>, <code>correlation_id</code>, <code>ref</code>, <code>ref_campaign</code>, <code>ref_source</code>, <code>_branch_match_id</code>, <code>_branch_referrer</code>, <code>rdt_cid</code>, <code>post_fullname</code>, and <code>chainedPosts</code> alongside <code>share_id</code>, <code>shrid</code>, and <code>rdt</code></li>
+        <li>Added HTML <code>canonical</code>/<code>og:url</code>/<code>meta-refresh</code> fallback resolution in <code>UrlExpander</code> when Reddit serves a 200 HTML redirect response, plus bounded network expansion for in-place <code>ACTION_PROCESS_TEXT</code> (<strong>Zlc</strong>) replacements and a <code>[ Reddit ]</code> test chip</li>
+      </ul>
+    </div>
+
+    <div class="commit-item">
+      <div class="commit-subject"><span class="tag-chip">tag: v22.0</span>v22.0: Compact 'Zlc' Text Selection Toolbar Action, text/* MIME Expansion, HTTP/HTTPS Smart Selection Link Handler &amp; Partial 'https' Selection Guard</div>
+      <div class="commit-meta">November 3, 2026 • Build 22 • Repo: <a href="https://github.com/znep/znep-link-cleaner" target="_blank" rel="noopener" style="color: var(--accent);">github.com/znep/znep-link-cleaner</a></div>
       <div class="prompt-box">
         <span class="prompt-label">&gt; TRIGGERING USER PROMPT //</span>
         "What are some example apps that support in place link cleaning? I tried one but it only sent the https part not the whole URL. Can I make zlc show up more often in the various menus that show up after selecting text? [Selected: Broaden PROCESS_TEXT to all text MIME types, Add HTTP/HTTPS link handler for Smart Selection; Label: Zlc; Partial selection: Show a helpful Toast and leave text unchanged]"

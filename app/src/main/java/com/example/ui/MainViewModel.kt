@@ -7,6 +7,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cleaner.AccessRestrictionDetector
+import com.example.cleaner.ArchiveLookupEngine
+import com.example.cleaner.ArchiveShareFormatter
 import com.example.cleaner.FacebookWebViewExpander
 import com.example.cleaner.LinkCleaner
 import com.example.cleaner.UrlExpander
@@ -15,7 +18,14 @@ import com.example.data.AppDatabase
 import com.example.data.CleanStats
 import com.example.data.CleanedLinkEntity
 import com.example.data.PreferencesManager
+import com.example.model.AccessAssessment
+import com.example.model.AccessRestrictionType
+import com.example.model.ArchiveCandidate
+import com.example.model.ArchiveLookupState
+import com.example.model.ArchiveProvider
+import com.example.model.ArchiveValidationStatus
 import com.example.model.CleanResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,15 +34,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed class UiEvent {
     data class ShowToast(val message: String) : UiEvent()
-    data class LinkCopied(val text: String) : UiEvent()
+    data class LinkCopied(
+        val text: String,
+        val toastMessage: String = "Clean link copied to clipboard!"
+    ) : UiEvent()
     data object FinishActivity : UiEvent()
 }
 
 enum class SampleType {
+    PAYWALLED_ARTICLE,
+    REDDIT,
     TIKTOK_SHARE,
     FACEBOOK_META,
     INSTAGRAM,
@@ -73,6 +89,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isFromShareIntent = MutableStateFlow(false)
     val isFromShareIntent: StateFlow<Boolean> = _isFromShareIntent.asStateFlow()
 
+    private val _accessAssessment = MutableStateFlow<AccessAssessment?>(null)
+    val accessAssessment: StateFlow<AccessAssessment?> = _accessAssessment.asStateFlow()
+
+    private val _archiveLookupState = MutableStateFlow<ArchiveLookupState>(ArchiveLookupState.Idle)
+    val archiveLookupState: StateFlow<ArchiveLookupState> = _archiveLookupState.asStateFlow()
+
+    private var accessCheckJob: Job? = null
+    private var archiveLookupJob: Job? = null
+
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
@@ -81,15 +106,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearInput() {
+        accessCheckJob?.cancel()
+        archiveLookupJob?.cancel()
         _inputText.value = ""
         _cleanResult.value = null
         _isExpanding.value = false
         _isFromShareIntent.value = false
+        _accessAssessment.value = null
+        _archiveLookupState.value = ArchiveLookupState.Idle
     }
 
     fun processInputText(text: String, isSharedIntent: Boolean = false) {
         val trimmed = text.trim().take(UrlSecurityValidator.MAX_INPUT_LENGTH)
         if (trimmed.isEmpty()) return
+
+        accessCheckJob?.cancel()
+        archiveLookupJob?.cancel()
+        _accessAssessment.value = null
+        _archiveLookupState.value = ArchiveLookupState.Idle
 
         _inputText.value = trimmed
         _isFromShareIntent.value = isSharedIntent
@@ -105,8 +139,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             )
             _cleanResult.value = initial
 
-            // If it's a redirect / shortener link or Facebook share link, expand it asynchronously unless Offline-Only Mode is active
-            if (!isOfflineOnly && (UrlExpander.shouldExpand(trimmed) || FacebookWebViewExpander.isFacebookShareLink(trimmed))) {
+            // If any URL in the text is a redirect / shortener link (including Reddit /r/<sub>/s/<id>) or Facebook share link,
+            // expand it asynchronously unless Offline-Only Mode is active
+            val extractedUrls = LinkCleaner.extractLinks(trimmed)
+            val requiresNetworkExpansion = extractedUrls.any {
+                UrlExpander.shouldExpand(it) || FacebookWebViewExpander.isFacebookShareLink(it)
+            } || UrlExpander.shouldExpand(trimmed) || FacebookWebViewExpander.isFacebookShareLink(trimmed)
+
+            if (!isOfflineOnly && requiresNetworkExpansion) {
                 _isExpanding.value = true
                 val expandedResult = LinkCleaner.cleanTextAsync(
                     inputText = trimmed,
@@ -121,25 +161,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 saveResultToDatabase(expandedResult)
                 handleAutoCopy(expandedResult, isSharedIntent)
+                startAccessAssessment(expandedResult.cleanedUrl, offlineOnlyMode = false)
             } else {
                 saveResultToDatabase(initial)
                 handleAutoCopy(initial, isSharedIntent)
+                startAccessAssessment(initial.cleanedUrl, offlineOnlyMode = isOfflineOnly)
             }
         }
     }
 
     /**
-     * Synchronously cleans selected text for Android's editable ACTION_PROCESS_TEXT write-back
+     * Cleans selected text for Android's editable ACTION_PROCESS_TEXT write-back
      * so the highlighted link is replaced in-place inside the host app with zero UI switch.
+     * If the selected link is an HTTP-redirect shortener (such as Reddit /r/<sub>/s/<id> or bit.ly)
+     * and Offline-Only Mode is disabled, performs a fast bounded network expansion.
      */
     fun cleanSynchronouslyForInPlaceReplacement(text: String): CleanResult {
         val bounded = text.take(UrlSecurityValidator.MAX_INPUT_LENGTH)
-        val result = LinkCleaner.cleanText(
-            inputText = bounded,
-            keepAmazonAffiliate = keepAmazonAffiliate.value,
-            strictMode = strictMode.value,
-            offlineOnlyMode = true
-        )
+        val isOfflineOnly = offlineOnlyMode.value
+        val urls = LinkCleaner.extractLinks(bounded)
+        val shouldExpandOverNetwork = !isOfflineOnly && urls.any { UrlExpander.shouldExpand(it) }
+
+        val result = if (shouldExpandOverNetwork) {
+            try {
+                kotlinx.coroutines.runBlocking {
+                    kotlinx.coroutines.withTimeout(3500L) {
+                        LinkCleaner.cleanTextAsync(
+                            inputText = bounded,
+                            context = null,
+                            enableFacebookWebView = false,
+                            keepAmazonAffiliate = keepAmazonAffiliate.value,
+                            strictMode = strictMode.value,
+                            offlineOnlyMode = false
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+                LinkCleaner.cleanText(
+                    inputText = bounded,
+                    keepAmazonAffiliate = keepAmazonAffiliate.value,
+                    strictMode = strictMode.value,
+                    offlineOnlyMode = isOfflineOnly
+                )
+            }
+        } else {
+            LinkCleaner.cleanText(
+                inputText = bounded,
+                keepAmazonAffiliate = keepAmazonAffiliate.value,
+                strictMode = strictMode.value,
+                offlineOnlyMode = isOfflineOnly
+            )
+        }
         viewModelScope.launch {
             saveResultToDatabase(result)
         }
@@ -166,7 +238,140 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _cleanResult.value = expandedResult
             _isExpanding.value = false
             saveResultToDatabase(expandedResult)
+            startAccessAssessment(expandedResult.cleanedUrl, offlineOnlyMode = false)
         }
+    }
+
+    /**
+     * Orthogonal access check: runs Stage A offline known-publisher detection immediately,
+     * then Stage B bounded HTTP/HTML probing asynchronously unless Offline-Only Mode is active.
+     */
+    private fun startAccessAssessment(cleanedUrl: String, offlineOnlyMode: Boolean) {
+        accessCheckJob?.cancel()
+        archiveLookupJob?.cancel()
+        _archiveLookupState.value = ArchiveLookupState.Idle
+
+        if (cleanedUrl.isBlank() || !UrlSecurityValidator.isSafeHttpUrl(cleanedUrl)) {
+            _accessAssessment.value = null
+            return
+        }
+
+        val offlineResult = AccessRestrictionDetector.assessOffline(cleanedUrl, offlineOnlyMode)
+        _accessAssessment.value = offlineResult
+
+        if (!offlineOnlyMode) {
+            accessCheckJob = viewModelScope.launch {
+                val liveResult = AccessRestrictionDetector.assessLive(cleanedUrl, offlineOnlyMode = false)
+                if (_cleanResult.value?.cleanedUrl == cleanedUrl) {
+                    _accessAssessment.value = liveResult
+                }
+            }
+        }
+    }
+
+    /**
+     * User-triggered two-stage archival lookup across all 4 curated trust-ordered providers.
+     * Never invoked automatically during cleaning to protect user privacy.
+     */
+    fun searchArchivesForCurrentLink() {
+        val cleanedUrl = _cleanResult.value?.cleanedUrl?.trim().orEmpty()
+        if (cleanedUrl.isEmpty() || !UrlSecurityValidator.isSafeHttpUrl(cleanedUrl)) {
+            viewModelScope.launch {
+                _uiEvents.emit(UiEvent.ShowToast("No valid HTTP/HTTPS link to search in archives"))
+            }
+            return
+        }
+
+        archiveLookupJob?.cancel()
+        val initialPlaceholders = ArchiveProvider.entries
+            .sortedBy { it.trustRank }
+            .map { provider ->
+                ArchiveCandidate(
+                    provider = provider,
+                    archiveUrl = "",
+                    validationStatus = ArchiveValidationStatus.CHECKING,
+                    statusDetail = "Querying ${provider.displayName}..."
+                )
+            }
+        _archiveLookupState.value = ArchiveLookupState.Searching(cleanedUrl, initialPlaceholders)
+
+        archiveLookupJob = viewModelScope.launch {
+            val finalResults = ArchiveLookupEngine.lookupAllArchives(
+                cleanedUrl = cleanedUrl,
+                onProviderUpdate = { updatedCandidate ->
+                    _archiveLookupState.update { current ->
+                        if (current is ArchiveLookupState.Searching && current.targetUrl == cleanedUrl) {
+                            val updatedList = current.candidates
+                                .map { existing ->
+                                    if (existing.provider == updatedCandidate.provider) updatedCandidate else existing
+                                }
+                                .sortedBy { it.provider.trustRank }
+                            ArchiveLookupState.Searching(cleanedUrl, updatedList)
+                        } else {
+                            current
+                        }
+                    }
+                }
+            )
+            if (_cleanResult.value?.cleanedUrl == cleanedUrl) {
+                _archiveLookupState.value = ArchiveLookupState.Completed(cleanedUrl, finalResults)
+            }
+        }
+    }
+
+    /**
+     * Builds the structured clipboard/share text bundling the labeled original URL,
+     * the archival URL, and the article title whenever it is not already represented in the URL.
+     */
+    fun buildArchiveBundleText(candidate: ArchiveCandidate): String {
+        val cleanedUrl = _cleanResult.value?.cleanedUrl.orEmpty()
+        val assessment = _accessAssessment.value
+        val restrictionType = assessment?.restrictionType ?: AccessRestrictionType.PAYWALL
+        val bestTitle = ArchiveShareFormatter.selectBestTitle(
+            archiveTitle = candidate.extractedTitle,
+            originalProbeTitle = assessment?.detectedTitle
+        )
+        return ArchiveShareFormatter.formatClipboardBundle(
+            originalUrl = cleanedUrl,
+            archiveUrl = candidate.archiveUrl,
+            providerName = candidate.provider.displayName,
+            restrictionType = restrictionType,
+            title = bestTitle
+        )
+    }
+
+    fun copyArchiveBundle(candidate: ArchiveCandidate) {
+        if (!UrlSecurityValidator.isSafeHttpUrl(candidate.archiveUrl)) {
+            viewModelScope.launch {
+                _uiEvents.emit(UiEvent.ShowToast("No valid archive link available to copy"))
+            }
+            return
+        }
+        val bundle = buildArchiveBundleText(candidate)
+        val context = getApplication<Application>()
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("ZnepLinkCleaner Archive Bundle", bundle))
+
+        val label = (_accessAssessment.value?.clipboardRestrictionLabel ?: "Paywalled").lowercase()
+        viewModelScope.launch {
+            _uiEvents.emit(
+                UiEvent.LinkCopied(
+                    text = bundle,
+                    toastMessage = "Copied $label link + ${candidate.provider.displayName} archive!"
+                )
+            )
+        }
+    }
+
+    fun shareArchiveBundle(context: Context, candidate: ArchiveCandidate) {
+        if (!UrlSecurityValidator.isSafeHttpUrl(candidate.archiveUrl)) {
+            viewModelScope.launch {
+                _uiEvents.emit(UiEvent.ShowToast("No valid archive link available to share"))
+            }
+            return
+        }
+        val bundle = buildArchiveBundleText(candidate)
+        shareLink(context, bundle)
     }
 
     private suspend fun saveResultToDatabase(result: CleanResult) {
@@ -203,10 +408,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         clipboard.setPrimaryClip(clip)
 
         viewModelScope.launch {
-            if (showToast) {
-                _uiEvents.emit(UiEvent.ShowToast("Copied clean link to clipboard!"))
-            }
-            _uiEvents.emit(UiEvent.LinkCopied(text))
+            _uiEvents.emit(
+                UiEvent.LinkCopied(
+                    text = text,
+                    toastMessage = if (showToast) "Copied clean link to clipboard!" else ""
+                )
+            )
         }
     }
 
@@ -249,6 +456,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadSample(type: SampleType) {
         val sample = when (type) {
+            SampleType.PAYWALLED_ARTICLE ->
+                "https://www.nytimes.com/2026/11/10/technology/ai-chips-energy-grid.html?smid=nytcore-ios-share&utm_source=twitter&utm_medium=social"
+            SampleType.REDDIT ->
+                "https://www.reddit.com/r/Seattle/comments/1abc234/sunset_over_puget_sound_from_kerry_park/?%24deep_link=true&correlation_id=9f8e7d6c-5b4a-3210&ref=share&ref_source=link&share_id=XyZ987654&shrid=ab12cd34&utm_source=share&utm_medium=android_app"
             SampleType.TIKTOK_SHARE ->
                 "https://www.tiktok.com/@creator/video/7345678901234567890?_r=1&_t=8Wxyz&is_from_webapp=1&sender_device=pc&share_app_id=1233&share_link_id=abc123xyz"
             SampleType.FACEBOOK_META ->

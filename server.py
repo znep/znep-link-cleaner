@@ -315,6 +315,15 @@ def ensure_daemon_running():
     Immediately patches Nginx (<50ms) and spawns server.py in the background if not running.
     """
     apply_nginx_patch_once()
+    self_heal_portal_artifacts()
+    try:
+        if "/app/applet/scripts" not in sys.path:
+            sys.path.insert(0, "/app/applet/scripts")
+        import sync_github
+        sync_github.export_git_commits_json()
+        sync_github.push_if_token_available()
+    except Exception:
+        pass
     if not is_port_in_use(PORT):
         subprocess.Popen(
             [sys.executable, os.path.abspath(__file__)],
