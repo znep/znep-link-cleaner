@@ -464,13 +464,67 @@ class ExampleRobolectricTest {
             com.example.cleaner.ArchiveLookupEngine.parseGhostarchiveSearchHtml(ghostHtml)
         )
 
-        // Stage 2 heuristic: full article (>= 250 words) -> VERIFIED_FULL_ARTICLE
-        val longBody = (1..280).joinToString(" ") { "journalism" }
+        // Stage 2 heuristic: full article (>= 4 editorial <p> paragraphs totaling >= 250 words) -> VERIFIED_FULL_ARTICLE
+        val paragraphText = (1..60).joinToString(" ") { "journalism" }
+        val multiParagraphBody = (1..5).joinToString("\n") { "<p>$paragraphText</p>" }
         val fullEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(
-            "<html><head><title>Deep Investigative Report</title></head><body><article><p>$longBody</p></article></body></html>"
+            "<html><head><title>Deep Investigative Report</title></head><body><article>$multiParagraphBody</article></body></html>"
         )
         assertEquals(com.example.model.ArchiveValidationStatus.VERIFIED_FULL_ARTICLE, fullEval.status)
         assertEquals("Deep Investigative Report", fullEval.extractedTitle)
+
+        // Stage 2 heuristic: FT.com Wayback barrier page with heavy <nav>/<footer> chrome + pricing table + teaser <p> MUST fail as SNAPSHOT_PARTIAL_OR_PAYWALLED
+        val bigNavMenu = (1..350).joinToString(" ") { "<a href='/section'>Markets World Tech Opinion</a>" }
+        val ftBarrierHtml = """
+            <html>
+            <head>
+              <title>Global Chip Supply Shifts | Financial Times</title>
+              <script type="application/ld+json">{"@type":"NewsArticle","isAccessibleForFree":false}</script>
+            </head>
+            <body>
+              <header><nav>$bigNavMenu</nav></header>
+              <main>
+                <div class="o-barrier barrier-grid" data-trackable="barrier">
+                  <h2>Try unlimited access</h2>
+                  <p>Subscribe to unlock this article and read the full Financial Times coverage today across web and app.</p>
+                  <div class="offer-card">
+                    <p>Standard Digital includes complete access to global reporting, markets analysis, newsletters and mobile alerts for subscribers.</p>
+                    <p>Premium Digital includes Lex column, curated digests, team tools, and unlimited access to exclusive financial insights.</p>
+                  </div>
+                </div>
+                <p>Semiconductor executives said supply chains are shifting rapidly across Asia and Europe as demand rises for next-generation servers.</p>
+              </main>
+              <footer><p>Financial Times and its journalism are subject to a self-regulation regime under the FT Editorial Code of Practice.</p></footer>
+            </body>
+            </html>
+        """.trimIndent()
+        val ftEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(ftBarrierHtml)
+        assertEquals(com.example.model.ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED, ftEval.status)
+        assertEquals("Global Chip Supply Shifts", ftEval.extractedTitle)
+
+        // Confirmed paywalled snapshots must be demoted out of primary actionable cards
+        val demotedCandidate = com.example.model.ArchiveCandidate(
+            provider = com.example.model.ArchiveProvider.WAYBACK_MACHINE,
+            archiveUrl = "https://web.archive.org/web/20261112143000/https://www.ft.com/content/8a9f21c0",
+            validationStatus = ftEval.status,
+            statusDetail = ftEval.detail
+        )
+        assertTrue(demotedCandidate.isPaywalledSnapshot)
+        assertFalse(demotedCandidate.isActionable)
+
+        // Multi-capture Wayback CDX parsing returns up to 2 distinct-digest captures newest-first
+        val multiDigestCdx = """
+            [
+              ["timestamp","original","statuscode","mimetype","length","digest"],
+              ["20261001090000","https://www.ft.com/content/8a9f21c0","200","text/html","28000","DIGEST_OLDER"],
+              ["20261110120000","https://www.ft.com/content/8a9f21c0","200","text/html","24500","DIGEST_NEW"],
+              ["20261112143000","https://www.ft.com/content/8a9f21c0","200","text/html","24500","DIGEST_NEW"]
+            ]
+        """.trimIndent()
+        val distinctCaptures = com.example.cleaner.ArchiveLookupEngine.parseWaybackCdxCaptures(multiDigestCdx)
+        assertEquals(2, distinctCaptures.size)
+        assertEquals("20261112143000", distinctCaptures[0].timestamp)
+        assertEquals("20261001090000", distinctCaptures[1].timestamp)
 
         // Stage 2 heuristic: short paywalled stub -> SNAPSHOT_PARTIAL_OR_PAYWALLED
         val stubEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(
@@ -492,8 +546,8 @@ class ExampleRobolectricTest {
     @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(24, releases.size)
-        assertEquals("24.0", releases.first().version)
+        assertEquals(25, releases.size)
+        assertEquals("25.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

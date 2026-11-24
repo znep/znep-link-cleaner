@@ -1,9 +1,20 @@
 # Changelog — ZnepLinkCleaner (`com.znep.linkcleaner`)
 
 > **VIBE-CODED PROOF OF CONCEPT**
-> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v24.0`), the exact user prompt that modified the application, and the resulting engineering changes.
+> Every release of **ZnepLinkCleaner** ([https://linkcleaner.znep.com](https://linkcleaner.znep.com) | Public GitHub: **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**) is built iteratively via natural-language prompts. This changelog records every functional release (`v1.0.0` through `v25.0`), the exact user prompt that modified the application, and the resulting engineering changes.
 
 ---
+
+## [v25.0] — Build 25 (November 24, 2026)
+### Hardened Archive Paywall Validation (`ft.com` Wayback Fix), Collapsible Compact Input Bar & Unified Above-the-Fold Clean + Paywall Card
+- **Triggering User Prompt**:
+  > *"Two issues found. 1. It shows ft.com links as accessible as the full article on web.archive.org even when it is still paywalled there. 2. The ux needs tweaking so it is clear a link is paywalled above the fold on a phone. It still needs cleaning before de-paywalling but there is too much clutter especially if it is already clean and just paywalled. This may require integrating the UX of the two functions more. [Selected: Collapse input to compact bar with Edit/Clear; Single unified card with compact actions and inline archives; Demote to muted footer labeled Paywalled Snapshot]"*
+- **Highlights**:
+  - Fixed false-positive `VERIFIED FULL ARTICLE` results on Financial Times (`ft.com`) and similar Wayback Machine snapshots by stripping structural chrome (`<nav>`, `<header>`, `<footer>`, `<aside>`, `<form>`) before counting words, detecting hard paywall barriers (`o-barrier`, `barrier-grid`, pricing tables, JSON-LD `isAccessibleForFree=false`), and requiring genuine multi-paragraph `<p>` editorial prose (`>= 4` non-boilerplate paragraphs, `>= 250` editorial words).
+  - Added automatic fallback probing of an earlier distinct-digest Wayback CDX capture whenever the newest Wayback snapshot turns out to be a paywalled barrier page.
+  - Demoted confirmed paywalled snapshots out of primary actionable archive cards into a dedicated muted footer explicitly labeled **`[ ✕ PAYWALLED SNAPSHOT ]`** with a subtle `Inspect ↗` link.
+  - Auto-collapsed the URL input console into a compact 1-line bar (~52dp) with **Edit** and **Clear** buttons once a link is processed so clean status, paywall badge, actions, and archive lookup sit cleanly above the fold on phones.
+  - Unified link-cleaning and paywall/archive recovery into a single integrated card (`CleanResultCard` + `InlineArchiveRecoveryContent`) with side-by-side status pills (`[ ✓ ALREADY CLEAN ]` / `[ CLEANED -XX% ]` + `[ PAYWALLED ]` / `[ REGION LOCKED ]`), a compact single-row `Copy | Share | Open` action strip, and inline archive search without redundant already-clean filler.
 
 ## [v24.0] — Build 24 (November 24, 2026)
 ### Hybrid Paywall & Region-Lock Detection, Trust-Ordered Archival Link Lookup, Two-Stage Full-Article Validation & Smart Clipboard Bundling

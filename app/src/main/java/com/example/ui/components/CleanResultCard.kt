@@ -171,7 +171,7 @@ fun CleanResultCard(
                     }
 
                     // Immediate Restriction Badge (PAYWALLED / REGION LOCKED / BLOCKED / SIGN-IN WALL)
-                    if (isRestricted && accessAssessment != null) {
+                    if (accessAssessment != null && accessAssessment.isRestricted) {
                         val restrictionIcon = when (accessAssessment.restrictionType) {
                             AccessRestrictionType.REGION_LOCKED -> Icons.Default.PublicOff
                             else -> Icons.Default.Lock
