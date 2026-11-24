@@ -34,6 +34,24 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "25.0",
+            buildNumber = 25,
+            releaseDate = "November 24, 2026",
+            title = "Hardened Archive Paywall Validation (FT.com Wayback Fix), Collapsible Compact Input Bar & Unified Above-the-Fold Clean + Paywall Card",
+            userPrompt = "Two issues found. 1. It shows ft.com links as accessible as the full article on web.archive.org even when it is still paywalled there. 2. The ux needs tweaking so it is clear a link is paywalled above the fold on a phone. It still needs cleaning before de-paywalling but there is too much clutter especially if it is already clean and just paywalled. This may require integrating the UX of the two functions more. [Selected: Collapse input to compact bar with Edit/Clear; Single unified card with compact actions and inline archives; Demote to muted footer labeled Paywalled Snapshot]",
+            highlights = listOf(
+                "Fixed false-positive 'VERIFIED FULL ARTICLE' results on Financial Times (ft.com) and similar Wayback Machine snapshots by stripping structural chrome (<nav>, <header>, <footer>, <aside>, <form>) before counting words, detecting hard paywall barriers (FT o-barrier / barrier-grid, pricing tables, JSON-LD isAccessibleForFree=false), and requiring genuine multi-paragraph <p> editorial prose (>= 4 non-boilerplate paragraphs, >= 250 editorial words)",
+                "Added automatic fallback probing of an earlier distinct-digest Wayback CDX capture whenever the newest Wayback snapshot turns out to be a paywalled barrier page",
+                "Demoted confirmed paywalled snapshots out of primary actionable archive cards into a dedicated muted footer explicitly labeled '[ ✕ PAYWALLED SNAPSHOT ]' with a subtle 'Inspect ↗' escape hatch",
+                "Auto-collapsed the URL input console into a compact 1-line bar (~52dp) with Edit and Clear buttons once a link is processed, keeping clean status, paywall badge, actions, and archive lookup cleanly above the fold on phones",
+                "Unified link-cleaning and paywall/archive recovery into a single integrated card with side-by-side status pills ([ ✓ ALREADY CLEAN ] / [ CLEANED -XX% ] + [ PAYWALLED ] / [ REGION LOCKED ]), a compact single-row Copy | Share | Open action strip, and inline archive search without redundant already-clean filler"
+            ),
+            technicalDetails = listOf(
+                "Upgraded ArchiveLookupEngine.evaluateArchivedHtml with structural chrome stripping, HARD_BARRIER_DOM_MARKERS, PRICING_TIER_BOILERPLATE_PAIR, extractEditorialParagraphs, and parseWaybackCdxCaptures (up to 2 distinct digests)",
+                "Added AccessAssessment.compactHudBadgeLabel and ArchiveCandidate.isPaywalledSnapshot in ArchiveModels.kt; refactored ArchiveRecoverySection.kt into InlineArchiveRecoveryContent embedded in CleanResultCard.kt; added collapsible compact_input_bar in CleanScreen.kt; bumped versionCode to 25 and versionName to 25.0"
+            )
+        ),
+        ReleaseNote(
             version = "24.0",
             buildNumber = 24,
             releaseDate = "November 24, 2026",
