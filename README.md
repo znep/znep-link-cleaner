@@ -1,4 +1,4 @@
-# ZnepLinkCleaner (`com.znep.linkcleaner`) — v23.0 (Build 23)
+# ZnepLinkCleaner (`com.znep.linkcleaner`) — v24.0 (Build 24)
 
 > **[ VIBE-CODED PROOF OF CONCEPT ]**
 > **ZnepLinkCleaner** is a 100% vibe-coded proof of concept Android application and web portal ([https://linkcleaner.znep.com](https://linkcleaner.znep.com)) with public source & prompt-tracked Git history at **[https://github.com/znep/znep-link-cleaner](https://github.com/znep/znep-link-cleaner)**. Built iteratively through natural-language prompts in Google AI Studio, every prompt that modified the application and its corresponding changes are permanently recorded in each separate Git commit message, this `README.md`, `CHANGELOG.md`, `ReleaseNotes.kt`, the in-app **Protection / Rules** tab, and on the public web portal (`index.html` & `repo.html`).
@@ -6,14 +6,25 @@
 ---
 
 ## Standing Maintenance Rules (Mandatory)
-1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v23.0`+).
+1. **Always Include Full Release History & Prompts**: Every modification to the app must add a new version entry to `ReleaseNotes.kt`, `README.md`, `CHANGELOG.md`, `download_portal/index.html`, and `download_portal/repo.html`, including the exact `userPrompt` that triggered the change, while preserving all prior releases (`v1.0.0` – `v24.0`+).
 2. **Preserve Vibe-Coded Proof of Concept Messaging**: Maintain clear messaging in the app, GitHub repository, and web portal that this project is a vibe-coded proof of concept.
 3. **Keep Public Web Portal Online**: Ensure Nginx (PID 5) serves `/app/applet/download_portal` directly with `absolute_redirect off; server_name_in_redirect off;` and `server.py` runs on port 3000 with the Lua auth-bypass watchdog active, alongside GitHub Pages (`gh-pages`) and GitHub Releases binary hosting.
-4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v23.0-source.zip`.
+4. **Public GitHub Repo (`https://github.com/znep/znep-link-cleaner`) & Per-Release Commit Push**: Every new version published to the website must be committed as a separate Git commit whose commit message includes `User Prompt:` and `Changes:`, tagged with `v<version>`, pushed to `https://github.com/znep/znep-link-cleaner`, and mirrored 1:1 in `repo.html`, `git_commits.json`, `ZnepLinkCleaner.bundle`, `ZnepLinkCleaner-git.zip`, and `ZnepLinkCleaner-v24.0-source.zip`.
 
 ---
 
-## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v23.0`)
+## Complete Release Notes & Vibe-Coding Prompt History (`v1.0.0` – `v24.0`)
+
+### `v24.0` (Build 24) — November 24, 2026
+**Hybrid Paywall & Region-Lock Detection, Trust-Ordered Archival Link Lookup, Two-Stage Full-Article Validation & Smart Clipboard Bundling**
+- **User Prompt**:
+  > *"I want to explore adding the ability to find archived links that bypass paywalls. If a link is detected as paywalled or otherwise blocked, there should be a new ux section that offers archival links. Propose methods for (1) determining if a link is paywalled or region locked and the (2) determining what archival sites have the full article and displaying them on order of trust with an indicator of if they are validated. This capability is orthogonal to cleaning links but can fit nicely into the same UX flow. [Selected: Hybrid known-domain list + live HTTP/HTML check; Auto-detect paywall, tap to search archives; Two-stage API check + full-text heuristic; Curated archives (Wayback, Perma.cc, Archive.today, Ghostarchive)] / When copied to the clipboard, include the original paywalled link and the archival link, indicating it is paywalled. Include the title as well if it isn't represented in the URL."*
+- **Changes**:
+  - Added Hybrid Paywall & Region-Lock Detection (`AccessRestrictionDetector`) combining an instant offline registry of 50 known hard/metered publishers with a bounded SSRF-safe live HTTP/HTML probe (`HTTP 402`/`451`/`403`, subscribe/login redirects, Schema.org JSON-LD `isAccessibleForFree=false`, paywall vendor scripts, and geo-block copy) while honoring Offline-Only Mode.
+  - Added an orthogonal **Archive Recovery** section (`ArchiveRecoverySection`) inside `CleanScreen` that auto-reveals on paywalled/region-locked links (plus a compact manual `[+] Check Web Archives` trigger on unflagged links) and keeps all third-party archive queries strictly user-initiated.
+  - Implemented concurrent Two-Stage Archival Discovery & Validation (`ArchiveLookupEngine`) across 4 trust-ordered providers: `#1 Wayback Machine`, `#2 Perma.cc`, `#3 Archive.today` (with honest CAPTCHA/unvalidated fallback), and `#4 Ghostarchive`.
+  - Added truthful validation badges (`[ ✓ VERIFIED FULL ARTICLE ]`, `[ ◐ PARTIAL / PAYWALLED ]`, `[ ◐ SNAPSHOT · UNVERIFIED ]`, `[ ◇ UNVALIDATED · DIRECT LOOKUP ]`, and compact `[ ✕ NOT ARCHIVED ]` footer) using bounded 128 KB readable word-count & paywall-marker heuristics.
+  - Implemented smart Archive Clipboard & Share Bundling (`ArchiveShareFormatter`): copies/shares both the labeled original link (`Original (Paywalled): ...`) and archival link (`Archive (...): ...`), automatically prepending the extracted article title whenever it is not already represented in the URL path slug.
 
 ### `v23.0` (Build 23) — November 23, 2026
 **Reddit Opaque Share Link (`/r/<sub>/s/<id>` & `/u/<user>/s/<id>`) Expansion, Readable Title Permalink Resolution & Deep-Link Tracker Purge**

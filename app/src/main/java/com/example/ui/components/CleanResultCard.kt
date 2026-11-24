@@ -5,6 +5,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,12 +23,15 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PublicOff
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -46,6 +52,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.model.AccessAssessment
+import com.example.model.AccessRestrictionType
+import com.example.model.ArchiveCandidate
+import com.example.model.ArchiveLookupState
+import com.example.model.ArchiveValidationStatus
 import com.example.model.CleanResult
 import com.example.model.ExpansionWarningType
 import com.example.model.RedirectHop
@@ -53,6 +64,7 @@ import com.example.model.SecurityAdvisory
 import com.example.model.SecuritySeverity
 import com.example.model.StrippedParam
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CleanResultCard(
     result: CleanResult,
@@ -62,13 +74,36 @@ fun CleanResultCard(
     onOpenBrowser: (String) -> Unit,
     onViewFacebookDetails: (() -> Unit)? = null,
     onExpandShortlinkNow: (() -> Unit)? = null,
+    accessAssessment: AccessAssessment? = null,
+    archiveLookupState: ArchiveLookupState = ArchiveLookupState.Idle,
+    copiedTextState: String? = null,
+    showArchiveSection: Boolean = false,
+    onSearchArchives: () -> Unit = {},
+    onCopyArchiveBundle: (ArchiveCandidate) -> Unit = {},
+    onShareArchiveBundle: (ArchiveCandidate) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showDetails by remember { mutableStateOf(false) }
     val isUnchanged = result.isUnchanged
     val hasWarnings = result.warningType != ExpansionWarningType.NONE || result.securityAdvisories.isNotEmpty()
+    val isRestricted = accessAssessment?.isRestricted == true
+    val isArchiveActive = showArchiveSection && (isRestricted || archiveLookupState !is ArchiveLookupState.Idle)
+    val hasVerifiedArchive = (archiveLookupState as? ArchiveLookupState.Completed)?.candidates?.any {
+        it.validationStatus == ArchiveValidationStatus.VERIFIED_FULL_ARTICLE
+    } == true
+
     val emeraldAccent = Color(0xFF10B981)
     val emeraldContainer = Color(0xFF062E22)
+    val amberAccent = Color(0xFFF59E0B)
+    val amberContainer = Color(0xFF2B1C06)
+    val amberText = Color(0xFFFDE68A)
+
+    val cardBorderColor = when {
+        hasVerifiedArchive -> emeraldAccent.copy(alpha = 0.7f)
+        isRestricted -> amberAccent.copy(alpha = 0.75f)
+        isUnchanged && !hasWarnings -> emeraldAccent.copy(alpha = 0.6f)
+        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+    }
 
     Card(
         modifier = modifier
@@ -78,39 +113,26 @@ fun CleanResultCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(
-            width = 1.5.dp,
-            color = if (isUnchanged && !hasWarnings) {
-                emeraldAccent.copy(alpha = 0.6f)
-            } else {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            }
-        )
+        border = BorderStroke(width = 1.5.dp, color = cardBorderColor)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp)
+                .padding(if (isArchiveActive) 15.dp else 18.dp)
         ) {
-            // HUD Status Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f, fill = false)
+            // Unified HUD Status Header: shows Clean status + immediate Restriction status side-by-side
+            if (isArchiveActive) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Clean status pill
                     if (isUnchanged) {
-                        val badgeLabel = if (hasWarnings) {
-                            "[ UNCHANGED // SEE ADVISORY ]"
-                        } else {
-                            "[ ✓ UNCHANGED // ALREADY CLEAN ]"
-                        }
-                        val badgeBorder = if (hasWarnings) Color(0xFFF59E0B) else emeraldAccent
-                        val badgeBg = if (hasWarnings) Color(0xFF2B1C06) else emeraldContainer
-                        val badgeText = if (hasWarnings) Color(0xFFFDE68A) else Color(0xFF6EE7B7)
+                        val badgeLabel = if (hasWarnings) "[ UNCHANGED // ADVISORY ]" else "[ ✓ ALREADY CLEAN ]"
+                        val badgeBorder = if (hasWarnings) amberAccent else emeraldAccent
+                        val badgeBg = if (hasWarnings) amberContainer else emeraldContainer
+                        val badgeText = if (hasWarnings) amberText else Color(0xFF6EE7B7)
 
                         Surface(
                             modifier = Modifier.testTag("status_badge_unchanged"),
@@ -127,6 +149,11 @@ fun CleanResultCard(
                             )
                         }
                     } else {
+                        val cleanedLabel = if (result.percentReduction > 0) {
+                            "[ CLEANED -${result.percentReduction}% ]"
+                        } else {
+                            "[ CLEANED ]"
+                        }
                         Surface(
                             modifier = Modifier.testTag("status_badge_cleaned"),
                             shape = RoundedCornerShape(8.dp),
@@ -134,7 +161,7 @@ fun CleanResultCard(
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                         ) {
                             Text(
-                                text = "[ CLEANED ]",
+                                text = cleanedLabel,
                                 style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -142,47 +169,147 @@ fun CleanResultCard(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (result.domain.isNotEmpty()) result.domain else "Clean Link",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
 
-                if (isUnchanged) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        modifier = Modifier.testTag("delta_badge_unchanged"),
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-                    ) {
+                    // Immediate Restriction Badge (PAYWALLED / REGION LOCKED / BLOCKED / SIGN-IN WALL)
+                    if (isRestricted && accessAssessment != null) {
+                        val restrictionIcon = when (accessAssessment.restrictionType) {
+                            AccessRestrictionType.REGION_LOCKED -> Icons.Default.PublicOff
+                            else -> Icons.Default.Lock
+                        }
+                        Surface(
+                            modifier = Modifier.testTag("status_badge_restricted"),
+                            shape = RoundedCornerShape(8.dp),
+                            color = amberContainer,
+                            border = BorderStroke(1.dp, amberAccent.copy(alpha = 0.85f))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = restrictionIcon,
+                                    contentDescription = null,
+                                    tint = amberText,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = accessAssessment.compactHudBadgeLabel,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                    fontWeight = FontWeight.Bold,
+                                    color = amberText
+                                )
+                            }
+                        }
+                    }
+
+                    if (result.domain.isNotEmpty()) {
                         Text(
-                            text = "0 B CHANGED",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            text = result.domain,
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 2.dp)
                         )
                     }
-                } else if (result.percentReduction > 0) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
+                }
+            } else {
+                // Standard Unrestricted HUD Status Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
                     ) {
+                        if (isUnchanged) {
+                            val badgeLabel = if (hasWarnings) {
+                                "[ UNCHANGED // SEE ADVISORY ]"
+                            } else {
+                                "[ ✓ UNCHANGED // ALREADY CLEAN ]"
+                            }
+                            val badgeBorder = if (hasWarnings) amberAccent else emeraldAccent
+                            val badgeBg = if (hasWarnings) amberContainer else emeraldContainer
+                            val badgeText = if (hasWarnings) amberText else Color(0xFF6EE7B7)
+
+                            Surface(
+                                modifier = Modifier.testTag("status_badge_unchanged"),
+                                shape = RoundedCornerShape(8.dp),
+                                color = badgeBg,
+                                border = BorderStroke(1.dp, badgeBorder.copy(alpha = 0.8f))
+                            ) {
+                                Text(
+                                    text = badgeLabel,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                    fontWeight = FontWeight.Bold,
+                                    color = badgeText,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        } else {
+                            Surface(
+                                modifier = Modifier.testTag("status_badge_cleaned"),
+                                shape = RoundedCornerShape(8.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                            ) {
+                                Text(
+                                    text = "[ CLEANED ]",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "-${result.percentReduction}%",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            text = if (result.domain.isNotEmpty()) result.domain else "Clean Link",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
+                    }
+
+                    if (isUnchanged) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            modifier = Modifier.testTag("delta_badge_unchanged"),
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = "0 B CHANGED",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    } else if (result.percentReduction > 0) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
+                        ) {
+                            Text(
+                                text = "-${result.percentReduction}%",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -193,7 +320,7 @@ fun CleanResultCard(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp)
+                            .padding(top = 10.dp)
                             .testTag("security_blocked_banner"),
                         shape = RoundedCornerShape(10.dp),
                         color = Color(0xFF380707),
@@ -221,7 +348,7 @@ fun CleanResultCard(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp),
+                            .padding(top = 10.dp),
                         shape = RoundedCornerShape(10.dp),
                         color = Color(0xFF380707),
                         border = BorderStroke(1.5.dp, Color(0xFFEF4444))
@@ -265,7 +392,7 @@ fun CleanResultCard(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 12.dp),
+                            .padding(top = 10.dp),
                         shape = RoundedCornerShape(10.dp),
                         color = Color(0xFF331604),
                         border = BorderStroke(1.5.dp, Color(0xFFF97316))
@@ -329,14 +456,14 @@ fun CleanResultCard(
             }
             if (displayedAdvisories.isNotEmpty()) {
                 val hasHighSeverity = displayedAdvisories.any { it.severity == SecuritySeverity.HIGH }
-                val borderColor = if (hasHighSeverity) Color(0xFFEF4444) else Color(0xFFF59E0B)
-                val bgColor = if (hasHighSeverity) Color(0xFF310B14) else Color(0xFF2B1C06)
-                val titleColor = if (hasHighSeverity) Color(0xFFFCA5A5) else Color(0xFFFDE68A)
+                val borderColor = if (hasHighSeverity) Color(0xFFEF4444) else amberAccent
+                val bgColor = if (hasHighSeverity) Color(0xFF310B14) else amberContainer
+                val titleColor = if (hasHighSeverity) Color(0xFFFCA5A5) else amberText
 
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp)
+                        .padding(top = 10.dp)
                         .testTag("security_advisories_banner"),
                     shape = RoundedCornerShape(10.dp),
                     color = bgColor,
@@ -369,176 +496,302 @@ fun CleanResultCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            val hopCount = (result.redirectHops.size - 1).coerceAtLeast(0)
 
-            // Cleaned URL Output Box (Monospace Retro Display)
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { onCopy(result.cleanedUrl) },
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = if (isUnchanged && !hasWarnings) {
-                        emeraldAccent.copy(alpha = 0.45f)
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    }
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = when {
-                            isUnchanged && hasWarnings -> "UNCHANGED LINK // SEE ADVISORY ABOVE"
-                            isUnchanged -> "VERIFIED CLEAN LINK // IDENTICAL TO INPUT"
-                            else -> "PURGED LINK //"
-                        },
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                        fontWeight = FontWeight.Bold,
-                        color = when {
-                            isUnchanged && hasWarnings -> Color(0xFFFDE68A)
-                            isUnchanged -> Color(0xFF6EE7B7)
-                            else -> MaterialTheme.colorScheme.primary
+            if (isArchiveActive) {
+                // COMPACT INTEGRATED LAYOUT: keeps Clean URL + Copy/Share/Open + Inline Paywall/Archives above the fold
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { onCopy(result.cleanedUrl) },
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        if (result.strippedParams.isNotEmpty() || hopCount > 0) {
+                            val summary = buildList {
+                                if (result.strippedParams.isNotEmpty()) add("${result.strippedParams.size} PURGED")
+                                if (result.bytesSaved > 0) add("-${result.bytesSaved} B")
+                                if (hopCount > 0) add(if (hopCount == 1) "1 HOP" else "$hopCount HOPS")
+                            }.joinToString(" · ")
+                            Text(
+                                text = "CLEAN LINK // $summary",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 9.5.sp
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
                         }
-                    )
-                    if (isUnchanged && !hasWarnings) {
-                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Link is already clean — no tracking parameters, redirect wrappers, or path bloat found.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 16.sp
+                            text = result.cleanedUrl,
+                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 17.sp
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = result.cleanedUrl,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 4,
-                        overflow = TextOverflow.Ellipsis,
-                        lineHeight = 20.sp
-                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // Primary Action: Large Retro Copy Button
-            Button(
-                onClick = { onCopy(result.cleanedUrl) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .testTag("copy_button"),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(
-                    imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isCopied) "[ COPIED TO CLIPBOARD! ]" else "[ COPY CLEAN LINK ]",
-                    style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Secondary Actions: Share & Browser
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { onShare(result.cleanedUrl) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(42.dp)
-                        .testTag("share_button"),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                // Single 48dp compact action row (Copy | Share | Open)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Share",
-                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-
-                OutlinedButton(
-                    onClick = { onOpenBrowser(result.cleanedUrl) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(42.dp)
-                        .testTag("open_browser_button"),
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Open",
-                        style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Compact Retro Telemetry Pill HUD
-            val hopCount = (result.redirectHops.size - 1).coerceAtLeast(0)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                TelemetryPill(
-                    label = if (result.strippedParams.isNotEmpty()) {
-                        "${result.strippedParams.size} ITEMS PURGED"
-                    } else if (isUnchanged) {
-                        "UNCHANGED (0 TRACKERS)"
-                    } else {
-                        "0 TRACKERS FOUND"
+                    OutlinedButton(
+                        onClick = { onCopy(result.cleanedUrl) },
+                        modifier = Modifier
+                            .weight(1.1f)
+                            .height(48.dp)
+                            .testTag("copy_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f))
+                    ) {
+                        Icon(
+                            imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                            contentDescription = "Copy cleaned link",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = if (isCopied) "Copied!" else "Copy",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            maxLines = 1
+                        )
                     }
-                )
-                if (result.bytesSaved > 0) {
-                    TelemetryPill(label = "-${result.bytesSaved} BYTES")
+
+                    OutlinedButton(
+                        onClick = { onShare(result.cleanedUrl) },
+                        modifier = Modifier
+                            .weight(0.95f)
+                            .height(48.dp)
+                            .testTag("share_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share cleaned link",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Share",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { onOpenBrowser(result.cleanedUrl) },
+                        modifier = Modifier
+                            .weight(0.95f)
+                            .height(48.dp)
+                            .testTag("open_browser_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = "Open cleaned link in browser",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Open",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1
+                        )
+                    }
                 }
-                if (hopCount > 0) {
-                    TelemetryPill(label = if (hopCount == 1) "1 HOP" else "$hopCount HOPS")
-                } else if (result.expandedFromUrl != null) {
-                    TelemetryPill(label = "EXPANDED")
+            } else {
+                // STANDARD UNRESTRICTED LAYOUT
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onCopy(result.cleanedUrl) },
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isUnchanged && !hasWarnings) {
+                            emeraldAccent.copy(alpha = 0.45f)
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        }
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = when {
+                                isUnchanged && hasWarnings -> "UNCHANGED LINK // SEE ADVISORY ABOVE"
+                                isUnchanged -> "VERIFIED CLEAN LINK // IDENTICAL TO INPUT"
+                                else -> "PURGED LINK //"
+                            },
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            fontWeight = FontWeight.Bold,
+                            color = when {
+                                isUnchanged && hasWarnings -> amberText
+                                isUnchanged -> Color(0xFF6EE7B7)
+                                else -> MaterialTheme.colorScheme.primary
+                            }
+                        )
+                        if (isUnchanged && !hasWarnings) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Link is already clean — no tracking parameters, redirect wrappers, or path bloat found.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = result.cleanedUrl,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 20.sp
+                        )
+                    }
                 }
-                if (result.securityAdvisories.isNotEmpty()) {
-                    TelemetryPill(label = "${result.securityAdvisories.size} SEC ALERT")
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Button(
+                    onClick = { onCopy(result.cleanedUrl) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("copy_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isCopied) "[ COPIED TO CLIPBOARD! ]" else "[ COPY CLEAN LINK ]",
+                        style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { onShare(result.cleanedUrl) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .testTag("share_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Share",
+                            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = { onOpenBrowser(result.cleanedUrl) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .testTag("open_browser_button"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Open",
+                            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Compact Retro Telemetry Pill HUD (shown in unrestricted mode)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    TelemetryPill(
+                        label = if (result.strippedParams.isNotEmpty()) {
+                            "${result.strippedParams.size} ITEMS PURGED"
+                        } else if (isUnchanged) {
+                            "UNCHANGED (0 TRACKERS)"
+                        } else {
+                            "0 TRACKERS FOUND"
+                        }
+                    )
+                    if (result.bytesSaved > 0) {
+                        TelemetryPill(label = "-${result.bytesSaved} BYTES")
+                    }
+                    if (hopCount > 0) {
+                        TelemetryPill(label = if (hopCount == 1) "1 HOP" else "$hopCount HOPS")
+                    } else if (result.expandedFromUrl != null) {
+                        TelemetryPill(label = "EXPANDED")
+                    }
+                    if (result.securityAdvisories.isNotEmpty()) {
+                        TelemetryPill(label = "${result.securityAdvisories.size} SEC ALERT")
+                    }
                 }
             }
 
-            // Collapsible Details Section (Decluttered: hidden by default!)
+            // Collapsible Details Section (only shown when trackers/hops actually exist)
             if (result.strippedParams.isNotEmpty() || result.expandedFromUrl != null || result.redirectHops.size > 1) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 val toggleLabel = when {
                     showDetails -> "[-] HIDE TELEMETRY & HOP TRACE"
                     hopCount > 0 && result.strippedParams.isNotEmpty() ->
@@ -631,6 +884,30 @@ fun CleanResultCard(
                         }
                     }
                 }
+            }
+
+            // Inline Paywall & Web Archive Recovery inside the SAME unified card
+            if (showArchiveSection) {
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = if (isRestricted) {
+                        amberAccent.copy(alpha = 0.35f)
+                    } else {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                    }
+                )
+                Spacer(modifier = Modifier.height(if (isArchiveActive) 10.dp else 4.dp))
+                InlineArchiveRecoveryContent(
+                    cleanedUrl = result.cleanedUrl,
+                    accessAssessment = accessAssessment,
+                    archiveLookupState = archiveLookupState,
+                    copiedTextState = copiedTextState,
+                    onSearchArchives = onSearchArchives,
+                    onCopyArchiveBundle = onCopyArchiveBundle,
+                    onShareArchiveBundle = onShareArchiveBundle,
+                    onOpenArchive = onOpenBrowser
+                )
             }
         }
     }

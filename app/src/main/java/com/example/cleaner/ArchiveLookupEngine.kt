@@ -24,26 +24,46 @@ import java.util.concurrent.TimeUnit
  *  #4 Ghostarchive (ghostarchive.org)    — Search extraction + snapshot HTML check
  *
  * Stage 1 confirms whether a concrete archived snapshot exists (or is CAPTCHA-gated).
- * Stage 2 fetches a strictly bounded 128 KB slice of the archived HTML and runs a readable
- * full-article heuristic to verify substantial non-paywalled content.
+ * Stage 2 strips navigation/header/footer/modal chrome, inspects hard paywall barriers
+ * (such as FT's `o-barrier`, `barrier-grid`, JSON-LD `isAccessibleForFree: false`, and
+ * subscription pricing tables), and requires genuine multi-paragraph `<p>` editorial prose
+ * before marking a snapshot as [ArchiveValidationStatus.VERIFIED_FULL_ARTICLE].
  */
 object ArchiveLookupEngine {
 
     private const val MAX_STAGE1_HTML_BYTES = 96 * 1024L
     private const val MAX_STAGE2_HTML_BYTES = 128 * 1024L
-    private const val MIN_FULL_ARTICLE_WORDS = 250
-    private const val MIN_PARTIAL_ARTICLE_WORDS = 80
+
+    // Editorial prose thresholds (measured ONLY on non-boilerplate <p> paragraphs after stripping nav/footer chrome)
+    private const val MIN_WORDS_PER_EDITORIAL_PARAGRAPH = 15
+    private const val MIN_EDITORIAL_PARAGRAPHS_FULL = 4
+    private const val MIN_EDITORIAL_WORDS_FULL = 250
+    private const val MIN_EDITORIAL_PARAGRAPHS_WHEN_JSONLD_LOCKED = 6
+    private const val MIN_EDITORIAL_WORDS_WHEN_JSONLD_LOCKED = 380
+    private const val MIN_EDITORIAL_PARAGRAPHS_WHEN_SOFT_CTA = 8
+    private const val MIN_EDITORIAL_WORDS_WHEN_SOFT_CTA = 450
+    private const val MIN_EDITORIAL_WORDS_UNVERIFIED = 100
 
     private const val USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
 
-    private val SCRIPT_STYLE_BLOCK_REGEX = Regex(
-        """<(script|style|noscript|svg|template|iframe)[^>]*>.*?</\1>""",
+    private val NON_CONTENT_BLOCK_REGEX = Regex(
+        """<(script|style|noscript|svg|template|iframe|nav|header|footer|aside|form|menu|dialog|select)[^>]*>.*?</\1>""",
         setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
     )
     private val HTML_COMMENT_REGEX = Regex("""<!--.*?-->""", RegexOption.DOT_MATCHES_ALL)
+    private val PARAGRAPH_TAG_REGEX = Regex(
+        """<p(?:\s[^>]*)?>(.*?)</p>""",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+    )
     private val HTML_TAG_REGEX = Regex("""<[^>]+>""")
     private val WORD_REGEX = Regex("""[A-Za-z]{2,}""")
+    private val CURRENCY_PRICE_REGEX = Regex("""[$£€]\s?\d+(?:\.\d{1,2})?""")
+
+    private val JSON_LD_NOT_FREE_REGEX = Regex(
+        """"isAccessibleForFree"\s*:\s*(?:false|"false"|'false')""",
+        RegexOption.IGNORE_CASE
+    )
 
     private val CAPTCHA_MARKERS = listOf(
         "cf-challenge",
@@ -57,14 +77,75 @@ object ArchiveLookupEngine {
         "too many requests"
     )
 
+    /**
+     * Explicit DOM barrier containers that publishers (e.g., Financial Times Origami `o-barrier`,
+     * WSJ/NYT gateway barriers) render when replacing the article body with a paywall screen.
+     */
+    private val HARD_BARRIER_DOM_MARKERS = listOf(
+        "o-barrier",
+        "barrier-grid",
+        "data-trackable=\"barrier\"",
+        "data-trackable='barrier'",
+        "paywall-barrier",
+        "ft-barrier",
+        "subscribe-barrier",
+        "id=\"barrier",
+        "class=\"barrier",
+        "gateway-content",
+        "snippet--paywall",
+        "regwall-container",
+        "paywall-wall",
+        "piano-paywall"
+    )
+
+    /**
+     * Subscription barrier / paywall gate copy found inside archived snapshots that only captured
+     * the locked view.
+     */
     private val ARCHIVE_PAYWALL_BLOCK_MARKERS = listOf(
+        "subscribe to unlock",
+        "try unlimited access",
+        "subscribe to read",
         "subscribe to continue reading",
-        "subscribe to read the full article",
+        "keep reading with a subscription",
         "this article is for subscribers",
+        "unlock this article",
         "you have reached your article limit",
         "you've reached your limit of free articles",
-        "create a free account to continue reading",
-        "already a subscriber? sign in"
+        "create a free account to continue",
+        "already a subscriber? sign in",
+        "log in to continue reading",
+        "to continue reading this article",
+        "become a subscriber to read",
+        "explore our subscription offers",
+        "choose your subscription"
+    )
+
+    private val PRICING_TIER_BOILERPLATE_PAIR = "standard digital" to "premium digital"
+
+    private val PARAGRAPH_BOILERPLATE_PHRASES = listOf(
+        "subscribe",
+        "subscription",
+        "unlimited access",
+        "per month",
+        "per week",
+        "per year",
+        "billed annually",
+        "cancel anytime",
+        "already a subscriber",
+        "sign in",
+        "log in",
+        "cookie",
+        "privacy policy",
+        "terms of service",
+        "terms & conditions",
+        "all rights reserved",
+        "standard digital",
+        "premium digital",
+        "manage cookies",
+        "accept all",
+        "copyright ©",
+        "© the financial times"
     )
 
     private val GHOSTARCHIVE_RESULT_REGEX = Regex(
@@ -80,13 +161,15 @@ object ArchiveLookupEngine {
         val status: ArchiveValidationStatus,
         val wordCount: Int,
         val extractedTitle: String?,
-        val detail: String
+        val detail: String,
+        val editorialParagraphCount: Int = 0
     )
 
     data class WaybackCapture(
         val timestamp: String,
         val originalUrl: String,
-        val byteLength: Long
+        val byteLength: Long,
+        val digest: String = ""
     ) {
         val viewerUrl: String
             get() = "https://web.archive.org/web/$timestamp/$originalUrl"
@@ -163,22 +246,24 @@ object ArchiveLookupEngine {
 
         return try {
             val cdxUrl = "https://web.archive.org/cdx/search/cdx?url=$encoded&output=json" +
-                "&fl=timestamp,original,statuscode,mimetype,length" +
+                "&fl=timestamp,original,statuscode,mimetype,digest,length" +
                 "&filter=statuscode:200&filter=mimetype:text/html&collapse=digest&limit=-5"
 
             val cdxResp = fetchText(cdxUrl, maxBytes = MAX_STAGE1_HTML_BYTES)
-            var bestCapture = if (cdxResp.code == 200) parseWaybackCdxJson(cdxResp.body) else null
+            var candidateCaptures = if (cdxResp.code == 200) parseWaybackCdxCaptures(cdxResp.body) else emptyList()
 
             // Fallback to Wayback Availability JSON API if CDX returned nothing or timed out
-            if (bestCapture == null) {
+            if (candidateCaptures.isEmpty()) {
                 val availUrl = "https://archive.org/wayback/available?url=$encoded"
                 val availResp = fetchText(availUrl, maxBytes = 32 * 1024L)
                 if (availResp.code == 200) {
-                    bestCapture = parseWaybackAvailabilityJson(availResp.body, targetUrl)
+                    parseWaybackAvailabilityJson(availResp.body, targetUrl)?.let {
+                        candidateCaptures = listOf(it)
+                    }
                 }
             }
 
-            if (bestCapture == null) {
+            if (candidateCaptures.isEmpty()) {
                 return ArchiveCandidate(
                     provider = ArchiveProvider.WAYBACK_MACHINE,
                     archiveUrl = fallbackSearchUrl,
@@ -188,28 +273,48 @@ object ArchiveLookupEngine {
                 )
             }
 
-            // Stage 2: Bounded raw HTML (`id_`) full-article verification
-            val rawHtmlResp = fetchText(bestCapture.rawHtmlUrl, maxBytes = MAX_STAGE2_HTML_BYTES, followSafeRedirects = true)
-            if (rawHtmlResp.code == 200 && rawHtmlResp.body.isNotBlank()) {
-                val heuristic = evaluateArchivedHtml(rawHtmlResp.body)
-                ArchiveCandidate(
-                    provider = ArchiveProvider.WAYBACK_MACHINE,
-                    archiveUrl = bestCapture.viewerUrl,
-                    validationStatus = heuristic.status,
-                    capturedAtDisplay = bestCapture.formattedDate,
-                    estimatedWordCount = heuristic.wordCount.takeIf { it > 0 },
-                    extractedTitle = heuristic.extractedTitle,
-                    statusDetail = heuristic.detail
-                )
-            } else {
-                ArchiveCandidate(
-                    provider = ArchiveProvider.WAYBACK_MACHINE,
-                    archiveUrl = bestCapture.viewerUrl,
-                    validationStatus = ArchiveValidationStatus.SNAPSHOT_UNVERIFIED,
-                    capturedAtDisplay = bestCapture.formattedDate,
-                    statusDetail = "Snapshot indexed (${bestCapture.formattedDate}); full-text check timed out"
-                )
+            // Stage 2: Inspect newest capture first; if paywalled, try 1 earlier distinct-digest capture
+            var firstResult: ArchiveCandidate? = null
+            for (capture in candidateCaptures.take(2)) {
+                val rawHtmlResp = fetchText(capture.rawHtmlUrl, maxBytes = MAX_STAGE2_HTML_BYTES, followSafeRedirects = true)
+                val evaluated = if (rawHtmlResp.code == 200 && rawHtmlResp.body.isNotBlank()) {
+                    val heuristic = evaluateArchivedHtml(rawHtmlResp.body)
+                    ArchiveCandidate(
+                        provider = ArchiveProvider.WAYBACK_MACHINE,
+                        archiveUrl = capture.viewerUrl,
+                        validationStatus = heuristic.status,
+                        capturedAtDisplay = capture.formattedDate,
+                        estimatedWordCount = heuristic.wordCount.takeIf { it > 0 },
+                        extractedTitle = heuristic.extractedTitle,
+                        statusDetail = heuristic.detail
+                    )
+                } else {
+                    ArchiveCandidate(
+                        provider = ArchiveProvider.WAYBACK_MACHINE,
+                        archiveUrl = capture.viewerUrl,
+                        validationStatus = ArchiveValidationStatus.SNAPSHOT_UNVERIFIED,
+                        capturedAtDisplay = capture.formattedDate,
+                        statusDetail = "Snapshot indexed (${capture.formattedDate}); full-text check timed out"
+                    )
+                }
+
+                if (evaluated.validationStatus == ArchiveValidationStatus.VERIFIED_FULL_ARTICLE) {
+                    return evaluated
+                }
+                if (firstResult == null) {
+                    firstResult = evaluated
+                } else if (firstResult.isPaywalledSnapshot && !evaluated.isPaywalledSnapshot) {
+                    return evaluated
+                }
             }
+
+            firstResult ?: ArchiveCandidate(
+                provider = ArchiveProvider.WAYBACK_MACHINE,
+                archiveUrl = fallbackSearchUrl,
+                validationStatus = ArchiveValidationStatus.NOT_ARCHIVED,
+                statusDetail = "No usable Wayback capture found",
+                isDirectLookupFallback = true
+            )
         } catch (_: Exception) {
             ArchiveCandidate(
                 provider = ArchiveProvider.WAYBACK_MACHINE,
@@ -293,7 +398,6 @@ object ArchiveLookupEngine {
         return try {
             val probe = fetchText(directNewestUrl, maxBytes = MAX_STAGE1_HTML_BYTES, followSafeRedirects = false)
 
-            // Concrete redirect to an existing snapshot (e.g. https://archive.ph/AbCdE)
             if (probe.code in 300..399 && !probe.locationHeader.isNullOrBlank()) {
                 val resolved = UrlExpander.resolveRedirectLocation(directNewestUrl, probe.locationHeader)
                 val host = UrlSecurityValidator.extractHost(resolved)
@@ -339,7 +443,7 @@ object ArchiveLookupEngine {
                     provider = ArchiveProvider.ARCHIVE_TODAY,
                     archiveUrl = directNewestUrl,
                     validationStatus = ArchiveValidationStatus.UNVALIDATED_CAPTCHA_OR_LOOKUP,
-                    statusDetail = "CAPTCHA or rate-limit blocked automated verification — tap to open directly",
+                    statusDetail = "CAPTCHA or rate-limit blocked automated check — tap to open directly",
                     isDirectLookupFallback = true
                 )
             }
@@ -404,7 +508,6 @@ object ArchiveLookupEngine {
                 )
             }
 
-            // Stage 2: Verify Ghostarchive snapshot content
             val htmlResp = fetchText(snapshotUrl, maxBytes = MAX_STAGE2_HTML_BYTES, followSafeRedirects = true)
             if (htmlResp.code == 200 && htmlResp.body.isNotBlank() && !isCaptchaPage(htmlResp.body)) {
                 val heuristic = evaluateArchivedHtml(htmlResp.body)
@@ -436,7 +539,7 @@ object ArchiveLookupEngine {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // Stage 2: Full-Article Heuristic Validator & Parsers (internal for unit tests)
+    // Stage 2: Strict Editorial Prose & Paywall Barrier Validator
     // ─────────────────────────────────────────────────────────────────────────────
 
     internal fun evaluateArchivedHtml(html: String): ContentHeuristicResult {
@@ -451,70 +554,172 @@ object ArchiveLookupEngine {
 
         val extractedTitle = ArchiveShareFormatter.extractArticleTitle(html)
         val lowerHtml = html.lowercase()
-        val hasHardPaywallCopy = ARCHIVE_PAYWALL_BLOCK_MARKERS.any { lowerHtml.contains(it) }
 
-        // Strip scripts/styles/comments/tags to estimate visible article text length
-        val stripped = SCRIPT_STYLE_BLOCK_REGEX.replace(html, " ")
-            .let { HTML_COMMENT_REGEX.replace(it, " ") }
-            .let { HTML_TAG_REGEX.replace(it, " ") }
+        // 1. Inspect hard paywall barriers before stripping chrome
+        val hasHardBarrierDom = HARD_BARRIER_DOM_MARKERS.any { lowerHtml.contains(it) }
+        val hasPricingTierPair = lowerHtml.contains(PRICING_TIER_BOILERPLATE_PAIR.first) &&
+            lowerHtml.contains(PRICING_TIER_BOILERPLATE_PAIR.second)
+        val hasHardPaywallCopy = ARCHIVE_PAYWALL_BLOCK_MARKERS.any { lowerHtml.contains(it) } || hasPricingTierPair
+        val hasJsonLdNotFree = JSON_LD_NOT_FREE_REGEX.containsMatchIn(html)
 
-        val wordCount = WORD_REGEX.findAll(stripped).count()
+        // 2. Strip non-editorial chrome (<nav>, <header>, <footer>, <aside>, <form>, <script>, <style>, etc.)
+        val bodyOnly = stripStructuralChrome(html)
+
+        // 3. Extract ONLY substantive, non-boilerplate <p> editorial paragraphs
+        val editorialParagraphs = extractEditorialParagraphs(bodyOnly)
+        val editorialParagraphCount = editorialParagraphs.size
+        val editorialWordCount = editorialParagraphs.sumOf { countWords(it) }
 
         return when {
-            wordCount >= MIN_FULL_ARTICLE_WORDS && !hasHardPaywallCopy -> {
-                ContentHeuristicResult(
-                    status = ArchiveValidationStatus.VERIFIED_FULL_ARTICLE,
-                    wordCount = wordCount,
-                    extractedTitle = extractedTitle,
-                    detail = "Full article verified (~$wordCount words, no paywall block)"
-                )
-            }
-            wordCount >= MIN_FULL_ARTICLE_WORDS && hasHardPaywallCopy -> {
-                // Substantial text alongside a soft subscriber banner/CTA in footer
-                ContentHeuristicResult(
-                    status = ArchiveValidationStatus.VERIFIED_FULL_ARTICLE,
-                    wordCount = wordCount,
-                    extractedTitle = extractedTitle,
-                    detail = "Substantial article text verified (~$wordCount words)"
-                )
-            }
-            hasHardPaywallCopy -> {
+            // Hard barrier DOM container (e.g. FT `o-barrier` / `barrier-grid`) ALWAYS disqualifies as paywalled
+            hasHardBarrierDom || hasPricingTierPair -> {
                 ContentHeuristicResult(
                     status = ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED,
-                    wordCount = wordCount,
+                    wordCount = editorialWordCount,
                     extractedTitle = extractedTitle,
-                    detail = "Archived snapshot appears truncated or paywalled (~$wordCount words)"
+                    editorialParagraphCount = editorialParagraphCount,
+                    detail = "Archived copy still shows a paywall barrier ($editorialParagraphCount editorial paragraphs)"
                 )
             }
-            wordCount >= MIN_PARTIAL_ARTICLE_WORDS -> {
+
+            // Explicit paywall copy present: only pass if overwhelming genuine article prose exists
+            hasHardPaywallCopy -> {
+                if (editorialParagraphCount >= MIN_EDITORIAL_PARAGRAPHS_WHEN_SOFT_CTA &&
+                    editorialWordCount >= MIN_EDITORIAL_WORDS_WHEN_SOFT_CTA
+                ) {
+                    ContentHeuristicResult(
+                        status = ArchiveValidationStatus.VERIFIED_FULL_ARTICLE,
+                        wordCount = editorialWordCount,
+                        extractedTitle = extractedTitle,
+                        editorialParagraphCount = editorialParagraphCount,
+                        detail = "Full article verified ($editorialParagraphCount paragraphs · ~$editorialWordCount editorial words)"
+                    )
+                } else {
+                    ContentHeuristicResult(
+                        status = ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED,
+                        wordCount = editorialWordCount,
+                        extractedTitle = extractedTitle,
+                        editorialParagraphCount = editorialParagraphCount,
+                        detail = "Archived snapshot is still paywalled ($editorialParagraphCount paragraphs · ~$editorialWordCount words)"
+                    )
+                }
+            }
+
+            // JSON-LD declares isAccessibleForFree=false: require stronger editorial prose proof
+            hasJsonLdNotFree -> {
+                if (editorialParagraphCount >= MIN_EDITORIAL_PARAGRAPHS_WHEN_JSONLD_LOCKED &&
+                    editorialWordCount >= MIN_EDITORIAL_WORDS_WHEN_JSONLD_LOCKED
+                ) {
+                    ContentHeuristicResult(
+                        status = ArchiveValidationStatus.VERIFIED_FULL_ARTICLE,
+                        wordCount = editorialWordCount,
+                        extractedTitle = extractedTitle,
+                        editorialParagraphCount = editorialParagraphCount,
+                        detail = "Full article verified ($editorialParagraphCount paragraphs · ~$editorialWordCount editorial words)"
+                    )
+                } else {
+                    ContentHeuristicResult(
+                        status = ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED,
+                        wordCount = editorialWordCount,
+                        extractedTitle = extractedTitle,
+                        editorialParagraphCount = editorialParagraphCount,
+                        detail = "Archived snapshot appears paywalled (JSON-LD locked · $editorialParagraphCount paragraphs)"
+                    )
+                }
+            }
+
+            // Clean open snapshot: require >= 4 genuine editorial <p> paragraphs & >= 250 editorial words
+            editorialParagraphCount >= MIN_EDITORIAL_PARAGRAPHS_FULL &&
+                editorialWordCount >= MIN_EDITORIAL_WORDS_FULL -> {
+                ContentHeuristicResult(
+                    status = ArchiveValidationStatus.VERIFIED_FULL_ARTICLE,
+                    wordCount = editorialWordCount,
+                    extractedTitle = extractedTitle,
+                    editorialParagraphCount = editorialParagraphCount,
+                    detail = "Full article verified ($editorialParagraphCount paragraphs · ~$editorialWordCount editorial words)"
+                )
+            }
+
+            // Brief or JS-rendered snapshot without barrier signals
+            editorialParagraphCount >= 2 && editorialWordCount >= MIN_EDITORIAL_WORDS_UNVERIFIED -> {
                 ContentHeuristicResult(
                     status = ArchiveValidationStatus.SNAPSHOT_UNVERIFIED,
-                    wordCount = wordCount,
+                    wordCount = editorialWordCount,
                     extractedTitle = extractedTitle,
-                    detail = "Snapshot found (~$wordCount words); may be brief or JS-rendered"
+                    editorialParagraphCount = editorialParagraphCount,
+                    detail = "Snapshot found ($editorialParagraphCount paragraphs · ~$editorialWordCount words); may be brief or partial"
                 )
             }
+
             else -> {
                 ContentHeuristicResult(
                     status = ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED,
-                    wordCount = wordCount,
+                    wordCount = editorialWordCount,
                     extractedTitle = extractedTitle,
-                    detail = "Snapshot has minimal readable text (~$wordCount words)"
+                    editorialParagraphCount = editorialParagraphCount,
+                    detail = "Archived snapshot lacks full article body ($editorialParagraphCount editorial paragraphs)"
                 )
             }
         }
     }
 
+    private fun stripStructuralChrome(html: String): String {
+        var cleaned = HTML_COMMENT_REGEX.replace(html, " ")
+        // Run twice to catch nested structural blocks cleanly (e.g., <nav> inside <header>)
+        repeat(2) {
+            cleaned = NON_CONTENT_BLOCK_REGEX.replace(cleaned, " ")
+        }
+        return cleaned
+    }
+
+    private fun extractEditorialParagraphs(bodyHtml: String): List<String> {
+        val result = mutableListOf<String>()
+        for (match in PARAGRAPH_TAG_REGEX.findAll(bodyHtml)) {
+            val rawInner = match.groupValues[1]
+            val plain = HTML_TAG_REGEX.replace(rawInner, " ")
+                .replace("&nbsp;", " ")
+                .replace(Regex("""\s+"""), " ")
+                .trim()
+
+            if (plain.isEmpty()) continue
+            val wordCount = countWords(plain)
+            if (wordCount < MIN_WORDS_PER_EDITORIAL_PARAGRAPH) continue
+
+            val lower = plain.lowercase()
+            if (PARAGRAPH_BOILERPLATE_PHRASES.any { lower.contains(it) }) continue
+            if (CURRENCY_PRICE_REGEX.containsMatchIn(plain) &&
+                (lower.contains("trial") || lower.contains("offer") || lower.contains("save") || lower.contains("access"))
+            ) {
+                continue
+            }
+
+            result.add(plain)
+        }
+        return result
+    }
+
+    private fun countWords(text: String): Int = WORD_REGEX.findAll(text).count()
+
     internal fun parseWaybackCdxJson(jsonText: String): WaybackCapture? {
+        return parseWaybackCdxCaptures(jsonText).firstOrNull()
+    }
+
+    /**
+     * Parses Wayback CDX JSON and returns up to 2 preferred captures with distinct digests:
+     * 1) the most recent substantial capture (> 2.5 KB) and
+     * 2) an earlier distinct-digest capture as a fallback in case the newest capture hit a paywall.
+     */
+    internal fun parseWaybackCdxCaptures(jsonText: String): List<WaybackCapture> {
         return try {
             val root = JSONArray(jsonText.trim())
-            if (root.length() < 2) return null
+            if (root.length() < 2) return emptyList()
 
             val header = root.getJSONArray(0)
             val cols = (0 until header.length()).associate { header.getString(it) to it }
-            val tsIdx = cols["timestamp"] ?: return null
-            val origIdx = cols["original"] ?: return null
+            val tsIdx = cols["timestamp"] ?: return emptyList()
+            val origIdx = cols["original"] ?: return emptyList()
             val lenIdx = cols["length"]
+            val digestIdx = cols["digest"]
 
             val captures = mutableListOf<WaybackCapture>()
             for (i in 1 until root.length()) {
@@ -522,22 +727,23 @@ object ArchiveLookupEngine {
                 val ts = row.optString(tsIdx, "").trim()
                 val orig = row.optString(origIdx, "").trim()
                 val len = lenIdx?.let { row.optString(it, "0").toLongOrNull() } ?: 0L
+                val digest = digestIdx?.let { row.optString(it, "").trim() }.orEmpty()
                 if (ts.length >= 8 && UrlSecurityValidator.isSafeHttpUrl(orig)) {
-                    captures.add(WaybackCapture(ts, orig, len))
+                    captures.add(WaybackCapture(ts, orig, len, digest))
                 }
             }
-            if (captures.isEmpty()) return null
+            if (captures.isEmpty()) return emptyList()
 
-            // Prefer substantial HTML captures (> 2.5 KB compressed) choosing the most recent,
-            // otherwise fall back to the largest capture available.
             val substantial = captures.filter { it.byteLength >= 2500L }
-            if (substantial.isNotEmpty()) {
-                substantial.maxByOrNull { it.timestamp }
-            } else {
-                captures.maxByOrNull { it.byteLength }
+            val pool = if (substantial.isNotEmpty()) substantial else captures
+            val sortedNewestFirst = pool.sortedByDescending { it.timestamp }
+            val primary = sortedNewestFirst.first()
+            val earlierDistinct = sortedNewestFirst.drop(1).lastOrNull {
+                it.digest.isEmpty() || it.digest != primary.digest
             }
+            listOfNotNull(primary, earlierDistinct)
         } catch (_: Exception) {
-            null
+            emptyList()
         }
     }
 

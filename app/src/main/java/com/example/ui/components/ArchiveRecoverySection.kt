@@ -1,12 +1,12 @@
 package com.example.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,15 +21,11 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PublicOff
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -54,9 +50,19 @@ import com.example.model.ArchiveCandidate
 import com.example.model.ArchiveLookupState
 import com.example.model.ArchiveValidationStatus
 
+/**
+ * Inline archive recovery content embedded directly inside the unified [CleanResultCard].
+ *
+ * - When the link is unrestricted and no archive lookup is active, renders a compact single-row
+ *   manual trigger (`[+] CHECK WEB ARCHIVES`).
+ * - When paywalled/region-locked or when an archive search is running/completed, renders the
+ *   compact evidence strip, detected title preview, tap-to-search CTA, trust-ordered actionable
+ *   candidates, a dedicated muted footer for confirmed paywalled snapshots (`Paywalled Snapshot`),
+ *   and a separate muted footer for unavailable/unarchived providers.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ArchiveRecoverySection(
+fun InlineArchiveRecoveryContent(
     cleanedUrl: String,
     accessAssessment: AccessAssessment?,
     archiveLookupState: ArchiveLookupState,
@@ -69,392 +75,408 @@ fun ArchiveRecoverySection(
 ) {
     val isRestricted = accessAssessment?.isRestricted == true
     val isActiveSearch = archiveLookupState !is ArchiveLookupState.Idle
-    val showExpandedPanel = isRestricted || isActiveSearch
+    val showExpandedInline = isRestricted || isActiveSearch
 
     val amberBorder = Color(0xFFF59E0B)
-    val amberBg = Color(0xFF2B1C06)
     val amberText = Color(0xFFFDE68A)
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        // Subtle single-row fallback when link is not flagged as paywalled/blocked
-        AnimatedVisibility(visible = !showExpandedPanel) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { onSearchArchives() }
-                    .heightIn(min = 48.dp)
-                    .testTag("manual_archive_lookup_row"),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+    if (!showExpandedInline) {
+        // Subtle single-row manual fallback inside the bottom of the unified result card
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .clickable { onSearchArchives() }
+                .heightIn(min = 48.dp)
+                .padding(horizontal = 6.dp, vertical = 10.dp)
+                .testTag("manual_archive_lookup_row"),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                if (accessAssessment?.isChecking == true) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(14.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Archive,
+                        contentDescription = "Check web archives",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (accessAssessment?.isChecking == true) {
+                        "Checking paywall/region status · Tap to search archives"
+                    } else {
+                        "[+] CHECK WEB ARCHIVES (4 TRUST-RANKED SOURCES)"
+                    },
+                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        return
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag("archive_recovery_card"),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Compact evidence chips + subtle live-probe spinner (the primary restriction pill lives in the unified top HUD)
+        val signals = accessAssessment?.signals.orEmpty()
+        if (signals.isNotEmpty() || accessAssessment?.isChecking == true) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (accessAssessment?.isChecking == true) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(14.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Archive,
-                                contentDescription = "Check web archives",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
+                    for (signal in signals) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                        ) {
+                            Text(
+                                text = signal,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (accessAssessment?.isChecking == true) {
-                                "Checking paywall/region status · Tap to search archives"
-                            } else {
-                                "[+] CHECK WEB ARCHIVES (4 TRUST-RANKED SOURCES)"
-                            },
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
+                }
+                if (accessAssessment?.isChecking == true) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                            .size(14.dp),
+                        strokeWidth = 2.dp,
+                        color = amberBorder
+                    )
                 }
             }
         }
 
-        // Expanded Access Advisory & Trust-Ordered Archive Recovery Panel
-        AnimatedVisibility(visible = showExpandedPanel) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("archive_recovery_card"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(
-                    width = 1.5.dp,
-                    color = if (isRestricted) amberBorder.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-                )
+        // Compact detected title preview if available
+        val bestDetectedTitle = resolveDisplayTitle(accessAssessment, archiveLookupState)
+        if (!bestDetectedTitle.isNullOrBlank()) {
+            val willIncludeInBundle = !ArchiveShareFormatter.isTitleRepresentedInUrl(bestDetectedTitle, cleanedUrl)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
             ) {
-                Column(
+                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                    Text(
+                        text = if (willIncludeInBundle) {
+                            "TITLE (AUTO-INCLUDED ON COPY — NOT IN URL)"
+                        } else {
+                            "TITLE (ALREADY IN URL SLUG)"
+                        },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 9.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = bestDetectedTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        // State-dependent content: Idle CTA vs Trust-Ordered Archive Cards
+        when (archiveLookupState) {
+            is ArchiveLookupState.Idle -> {
+                Text(
+                    text = if (accessAssessment?.wasOfflineOnly == true) {
+                        "Offline-Only Mode skipped auto-probing. Tap to search Wayback, Perma.cc, Archive.today & Ghostarchive."
+                    } else {
+                        "No archive contacted yet. Tap to find and verify full-article copies across 4 trust-ranked archives."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+
+                Button(
+                    onClick = onSearchArchives,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .height(48.dp)
+                        .testTag("search_archives_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
                 ) {
-                    // Header row: Detection status badge + checking spinner
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "[ SEARCH WEB ARCHIVES (4 SOURCES) ]",
+                        style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            is ArchiveLookupState.Searching,
+            is ArchiveLookupState.Completed -> {
+                val candidates = when (archiveLookupState) {
+                    is ArchiveLookupState.Searching -> archiveLookupState.candidates
+                    is ArchiveLookupState.Completed -> archiveLookupState.candidates
+                    else -> emptyList()
+                }.sortedBy { it.provider.trustRank }
+
+                val actionable = candidates.filter { it.isActionable }
+                val paywalledSnapshots = candidates.filter { it.isPaywalledSnapshot }
+                val unavailable = candidates.filter { !it.isActionable && !it.isPaywalledSnapshot }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (archiveLookupState is ArchiveLookupState.Searching) {
+                            "ARCHIVES BY TRUST · VALIDATING..."
+                        } else {
+                            "ARCHIVES BY TRUST"
+                        },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 10.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    if (archiveLookupState is ArchiveLookupState.Completed) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable { onSearchArchives() }
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                .testTag("recheck_archives_button"),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val headerIcon = when (accessAssessment?.restrictionType) {
-                                AccessRestrictionType.REGION_LOCKED -> Icons.Default.PublicOff
-                                AccessRestrictionType.PAYWALL,
-                                AccessRestrictionType.ACCESS_BLOCKED,
-                                AccessRestrictionType.REGISTRATION_WALL -> Icons.Default.Lock
-                                else -> Icons.Default.Archive
-                            }
                             Icon(
-                                imageVector = headerIcon,
-                                contentDescription = null,
-                                tint = if (isRestricted) amberText else MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Re-check archives",
+                                tint = MaterialTheme.colorScheme.secondary,
+                                modifier = Modifier.size(14.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isRestricted) amberBg else MaterialTheme.colorScheme.primaryContainer,
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (isRestricted) amberBorder.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                                )
-                            ) {
-                                Text(
-                                    text = if (isRestricted) {
-                                        accessAssessment?.bannerBadgeLabel ?: "[ PAYWALL DETECTED ]"
-                                    } else {
-                                        "[ WEB ARCHIVE LOOKUP ]"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isRestricted) amberText else MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-
-                        if (accessAssessment?.isChecking == true) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = amberBorder
-                            )
-                        }
-                    }
-
-                    // Evidence chips explaining WHY it was flagged
-                    val signals = accessAssessment?.signals.orEmpty()
-                    if (signals.isNotEmpty()) {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            for (signal in signals) {
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                                ) {
-                                    Text(
-                                        text = signal,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontFamily = FontFamily.Monospace,
-                                            fontSize = 10.sp
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Show detected title preview if available and useful
-                    val bestDetectedTitle = resolveDisplayTitle(accessAssessment, archiveLookupState)
-                    if (!bestDetectedTitle.isNullOrBlank()) {
-                        val willIncludeInBundle = !ArchiveShareFormatter.isTitleRepresentedInUrl(bestDetectedTitle, cleanedUrl)
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-                        ) {
-                            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)) {
-                                Text(
-                                    text = if (willIncludeInBundle) {
-                                        "DETECTED TITLE (AUTO-INCLUDED ON COPY — NOT IN URL)"
-                                    } else {
-                                        "DETECTED TITLE (ALREADY IN URL SLUG)"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 9.sp
-                                    ),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = bestDetectedTitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-
-                    // State-dependent content: Idle CTA vs Trust-Ordered Archive Cards
-                    when (archiveLookupState) {
-                        is ArchiveLookupState.Idle -> {
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (accessAssessment?.wasOfflineOnly == true) {
-                                    "Offline-Only Mode prevented automatic probing. Tap below to explicitly query 4 curated archives for this cleaned link."
-                                } else {
-                                    "No archive service has been contacted yet. Tap to search Wayback Machine, Perma.cc, Archive.today & Ghostarchive and validate full-article copies."
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                lineHeight = 16.sp
+                                text = "RE-CHECK",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary
                             )
-
-                            Button(
-                                onClick = onSearchArchives,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .testTag("search_archives_button"),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.secondary,
-                                    contentColor = MaterialTheme.colorScheme.onSecondary
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "[ SEARCH WEB ARCHIVES (4 SOURCES) ]",
-                                    style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
                         }
+                    }
+                }
 
-                        is ArchiveLookupState.Searching,
-                        is ArchiveLookupState.Completed -> {
-                            val candidates = when (archiveLookupState) {
-                                is ArchiveLookupState.Searching -> archiveLookupState.candidates
-                                is ArchiveLookupState.Completed -> archiveLookupState.candidates
-                                else -> emptyList()
-                            }.sortedBy { it.provider.trustRank }
+                if (actionable.isEmpty() && archiveLookupState is ArchiveLookupState.Completed) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = if (paywalledSnapshots.isNotEmpty()) {
+                                "No readable full-article copy was confirmed. Captured snapshots below appear to still be behind a paywall."
+                            } else {
+                                "No archived snapshots were confirmed across the 4 providers. You can still try a direct lookup below."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
 
-                            val actionable = candidates.filter { it.isActionable }
-                            val unavailable = candidates.filter { !it.isActionable }
+                for (candidate in actionable) {
+                    val expectedBundle = ArchiveShareFormatter.formatClipboardBundle(
+                        originalUrl = cleanedUrl,
+                        archiveUrl = candidate.archiveUrl,
+                        providerName = candidate.provider.displayName,
+                        restrictionType = accessAssessment?.restrictionType ?: AccessRestrictionType.PAYWALL,
+                        title = ArchiveShareFormatter.selectBestTitle(
+                            candidate.extractedTitle,
+                            accessAssessment?.detectedTitle
+                        )
+                    )
+                    ArchiveCandidateCard(
+                        candidate = candidate,
+                        isBundleCopied = copiedTextState == expectedBundle,
+                        onCopyBundle = { onCopyArchiveBundle(candidate) },
+                        onShareBundle = { onShareArchiveBundle(candidate) },
+                        onOpen = { onOpenArchive(candidate.archiveUrl) }
+                    )
+                }
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (archiveLookupState is ArchiveLookupState.Searching) {
-                                        "ARCHIVE SOURCES (ORDERED BY TRUST · VALIDATING...)"
-                                    } else {
-                                        "ARCHIVE SOURCES (ORDERED BY TRUST)"
-                                    },
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 10.sp
-                                    ),
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-
-                                if (archiveLookupState is ArchiveLookupState.Completed) {
-                                    Row(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .clickable { onSearchArchives() }
-                                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                                            .testTag("recheck_archives_button"),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Re-check archives",
-                                            tint = MaterialTheme.colorScheme.secondary,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
+                // Demoted Muted Footer: Confirmed Paywalled Snapshots (explicitly separated from actionable cards)
+                if (paywalledSnapshots.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("paywalled_snapshots_footer"),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                        border = BorderStroke(1.dp, amberBorder.copy(alpha = 0.35f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "[ ✕ PAYWALLED SNAPSHOT ]",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = amberText.copy(alpha = 0.9f)
+                            )
+                            for (snap in paywalledSnapshots) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        val datePart = snap.capturedAtDisplay?.let { " · $it" }.orEmpty()
                                         Text(
-                                            text = "RE-CHECK",
+                                            text = "#${snap.provider.trustRank} ${snap.provider.displayName}$datePart",
                                             style = MaterialTheme.typography.labelSmall.copy(
                                                 fontFamily = FontFamily.Monospace,
                                                 fontSize = 10.sp
                                             ),
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.secondary
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
+                                        Text(
+                                            text = snap.statusDetail.ifBlank { "Archived copy is still behind a paywall" },
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    if (snap.archiveUrl.isNotBlank()) {
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Surface(
+                                            onClick = { onOpenArchive(snap.archiveUrl) },
+                                            modifier = Modifier
+                                                .heightIn(min = 36.dp)
+                                                .testTag("inspect_paywalled_snapshot_${snap.provider.name.lowercase()}"),
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = MaterialTheme.colorScheme.surface,
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                                        ) {
+                                            Text(
+                                                text = "Inspect ↗",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontFamily = FontFamily.Monospace,
+                                                    fontSize = 10.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
+                        }
+                    }
+                }
 
-                            if (actionable.isEmpty() && archiveLookupState is ArchiveLookupState.Completed) {
-                                Surface(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                                ) {
-                                    Text(
-                                        text = "No archived snapshots were confirmed across the 4 providers. You can still try opening a direct lookup below.",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(12.dp)
-                                    )
-                                }
+                // Compact muted footer for NOT_ARCHIVED / ERROR providers
+                if (unavailable.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("unavailable_archives_footer"),
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            val names = unavailable.joinToString(", ") {
+                                "#${it.provider.trustRank} ${it.provider.displayName}"
                             }
-
-                            for (candidate in actionable) {
-                                val expectedBundle = ArchiveShareFormatter.formatClipboardBundle(
-                                    originalUrl = cleanedUrl,
-                                    archiveUrl = candidate.archiveUrl,
-                                    providerName = candidate.provider.displayName,
-                                    restrictionType = accessAssessment?.restrictionType ?: AccessRestrictionType.PAYWALL,
-                                    title = ArchiveShareFormatter.selectBestTitle(
-                                        candidate.extractedTitle,
-                                        accessAssessment?.detectedTitle
-                                    )
-                                )
-                                ArchiveCandidateCard(
-                                    candidate = candidate,
-                                    isBundleCopied = copiedTextState == expectedBundle,
-                                    onCopyBundle = { onCopyArchiveBundle(candidate) },
-                                    onShareBundle = { onShareArchiveBundle(candidate) },
-                                    onOpen = { onOpenArchive(candidate.archiveUrl) }
-                                )
+                            Text(
+                                text = "[ ✕ NOT ARCHIVED / UNAVAILABLE ] $names",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 10.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            val directFallbacks = unavailable.filter {
+                                it.isDirectLookupFallback && it.archiveUrl.isNotBlank()
                             }
-
-                            // Compact muted footer for NOT_ARCHIVED / ERROR providers
-                            if (unavailable.isNotEmpty()) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .testTag("unavailable_archives_footer"),
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+                            if (directFallbacks.isNotEmpty()) {
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(10.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        val names = unavailable.joinToString(", ") {
-                                            "#${it.provider.trustRank} ${it.provider.displayName}"
-                                        }
-                                        Text(
-                                            text = "[ ✕ NOT ARCHIVED / UNAVAILABLE ] $names",
-                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                fontFamily = FontFamily.Monospace,
-                                                fontSize = 10.sp
-                                            ),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        val directFallbacks = unavailable.filter {
-                                            it.isDirectLookupFallback && it.archiveUrl.isNotBlank()
-                                        }
-                                        if (directFallbacks.isNotEmpty()) {
-                                            FlowRow(
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                for (fallback in directFallbacks) {
-                                                    Surface(
-                                                        onClick = { onOpenArchive(fallback.archiveUrl) },
-                                                        shape = RoundedCornerShape(6.dp),
-                                                        color = MaterialTheme.colorScheme.surface,
-                                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
-                                                    ) {
-                                                        Text(
-                                                            text = "Search ${fallback.provider.displayName} ↗",
-                                                            style = MaterialTheme.typography.labelSmall.copy(
-                                                                fontFamily = FontFamily.Monospace,
-                                                                fontSize = 10.sp
-                                                            ),
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp)
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                    for (fallback in directFallbacks) {
+                                        Surface(
+                                            onClick = { onOpenArchive(fallback.archiveUrl) },
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = MaterialTheme.colorScheme.surface,
+                                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                                        ) {
+                                            Text(
+                                                text = "Search ${fallback.provider.displayName} ↗",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    fontFamily = FontFamily.Monospace,
+                                                    fontSize = 10.sp
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                                            )
                                         }
                                     }
                                 }
@@ -487,7 +509,7 @@ private fun ArchiveCandidateCard(
         ArchiveValidationStatus.VERIFIED_FULL_ARTICLE ->
             Quad("[ ✓ VERIFIED FULL ARTICLE ]", emeraldBg, emeraldBorder, emeraldText)
         ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED ->
-            Quad("[ ◐ PARTIAL / PAYWALLED ]", amberBg, amberBorder, amberText)
+            Quad("[ ✕ PAYWALLED SNAPSHOT ]", amberBg, amberBorder, amberText)
         ArchiveValidationStatus.SNAPSHOT_UNVERIFIED ->
             Quad(
                 "[ ◐ SNAPSHOT · UNVERIFIED ]",
@@ -530,8 +552,8 @@ private fun ArchiveCandidateCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(11.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             // Provider Trust Header
             Row(
@@ -564,7 +586,6 @@ private fun ArchiveCandidateCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = candidate.provider.trustTierLabel,
                         style = MaterialTheme.typography.labelSmall,
@@ -633,6 +654,7 @@ private fun ArchiveCandidateCard(
                             .height(48.dp)
                             .testTag("copy_archive_bundle_${candidate.provider.name.lowercase()}"),
                         shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -659,6 +681,7 @@ private fun ArchiveCandidateCard(
                             .height(48.dp)
                             .testTag("share_archive_bundle_${candidate.provider.name.lowercase()}"),
                         shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Icon(
@@ -683,6 +706,7 @@ private fun ArchiveCandidateCard(
                             .height(48.dp)
                             .testTag("open_archive_${candidate.provider.name.lowercase()}"),
                         shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                     ) {
                         Icon(

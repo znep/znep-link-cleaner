@@ -36,6 +36,15 @@ data class AccessAssessment(
             AccessRestrictionType.NONE -> "[ ACCESS CHECKED ]"
         }
 
+    val compactHudBadgeLabel: String
+        get() = when (restrictionType) {
+            AccessRestrictionType.PAYWALL -> "[ PAYWALLED ]"
+            AccessRestrictionType.REGION_LOCKED -> "[ REGION LOCKED ]"
+            AccessRestrictionType.ACCESS_BLOCKED -> "[ BLOCKED ]"
+            AccessRestrictionType.REGISTRATION_WALL -> "[ SIGN-IN WALL ]"
+            AccessRestrictionType.NONE -> ""
+        }
+
     val clipboardRestrictionLabel: String
         get() = when (restrictionType) {
             AccessRestrictionType.PAYWALL -> "Paywalled"
@@ -98,10 +107,20 @@ data class ArchiveCandidate(
     val statusDetail: String = "",
     val isDirectLookupFallback: Boolean = false
 ) {
+    /**
+     * True when the archived copy exists, was inspected, and proved to still be behind a paywall
+     * or missing real editorial body text. Demoted to the muted footer labeled "Paywalled Snapshot".
+     */
+    val isPaywalledSnapshot: Boolean
+        get() = validationStatus == ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED
+
+    /**
+     * Actionable candidates shown in the primary trust-ordered list.
+     * Confirmed paywalled snapshots are demoted to the muted footer so viable options stay prominent.
+     */
     val isActionable: Boolean
         get() = validationStatus == ArchiveValidationStatus.CHECKING ||
             validationStatus == ArchiveValidationStatus.VERIFIED_FULL_ARTICLE ||
-            validationStatus == ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED ||
             validationStatus == ArchiveValidationStatus.SNAPSHOT_UNVERIFIED ||
             validationStatus == ArchiveValidationStatus.UNVALIDATED_CAPTCHA_OR_LOOKUP
 }

@@ -332,10 +332,168 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `detect paywalled publishers offline and analyze live HTTP and HTML paywall or region-lock signals`() {
+        val nytArticle = "https://www.nytimes.com/2026/11/10/technology/ai-chips-energy-grid.html"
+        val offlineNyt = com.example.cleaner.AccessRestrictionDetector.assessOffline(nytArticle, offlineOnlyMode = true)
+        assertTrue(offlineNyt.isRestricted)
+        assertEquals(com.example.model.AccessRestrictionType.PAYWALL, offlineNyt.restrictionType)
+        assertEquals(com.example.model.DetectionConfidence.OFFLINE_LIKELY, offlineNyt.confidence)
+        assertTrue(offlineNyt.signals.any { it.contains("The New York Times") })
+
+        // Bare homepage should not falsely flag offline
+        val nytHome = com.example.cleaner.AccessRestrictionDetector.assessOffline("https://www.nytimes.com/", offlineOnlyMode = true)
+        assertFalse(nytHome.isRestricted)
+
+        // Live HTTP 451 + geo-block HTML should detect REGION_LOCKED with HIGH confidence
+        val baseNone = com.example.cleaner.AccessRestrictionDetector.assessOffline("https://example-news.com/story/123")
+        val geoResult = com.example.cleaner.AccessRestrictionDetector.analyzeHttpAndHtmlResponse(
+            originalUrl = "https://example-news.com/story/123",
+            statusCode = 451,
+            finalUrl = "https://example-news.com/story/123",
+            htmlBody = "<html><head><title>451 Unavailable For Legal Reasons</title></head><body>This content is not available in your region.</body></html>",
+            offlineBase = baseNone
+        )
+        assertEquals(com.example.model.AccessRestrictionType.REGION_LOCKED, geoResult.restrictionType)
+        assertEquals(com.example.model.DetectionConfidence.HIGH, geoResult.confidence)
+        assertTrue(geoResult.signals.any { it.contains("451") })
+        assertEquals(null, geoResult.detectedTitle) // Generic error title rejected
+
+        // JSON-LD isAccessibleForFree=false + Piano script + valid og:title
+        val jsonLdHtml = """
+            <html><head>
+            <meta property="og:title" content="Inside the Next Wave of Chip Manufacturing - Financial Times" />
+            <script type="application/ld+json">{"@type":"NewsArticle","isAccessibleForFree":false,"headline":"Inside the Next Wave of Chip Manufacturing"}</script>
+            <script src="https://cdn.tinypass.com/api/tinypass.min.js"></script>
+            </head><body><p>Subscribe to continue reading.</p></body></html>
+        """.trimIndent()
+        val paywallResult = com.example.cleaner.AccessRestrictionDetector.analyzeHttpAndHtmlResponse(
+            originalUrl = "https://www.ft.com/content/8a9f21c0-3b4e",
+            statusCode = 200,
+            finalUrl = "https://www.ft.com/content/8a9f21c0-3b4e",
+            htmlBody = jsonLdHtml,
+            offlineBase = com.example.cleaner.AccessRestrictionDetector.assessOffline("https://www.ft.com/content/8a9f21c0-3b4e")
+        )
+        assertEquals(com.example.model.AccessRestrictionType.PAYWALL, paywallResult.restrictionType)
+        assertEquals(com.example.model.DetectionConfidence.HIGH, paywallResult.confidence)
+        assertEquals("Inside the Next Wave of Chip Manufacturing", paywallResult.detectedTitle)
+        assertTrue(paywallResult.signals.any { it.contains("JSON-LD") })
+    }
+
+    @Test
+    fun `format archive clipboard bundle with paywall label and conditional title based on URL representation`() {
+        val opaqueFtUrl = "https://www.ft.com/content/8a9f21c0-3b4e"
+        val waybackFtUrl = "https://web.archive.org/web/20261112000000/$opaqueFtUrl"
+        val opaqueTitle = "Inside the Next Wave of Chip Manufacturing"
+
+        assertFalse(com.example.cleaner.ArchiveShareFormatter.isTitleRepresentedInUrl(opaqueTitle, opaqueFtUrl))
+        val opaqueBundle = com.example.cleaner.ArchiveShareFormatter.formatClipboardBundle(
+            originalUrl = opaqueFtUrl,
+            archiveUrl = waybackFtUrl,
+            providerName = "Wayback Machine",
+            restrictionType = com.example.model.AccessRestrictionType.PAYWALL,
+            title = opaqueTitle
+        )
+        assertEquals(
+            "Inside the Next Wave of Chip Manufacturing\n" +
+                "Original (Paywalled): $opaqueFtUrl\n" +
+                "Archive (Wayback Machine): $waybackFtUrl",
+            opaqueBundle
+        )
+
+        // When URL slug already conveys the title, omit the redundant title line
+        val descriptiveUrl = "https://www.nytimes.com/2026/11/10/technology/ai-chips-energy-grid.html"
+        val descriptiveTitle = "AI Chips and the Energy Grid"
+        assertTrue(com.example.cleaner.ArchiveShareFormatter.isTitleRepresentedInUrl(descriptiveTitle, descriptiveUrl))
+        val descriptiveBundle = com.example.cleaner.ArchiveShareFormatter.formatClipboardBundle(
+            originalUrl = descriptiveUrl,
+            archiveUrl = "https://archive.ph/AbCdE",
+            providerName = "Archive.today",
+            restrictionType = com.example.model.AccessRestrictionType.PAYWALL,
+            title = descriptiveTitle
+        )
+        assertEquals(
+            "Original (Paywalled): $descriptiveUrl\n" +
+                "Archive (Archive.today): https://archive.ph/AbCdE",
+            descriptiveBundle
+        )
+
+        // Region-locked label formatting
+        val regionBundle = com.example.cleaner.ArchiveShareFormatter.formatClipboardBundle(
+            originalUrl = "https://news.example.com/a/99182",
+            archiveUrl = "https://perma.cc/W5MF-N9EV",
+            providerName = "Perma.cc",
+            restrictionType = com.example.model.AccessRestrictionType.REGION_LOCKED,
+            title = "European Privacy Law Ruling Explained"
+        )
+        assertTrue(regionBundle.startsWith("European Privacy Law Ruling Explained\nOriginal (Region-Locked): "))
+    }
+
+    @Test
+    fun `parse archive API payloads and validate full article vs paywalled stub vs CAPTCHA`() {
+        val cdxJson = """
+            [
+              ["timestamp","original","statuscode","mimetype","length"],
+              ["20261101100000","https://www.ft.com/content/8a9f21c0","200","text/html","800"],
+              ["20261112143000","https://www.ft.com/content/8a9f21c0","200","text/html","24500"]
+            ]
+        """.trimIndent()
+        val wayback = com.example.cleaner.ArchiveLookupEngine.parseWaybackCdxJson(cdxJson)
+        assertEquals("20261112143000", wayback?.timestamp)
+        assertEquals("2026-11-12", wayback?.formattedDate)
+        assertEquals("https://web.archive.org/web/20261112143000/https://www.ft.com/content/8a9f21c0", wayback?.viewerUrl)
+
+        val permaJson = """
+            {
+              "objects": [
+                {
+                  "guid": "W5MF-N9EV",
+                  "url": "https://www.ft.com/content/8a9f21c0",
+                  "creation_timestamp": "2026-11-12T10:15:00Z",
+                  "title": "Inside Chip Manufacturing | Financial Times"
+                }
+              ]
+            }
+        """.trimIndent()
+        val perma = com.example.cleaner.ArchiveLookupEngine.parsePermaCcJson(permaJson, "https://ft.com/content/8a9f21c0")
+        assertEquals("https://perma.cc/W5MF-N9EV", perma?.archiveUrl)
+        assertEquals("Inside Chip Manufacturing", perma?.title)
+
+        val ghostHtml = """<html><body><a href="/archive/xYz123">Snapshot</a></body></html>"""
+        assertEquals(
+            "https://ghostarchive.org/archive/xYz123",
+            com.example.cleaner.ArchiveLookupEngine.parseGhostarchiveSearchHtml(ghostHtml)
+        )
+
+        // Stage 2 heuristic: full article (>= 250 words) -> VERIFIED_FULL_ARTICLE
+        val longBody = (1..280).joinToString(" ") { "journalism" }
+        val fullEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(
+            "<html><head><title>Deep Investigative Report</title></head><body><article><p>$longBody</p></article></body></html>"
+        )
+        assertEquals(com.example.model.ArchiveValidationStatus.VERIFIED_FULL_ARTICLE, fullEval.status)
+        assertEquals("Deep Investigative Report", fullEval.extractedTitle)
+
+        // Stage 2 heuristic: short paywalled stub -> SNAPSHOT_PARTIAL_OR_PAYWALLED
+        val stubEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(
+            "<html><body><p>Subscribe to continue reading this exclusive article.</p></body></html>"
+        )
+        assertEquals(com.example.model.ArchiveValidationStatus.SNAPSHOT_PARTIAL_OR_PAYWALLED, stubEval.status)
+
+        // Stage 2 heuristic: CAPTCHA wall -> UNVALIDATED_CAPTCHA_OR_LOOKUP
+        val captchaEval = com.example.cleaner.ArchiveLookupEngine.evaluateArchivedHtml(
+            "<html><head><title>Just a moment...</title></head><body><div class='cf-challenge'>Verify you are human</div></body></html>"
+        )
+        assertEquals(com.example.model.ArchiveValidationStatus.UNVALIDATED_CAPTCHA_OR_LOOKUP, captchaEval.status)
+
+        // Trust rank ordering invariant
+        val ranks = com.example.model.ArchiveProvider.entries.map { it.trustRank }
+        assertEquals(listOf(1, 2, 3, 4), ranks)
+    }
+
+    @Test
     fun `verify full release notes history completeness and prompts`() {
         val releases = com.example.model.ReleaseHistory.RELEASES
-        assertEquals(23, releases.size)
-        assertEquals("23.0", releases.first().version)
+        assertEquals(24, releases.size)
+        assertEquals("24.0", releases.first().version)
         assertEquals("1.0.0", releases.last().version)
         assertEquals("https://github.com/znep/znep-link-cleaner", com.example.model.ReleaseHistory.GITHUB_REPO_URL)
         assertTrue(releases.all { it.highlights.isNotEmpty() })

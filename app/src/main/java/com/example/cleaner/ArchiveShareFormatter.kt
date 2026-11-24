@@ -210,7 +210,7 @@ object ArchiveShareFormatter {
         val includeTitle = sanitizedTitle != null && !isTitleRepresentedInUrl(sanitizedTitle, originalUrl)
 
         return buildString {
-            if (includeTitle && sanitizedTitle != null) {
+            if (includeTitle) {
                 appendLine(sanitizedTitle)
             }
             appendLine("Original ($label): ${originalUrl.trim()}")

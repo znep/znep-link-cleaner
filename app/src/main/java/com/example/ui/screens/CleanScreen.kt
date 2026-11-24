@@ -4,6 +4,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
@@ -44,10 +47,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cleaner.LinkCleaner
@@ -57,7 +62,6 @@ import com.example.model.ArchiveCandidate
 import com.example.model.ArchiveLookupState
 import com.example.model.CleanResult
 import com.example.ui.SampleType
-import com.example.ui.components.ArchiveRecoverySection
 import com.example.ui.components.CleanResultCard
 
 @Composable
@@ -85,6 +89,12 @@ fun CleanScreen(
 ) {
     val context = LocalContext.current
     var clipboardUrl by remember { mutableStateOf<String?>(null) }
+    var isEditingInput by remember { mutableStateOf(cleanResult == null) }
+
+    // Automatically collapse input console once a link is processed so clean + paywall/archive results sit above the fold
+    LaunchedEffect(cleanResult?.cleanedUrl, cleanResult == null) {
+        isEditingInput = (cleanResult == null)
+    }
 
     // Inspect system clipboard for fast pasting
     LaunchedEffect(Unit) {
@@ -103,146 +113,247 @@ fun CleanScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Spacer(modifier = Modifier.height(2.dp))
 
-        // Sleek Retro Console Card
-        Card(
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Console Header bar
+        if (cleanResult != null && !isEditingInput) {
+            // Compact 1-Line Input Bar (~52dp) with Edit & Clear once a link is processed
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("compact_input_bar")
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                        .padding(start = 12.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "> ZNEPLINKCLEANER CONSOLE //",
-                        style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)),
-                        modifier = Modifier.testTag("vibe_coded_poc_badge")
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { isEditingInput = true }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "[ VIBE-CODED PoC ]",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace, fontSize = 9.sp),
+                            text = "> ",
+                            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Monospace),
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = inputText.trim().ifEmpty { cleanResult.cleanedUrl },
+                            style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { isEditingInput = true },
+                        modifier = Modifier.testTag("edit_input_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit URL",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            onClearClicked()
+                            isEditingInput = true
+                        },
+                        modifier = Modifier.testTag("clear_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear input",
+                            tint = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Input Box
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = onInputChanged,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("url_input_field"),
-                    placeholder = {
+            }
+        } else {
+            // Full Retro Input Console Card (empty state or while editing)
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Console Header bar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "Paste or share dirty URL...",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            text = "> ZNEPLINKCLEANER CONSOLE //",
+                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                    },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                    minLines = 2,
-                    maxLines = 5,
-                    shape = RoundedCornerShape(12.dp),
-                    trailingIcon = {
-                        if (inputText.isNotEmpty()) {
-                            IconButton(
-                                onClick = onClearClicked,
-                                modifier = Modifier.testTag("clear_button")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (cleanResult != null) {
+                                Surface(
+                                    onClick = { isEditingInput = false },
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                                ) {
+                                    Text(
+                                        text = "COLLAPSE",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 9.sp
+                                        ),
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)),
+                                modifier = Modifier.testTag("vibe_coded_poc_badge")
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Clear,
-                                    contentDescription = "Clear input",
-                                    tint = MaterialTheme.colorScheme.outline
+                                Text(
+                                    text = "[ VIBE-CODED PoC ]",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 9.sp
+                                    ),
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
-                    )
-                )
+                    }
 
-                // Quick Paste Chip if available and field is empty
-                if (inputText.isEmpty() && clipboardUrl != null) {
                     Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedButton(
-                        onClick = {
-                            clipboardUrl?.let {
-                                onInputChanged(it)
-                                onCleanClicked(it)
-                            }
-                        },
+
+                    // Input Box
+                    OutlinedTextField(
+                        value = inputText,
+                        onValueChange = onInputChanged,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(38.dp)
-                            .testTag("paste_clipboard_button"),
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
+                            .testTag("url_input_field"),
+                        placeholder = {
+                            Text(
+                                text = "Paste or share dirty URL...",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        minLines = 2,
+                        maxLines = 5,
+                        shape = RoundedCornerShape(12.dp),
+                        trailingIcon = {
+                            if (inputText.isNotEmpty()) {
+                                IconButton(
+                                    onClick = onClearClicked,
+                                    modifier = Modifier.testTag("clear_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Clear input",
+                                        tint = MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                        )
+                    )
+
+                    // Quick Paste Chip if available and field is empty
+                    if (inputText.isEmpty() && clipboardUrl != null) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = {
+                                clipboardUrl?.let {
+                                    onInputChanged(it)
+                                    onCleanClicked(it)
+                                    isEditingInput = false
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(42.dp)
+                                .testTag("paste_clipboard_button"),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentPaste,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp),
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Paste from Clipboard",
+                                style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Action Button
+                    Button(
+                        onClick = {
+                            onCleanClicked(inputText)
+                            isEditingInput = false
+                        },
+                        enabled = inputText.isNotBlank(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("clean_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ContentPaste,
+                            imageVector = Icons.Default.ElectricBolt,
                             contentDescription = null,
-                            modifier = Modifier.size(15.dp),
-                            tint = MaterialTheme.colorScheme.secondary
+                            modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Paste from Clipboard",
-                            style = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace),
-                            color = MaterialTheme.colorScheme.secondary,
+                            text = "[ PURGE TRACKERS ]",
+                            style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
                             fontWeight = FontWeight.Bold
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Action Button
-                Button(
-                    onClick = { onCleanClicked(inputText) },
-                    enabled = inputText.isNotBlank(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp)
-                        .testTag("clean_button"),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ElectricBolt,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "[ PURGE TRACKERS ]",
-                        style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace),
-                        fontWeight = FontWeight.Bold
-                    )
                 }
             }
         }
@@ -256,14 +367,14 @@ fun CleanScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f))
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(15.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -302,7 +413,7 @@ fun CleanScreen(
             }
         }
 
-        // Cleaned Result Card + Orthogonal Paywall / Archive Recovery Section
+        // Unified Cleaned Link + Paywall / Archive Recovery Card
         if (cleanResult != null) {
             val isCurrentCopied = copiedTextState == cleanResult.cleanedUrl || copiedTextState == cleanResult.cleanedText
             CleanResultCard(
@@ -312,28 +423,22 @@ fun CleanScreen(
                 onShare = onShareCleaned,
                 onOpenBrowser = onOpenBrowser,
                 onViewFacebookDetails = onViewFacebookDetails,
-                onExpandShortlinkNow = onExpandShortlinkNow
+                onExpandShortlinkNow = onExpandShortlinkNow,
+                accessAssessment = accessAssessment,
+                archiveLookupState = archiveLookupState,
+                copiedTextState = copiedTextState,
+                showArchiveSection = UrlSecurityValidator.isSafeHttpUrl(cleanResult.cleanedUrl),
+                onSearchArchives = onSearchArchives,
+                onCopyArchiveBundle = onCopyArchiveBundle,
+                onShareArchiveBundle = onShareArchiveBundle
             )
-
-            if (UrlSecurityValidator.isSafeHttpUrl(cleanResult.cleanedUrl)) {
-                ArchiveRecoverySection(
-                    cleanedUrl = cleanResult.cleanedUrl,
-                    accessAssessment = accessAssessment,
-                    archiveLookupState = archiveLookupState,
-                    copiedTextState = copiedTextState,
-                    onSearchArchives = onSearchArchives,
-                    onCopyArchiveBundle = onCopyArchiveBundle,
-                    onShareArchiveBundle = onShareArchiveBundle,
-                    onOpenArchive = onOpenBrowser
-                )
-            }
         }
 
         // Decluttered Minimalist Quick Samples
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(

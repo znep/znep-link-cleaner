@@ -34,6 +34,24 @@ object ReleaseHistory {
 
     val RELEASES = listOf(
         ReleaseNote(
+            version = "24.0",
+            buildNumber = 24,
+            releaseDate = "November 24, 2026",
+            title = "Hybrid Paywall & Region-Lock Detection, Trust-Ordered Archival Link Lookup, Two-Stage Full-Article Validation & Smart Clipboard Bundling",
+            userPrompt = "I want to explore adding the ability to find archived links that bypass paywalls. If a link is detected as paywalled or otherwise blocked, there should be a new ux section that offers archival links. Propose methods for (1) determining if a link is paywalled or region locked and the (2) determining what archival sites have the full article and displaying them on order of trust with an indicator of if they are validated. This capability is orthogonal to cleaning links but can fit nicely into the same UX flow. [Selected: Hybrid known-domain list + live HTTP/HTML check; Auto-detect paywall, tap to search archives; Two-stage API check + full-text heuristic; Curated archives (Wayback, Perma.cc, Archive.today, Ghostarchive)] / When copied to the clipboard, include the original paywalled link and the archival link, indicating it is paywalled. Include the title as well if it isn't represented in the URL.",
+            highlights = listOf(
+                "Added Hybrid Paywall & Region-Lock Detection combining an instant offline registry of 50 known hard/metered publishers with a bounded SSRF-safe live HTTP/HTML probe (HTTP 402/451/403, subscribe/login redirects, Schema.org JSON-LD isAccessibleForFree=false, paywall vendor scripts, and geo-block copy) while honoring Offline-Only Mode",
+                "Added an orthogonal Archive Recovery UX section inside CleanScreen that auto-reveals on paywalled/region-locked links (with a compact manual '[+] Check Web Archives' trigger on unflagged links) and keeps all third-party archive lookups strictly user-initiated",
+                "Implemented concurrent Two-Stage Archival Discovery & Validation across 4 trust-ordered providers: #1 Wayback Machine (CDX/Availability JSON + raw id_ HTML check), #2 Perma.cc (Harvard Law public API), #3 Archive.today (newest lookup with honest CAPTCHA/unvalidated fallback), and #4 Ghostarchive",
+                "Added truthful validation status badges ([ ✓ VERIFIED FULL ARTICLE ], [ ◐ PARTIAL / PAYWALLED ], [ ◐ SNAPSHOT · UNVERIFIED ], [ ◇ UNVALIDATED · DIRECT LOOKUP ], and compact [ ✕ NOT ARCHIVED ] footer) based on bounded 128 KB readable word-count & paywall-marker heuristics",
+                "Implemented smart Archive Clipboard & Share Bundling (ArchiveShareFormatter): copies and shares both the labeled original link ('Original (Paywalled): ...') and the archive link ('Archive (...): ...'), automatically prepending the extracted article title whenever the title is not already represented in the URL path slug"
+            ),
+            technicalDetails = listOf(
+                "Added ArchiveModels.kt, AccessRestrictionDetector.kt, ArchiveLookupEngine.kt, ArchiveShareFormatter.kt, and ArchiveRecoverySection.kt",
+                "Wired orthogonal accessAssessment and archiveLookupState flows, concurrent cancellation-safe lookup jobs, and [ Paywall ] test sample into MainViewModel.kt, MainScreen.kt, and CleanScreen.kt; added smid & shareType tracking params and bumped versionCode to 24 and versionName to 24.0"
+            )
+        ),
+        ReleaseNote(
             version = "23.0",
             buildNumber = 23,
             releaseDate = "November 23, 2026",

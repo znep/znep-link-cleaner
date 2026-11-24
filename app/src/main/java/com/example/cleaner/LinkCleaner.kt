@@ -200,6 +200,10 @@ object LinkCleaner {
         "mx" to ("Twitter / X" to "Twitter / X marketing telemetry token"),
         "invite_code" to ("Pinterest" to "User invitation tracking token"),
 
+        // Publisher / News Share Telemetry
+        "smid" to ("Publisher Telemetry" to "New York Times / news social share tracking identifier"),
+        "shareType" to ("Publisher Telemetry" to "Financial Times / publisher share variant tracking token"),
+
         // Canonical / AMP parameters
         "amp" to ("AMP Canonicalizer" to "Accelerated Mobile Pages wrapper parameter"),
         "outputtype" to ("AMP Canonicalizer" to "AMP output format override parameter")
